@@ -14,7 +14,9 @@
 
   const wheel = $("wheel");
   const wheelRing = document.querySelector(".wheelRing");
-
+const wcTop  = document.getElementById("wcTop");
+const wcMain = document.getElementById("wcMain");
+const wcBot  = document.getElementById("wcBot");
   const iconRail = $("iconRail");
 
   const sheetWrap = $("sheetWrap");
@@ -121,8 +123,9 @@
   }
 
   function setActiveIndex(idx) {
-    activeIndex = ((idx % VIEW_DEFS.length) + VIEW_DEFS.length) % VIEW_DEFS.length;
-    renderIconRail();
+  activeIndex = ((idx % VIEW_DEFS.length) + VIEW_DEFS.length) % VIEW_DEFS.length;
+  renderIconRail();
+  renderWheelCenter(); // <-- LÄGG TILL DENNA RAD
   }
 
   /* ---------- wheel math: clockwise => advances right ---------- */
