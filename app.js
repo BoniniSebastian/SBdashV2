@@ -83,17 +83,7 @@ function applyRotation(deg) {
   rotationDeg = deg;
 
   if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
-
-  // 3) speciallägen utan overlay-hook (om du kör så)
-  if (overlayOpen === "fidget") {
-    const delta = deg - prev;
-    fidgetSpin(delta);
-    return;
-  }
-
-  if (overlayOpen === "dart") {
-    dartSpin(deg);
-    return;
+  
   }
 
   // 4) normal “byta sektion”-logik
@@ -157,34 +147,6 @@ wheel.addEventListener("pointercancel", ()=>{
 }
 
 
-/* ===============================
-   BUTTON HOOKS (START PAGE)
-================================= */
-
-document.addEventListener("click", (e)=>{
-
-  if(e.target.closest("#btnOpenTimer")){
-    openOverlay("timer")
-  }
-
-  if(e.target.closest("#btnOpenFidget")){
-    openOverlay("fidget")
-  }
-
-  if(e.target.closest("#btnOpenDart")){
-    openOverlay("dart")
-  }
-
-  if(e.target.closest(".overlayClose")){
-    const parent = e.target.closest(".overlay")
-    if(parent){
-      parent.style.display = "none"
-      overlayOpen = null
-      document.body.classList.remove("overlayOpen")
-    }
-  }
-
-})
 
 
 /* ===============================
@@ -194,6 +156,7 @@ document.addEventListener("click", (e)=>{
 let FIDGET = {
   count: 0,
   lastRotation: 0
+   window.FIDGET = FIDGET;
 }
 
 function fidgetSpin(delta){
