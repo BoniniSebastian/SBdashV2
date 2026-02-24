@@ -5,53 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#050b12" />
 
-  <!-- iOS "webapp" feel -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
   <title>SB Dash v2</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
   <div class="app">
 
-    <!-- ICON RAIL (centered row) -->
+    <!-- ICON RAIL (top row) -->
     <div class="iconRail" id="iconRail" aria-label="Menyikoner"></div>
 
-    <!-- START CONTENT (what you see on Start) -->
-    <div class="startArea" id="startArea" aria-label="Startyta">
-      <div class="startLeftStack">
-        <!-- Fidget button -->
-        <button class="quickBtn" id="btnFidget" type="button" aria-label="Fidget">
-          <span class="quickIcon">🎯</span>
-        </button>
-
-        <!-- Timer button -->
-        <button class="quickBtn" id="btnTimer" type="button" aria-label="Timer">
-          <span class="quickIcon">⏱</span>
-        </button>
-      </div>
-
-      <!-- Tiny tape (stocks) -->
-      <div class="tape" id="tape" aria-label="Tape"></div>
-
-      <!-- Right-side timer bar (visible when timer running) -->
-      <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
-        <div class="timerBar" id="timerBar"></div>
-      </div>
+    <!-- Right-side timer bar -->
+    <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
+      <div class="timerBar" id="timerBar"></div>
     </div>
 
-    <!-- WHEEL (left, partly off-screen) -->
+    <!-- WHEEL (bottom-left, full visible) -->
     <div class="wheelWrap" id="wheelWrap">
       <div class="wheel" id="wheel">
-        <img class="wheelRing" src="knob-ring.svg" alt="" draggable="false" />
+        <!-- IMPORTANT: this must match your repo path -->
+        <img class="wheelRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
         <div class="wheelDot" id="wheelDot" aria-hidden="true"></div>
       </div>
     </div>
 
-    <!-- SECTION SHEET (opens on click) -->
+    <!-- SECTION SHEET -->
     <div class="sheetWrap" id="sheetWrap" aria-hidden="true">
       <div class="sheet" id="sheet" role="dialog" aria-modal="true">
         <div class="sheetHeader">
@@ -63,7 +45,7 @@
       </div>
     </div>
 
-    <!-- TIMER OVERLAY (full screen) -->
+    <!-- TIMER OVERLAY -->
     <div class="overlayWrap" id="timerOverlay" aria-hidden="true">
       <div class="overlayCard">
         <div class="overlayTop">
@@ -80,40 +62,53 @@
       </div>
     </div>
 
-    <!-- FIDGET OVERLAY (full screen) -->
-    <div class="overlayWrap" id="fidgetOverlay" aria-hidden="true">
+    <!-- TOOLS OVERLAY -->
+    <div class="overlayWrap" id="toolsOverlay" aria-hidden="true">
       <div class="overlayCard">
+
         <div class="overlayTop">
-          <div class="overlayTitle">FIDGET</div>
-          <button class="overlayClose" id="fidgetClose" type="button" aria-label="Stäng fidget">✕</button>
+          <div class="overlayTitle">TOOLS</div>
+          <button class="overlayClose" id="toolsClose" type="button" aria-label="Stäng tools">✕</button>
         </div>
 
-        <div class="fidgetCount" id="fidgetCount">0</div>
+        <!-- COUNTER MODE -->
+        <div id="toolsCounterMode">
+          <div class="toolsTopRow">
+            <button class="toolsTxtBtn" id="guessOdd" type="button">UDDA</button>
+            <button class="toolsTxtBtn" id="guessEven" type="button">JÄMNT</button>
+            <button class="toolsTxtBtn" id="btn501" type="button">501</button>
+          </div>
 
-        <div class="oddEvenRow">
-          <button class="oddEvenBtn" id="guessOdd" type="button">UDDA</button>
-          <button class="oddEvenBtn" id="guessEven" type="button">JÄMNT</button>
-          <button class="oddEvenBtn ghost" id="fidgetReset" type="button">RESET</button>
-          <button class="oddEvenBtn" id="btn501" type="button">501</button>
+          <div class="fidgetCount" id="fidgetCount">0</div>
+
+          <div class="toolsBottomRow">
+            <button class="toolsTxtBtn ghost" id="fidgetReset" type="button">RESET</button>
+          </div>
+
+          <div class="miniHint" id="fidgetHint">Vrid hjulet → räknar oändligt. Slut-siffra avgör udda/jämnt.</div>
         </div>
 
-        <div class="miniHint" id="fidgetHint">Vrid hjulet → räknar oändligt. Slut-siffra avgör udda/jämnt.</div>
+        <!-- 501 MODE -->
+        <div id="tools501Mode" hidden>
+          <div class="toolsBackRow">
+            <button class="toolsTxtBtn" id="btn501Back" type="button">← TILLBAKA</button>
+          </div>
 
-        <!-- 501 panel -->
-        <div class="dartWrap" id="dartWrap" hidden>
-          <div class="dartGrid" id="dartGrid"></div>
+          <div class="dartWrap" id="dartWrap">
+            <div class="dartGrid" id="dartGrid"></div>
+          </div>
+
+          <div class="miniHint">Vrid hjulet för poäng. Släpp → sparar rundan och hoppar till nästa spelare.</div>
         </div>
+
       </div>
     </div>
 
     <!-- optional alarm audio -->
-    <audio id="alarmAudio" preload="auto">
-      <!-- Lägg en fil om du vill, annars fallback-beep -->
-      <!-- <source src="assets/alarm.mp3" type="audio/mpeg"> -->
-    </audio>
+    <audio id="alarmAudio" preload="auto"></audio>
 
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
