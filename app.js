@@ -326,18 +326,23 @@
     }
   }
 
-  function openTimerOverlay() {
-    closeSheet();
-    timerOverlay?.classList.add("open");
-    timerOverlay?.setAttribute("aria-hidden", "false");
-    const m = TIMER_PRESETS[timerPresetIndex];
-    if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
-    if (timerSub) timerSub.textContent = `Vrid hjulet: ${TIMER_PRESETS.join(" / ")}`;
-  }
+ function openTimerOverlay() {
+  document.body.classList.remove("toolsOpen");   // säkerhet
+  document.body.classList.add("timerOpen");
+
+  timerOverlay?.classList.add("open");
+  timerOverlay?.setAttribute("aria-hidden", "false");
+
+  const m = TIMER_PRESETS[timerPresetIndex];
+  if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
+  if (timerSub) timerSub.textContent = `Vrid hjulet: ${TIMER_PRESETS.join(" / ")}`;
+}
   function closeTimerOverlay() {
-    timerOverlay?.classList.remove("open");
-    timerOverlay?.setAttribute("aria-hidden", "true");
-  }
+  document.body.classList.remove("timerOpen");
+
+  timerOverlay?.classList.remove("open");
+  timerOverlay?.setAttribute("aria-hidden", "true");
+}
   function timerWheelSelectFromDeg(deg) {
     const idx = sectorFromDeg(deg) % TIMER_PRESETS.length;
     timerPresetIndex = idx;
