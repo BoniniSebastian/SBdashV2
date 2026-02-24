@@ -156,23 +156,6 @@ wheel.addEventListener("pointercancel", ()=>{
 
 }
 
-/* ===============================
-   OVERLAY BASE SYSTEM
-================================= */
-
-function openOverlay(name){
-  overlayOpen = name
-  document.body.classList.add("overlayOpen")
-  const el = document.getElementById(name + "Overlay")
-  if(el) el.style.display = "block"
-}
-
-function closeOverlay(name){
-  overlayOpen = null
-  document.body.classList.remove("overlayOpen")
-  const el = document.getElementById(name + "Overlay")
-  if(el) el.style.display = "none"
-}
 
 /* ===============================
    BUTTON HOOKS (START PAGE)
