@@ -4,10 +4,13 @@
   --text: rgba(255,255,255,.92);
   --shadow: 0 18px 60px rgba(0,0,0,.55);
 
+  /* Top row position */
   --railTop: calc(env(safe-area-inset-top) + 18px);
-  --wheelSize: clamp(240px, 34vh, 320px);
-  --wheelLeft: 12px;
-  --wheelBottom: calc(12px + env(safe-area-inset-bottom));
+
+  /* Wheel */
+  --wheelSize: 220px;
+  --wheelLeft: 16px;
+  --wheelBottom: calc(16px + env(safe-area-inset-bottom));
 }
 
 *{ box-sizing:border-box; }
@@ -32,49 +35,82 @@ body{
 /* Prevent iOS zoom */
 input, textarea, button { font-size:16px; }
 
+/* App wrapper */
 .app{
   position:fixed;
   inset:0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-.app{
-  position:fixed;
-  inset:0;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow:hidden;
 }
 
-/* ===== AMBIENT START BLOB ===== */
+/* =========================
+   BACKGROUND BLOBS (START)
+   - startZen: always pulsing “timer style”
+   - ambientBlob: extra layer that JS can “boost” on rotation
+========================= */
+
+/* Always-on pulse blob (same “zen” look) */
+.zenBlob{
+  position:absolute;
+  left:50%;
+  top:55%;
+  width: 320px;
+  height: 320px;
+  transform: translate(-50%,-50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0,209,255,.35), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
+    radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
+  filter: blur(10px);
+  opacity:.75;
+  animation: zenPulse 2.4s ease-in-out infinite;
+  pointer-events:none;
+  z-index: 0;
+}
+@keyframes zenPulse{
+  0%{ transform: translate(-50%,-50%) scale(1); opacity:.55; }
+  50%{ transform: translate(-50%,-50%) scale(1.03); opacity:.85; }
+  100%{ transform: translate(-50%,-50%) scale(1); opacity:.55; }
+}
+
+/* Start-page blob – bigger + placed for “background mood” */
+.startZen{
+  width: 620px;
+  height: 620px;
+  left: 54%;
+  top: 56%;
+  filter: blur(60px);
+  opacity: .55;
+}
+
+/* Ambient layer that JS boosts on wheel movement */
 .ambientBlob{
   position:absolute;
-  left: -120px;
-  bottom: -120px;
-  width: 520px;
-  height: 520px;
+  left: 52%;
+  top: 58%;
+  width: 640px;
+  height: 640px;
+  transform: translate(-50%,-50%);
   border-radius: 999px;
   pointer-events:none;
   z-index: 0;
 
   background:
-    radial-gradient(circle at 35% 35%, rgba(0,209,255,.35), transparent 55%),
-    radial-gradient(circle at 70% 65%, rgba(255,100,180,.25), transparent 60%),
-    radial-gradient(circle at 60% 30%, rgba(0,255,180,.18), transparent 65%);
+    radial-gradient(circle at 35% 35%, rgba(0,209,255,.22), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(255,100,180,.16), transparent 60%),
+    radial-gradient(circle at 60% 30%, rgba(0,255,180,.12), transparent 65%);
 
-  filter: blur(60px);
+  filter: blur(70px);
   opacity:.45;
-  transition: transform .2s ease, opacity .2s ease;
+
+  /* JS ändrar transform/opacity vid rotation */
+  transition: transform .18s ease, opacity .18s ease;
 }
 
-@keyframes ambientPulse{
-  0%{ transform: scale(1); opacity:.45; }
-  50%{ transform: scale(1.05); opacity:.65; }
-  100%{ transform: scale(1); opacity:.45; }
-}
-
-.ambientBlob.pulse{
-  animation: ambientPulse 3.5s ease-in-out infinite;
-}
-
-/* ICON RAIL (top) */
+/* =========================
+   ICON RAIL (TOP)
+========================= */
 .iconRail{
   position:absolute;
   left:50%;
@@ -115,7 +151,10 @@ input, textarea, button { font-size:16px; }
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
 
-/* ---- TIMER BAR (shrinks top -> down) ---- */
+/* =========================
+   TIMER BAR (RIGHT)
+   - shrink from TOP down
+========================= */
 .timerBarWrap{
   position:absolute;
   top: 0;
@@ -125,44 +164,34 @@ input, textarea, button { font-size:16px; }
   pointer-events:none;
   opacity: 0;
   transition: opacity .20s ease;
-  z-index: 5;
+  z-index: 10;
 }
 body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .timerBar{
   position:absolute;
-  top: 0;
   right: 0;
+  top: 0;
   width: 6px;
   height: 100%;
   border-radius: 999px;
-
-  background: linear-gradient(
-    180deg,
-    rgba(0,209,255,.95),
-    rgba(255,100,180,.85),
-    rgba(0,255,180,.85)
-  );
-
-  transform-origin: bottom;     /* IMPORTANT */
-  transform: scaleY(1);      /* 1 -> 0 = empties downward */
-
+  background: linear-gradient(180deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
+  transform-origin: top; /* IMPORTANT */
+  transform: scaleY(1);
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
 
-/* ---- WHEEL (bottom-left, smaller, refined glow) ---- */
-
-:root{
-  --wheelSize: 230px; /* lite mer proportionerligt */
-}
-
+/* =========================
+   WHEEL (BOTTOM-LEFT)
+========================= */
 .wheelWrap{
-  position: absolute;
-  left: 20px;
-  bottom: 20px;          /* <-- flyttar ner den */
-  width: 220px;          /* lite mindre */
-  height: 220px;
-  z-index: 10;
+  position:absolute;
+  left: var(--wheelLeft);
+  bottom: var(--wheelBottom);
+  width: var(--wheelSize);
+  height: var(--wheelSize);
+  z-index: 20;
+  pointer-events:auto;
 }
 
 .wheel{
@@ -171,15 +200,10 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   border-radius: 999px;
   position:relative;
   display:block;
-
-  background:
-    radial-gradient(circle at 50% 50%, rgba(0,0,0,.75), rgba(0,0,0,.45));
-
-  box-shadow:
-    0 0 26px rgba(0,209,255,.16),
-    0 14px 40px rgba(0,0,0,.55);
-
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.40));
+  box-shadow: 0 0 34px rgba(0,209,255,.18), 0 18px 60px rgba(0,0,0,.55);
   touch-action: none;
+
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -187,27 +211,15 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .wheelRing{
   position:absolute;
-  inset:-8px; /* lite mindre än -10 */
-  width: calc(100% + 16px);
-  height: calc(100% + 16px);
+  inset:-10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
   transform-origin: 50% 50%;
   opacity:.95;
-  filter: drop-shadow(0 0 14px rgba(0,209,255,.22));
+  filter: drop-shadow(0 0 18px rgba(0,209,255,.22));
 }
 
-.wheelDot{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  transform: translate(-50%,-50%);
-  background: rgba(0,209,255,.95);
-  box-shadow: 0 0 14px rgba(0,209,255,.65);
-  opacity:0;
-}
-/* ---- Wheel Center Text ---- */
+/* Center text in wheel */
 .wheelCenter{
   position:absolute;
   inset:0;
@@ -239,18 +251,30 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   color: rgba(255,255,255,.82);
 }
 
-/* subtil fade när man drar */
-body.wheelDragging .wheelCenter{
-  opacity: .75;
+/* Dot (used in tools mode) */
+.wheelDot{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  transform: translate(-50%,-50%);
+  background: rgba(0,209,255,.95);
+  box-shadow: 0 0 18px rgba(0,209,255,.65);
+  opacity:0;
 }
 
-/* SHEET */
+/* =========================
+   SHEET
+========================= */
 .sheetWrap{
   position:absolute;
   inset:0;
   z-index: 40;
   pointer-events:none;
 }
+
 .sheet{
   position:absolute;
   left: 14px;
@@ -304,7 +328,9 @@ body.sheetOpen .sheet{
   -webkit-overflow-scrolling: touch;
 }
 
-/* OVERLAYS */
+/* =========================
+   OVERLAYS
+========================= */
 .overlayWrap{
   position:fixed;
   inset:0;
@@ -317,6 +343,7 @@ body.sheetOpen .sheet{
   opacity:1;
   pointer-events:auto;
 }
+
 .overlayWrap::before{
   content:"";
   position:absolute;
@@ -388,49 +415,7 @@ body.sheetOpen .sheet{
 }
 .ctaBtn:active{ transform: scale(.99); }
 
-.zenBlob{
-  position:absolute;
-  left:50%;
-  top:55%;
-  width: 320px;
-  height: 320px;
-  transform: translate(-50%,-50%);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(0,209,255,.35), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
-    radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
-  filter: blur(10px);
-  opacity:.75;
-  animation: zenPulse 2.4s ease-in-out infinite;
-  pointer-events:none;
-}
-@keyframes zenPulse{
-  0%{ transform: translate(-50%,-50%) scale(1); opacity:.65; }
-  50%{ transform: translate(-50%,-50%) scale(1.03); opacity:.9; }
-  100%{ transform: translate(-50%,-50%) scale(1); opacity:.65; }
-}
-/* ---- Start Zen Blob (same as timer) ---- */
-.startZen{
-  position:absolute;
-  left: -140px;
-  bottom: -140px;
-  width: 520px;
-  height: 520px;
-  z-index: 0;
-  opacity: .55;
-  pointer-events:none;
-}
-
-/* Se till att UI ligger över blobben */
-.iconRail,
-.wheelWrap,
-.sheetWrap,
-.timerBarWrap{
-  position: relative;
-  z-index: 10;
-}
-/* Shared */
+/* Shared UI */
 .miniHint{ color: rgba(255,255,255,.60); font-size: 13px; }
 .miniForm{ display:flex; gap:10px; margin-bottom: 12px; }
 .miniInput{
@@ -493,7 +478,7 @@ body.sheetOpen .sheet{
   box-shadow: 0 0 16px rgba(0,209,255,.22);
 }
 
-/* TOOLS */
+/* TOOLS buttons text-only */
 .toolsTopRow, .toolsBottomRow{
   display:flex;
   justify-content:center;
@@ -520,6 +505,7 @@ body.sheetOpen .sheet{
 .toolsTxtBtn:active{ transform: translateY(1px); opacity:1; }
 .toolsTxtBtn.ghost{ opacity:.70; }
 
+/* Counter number */
 .fidgetCount{
   margin-top: 12px;
   text-align:center;
@@ -568,8 +554,10 @@ body.sheetOpen .sheet{
   font-weight: 900;
   font-size: 12px;
 }
-/* ===== Overlay wheel priority ===== */
-body.toolsOpen .wheelWrap,
-body.timerOpen .wheelWrap{
-  z-index: 200;
+
+/* Small screens */
+@media (max-height: 740px){
+  :root{ --wheelSize: 205px; }
+  .timerBig{ font-size: 58px; }
+  .fidgetCount{ font-size: 74px; }
 }
