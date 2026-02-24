@@ -1,17 +1,13 @@
 :root{
   --bg:#050b12;
-  --panel: rgba(255,255,255,.06);
-  --panel2: rgba(255,255,255,.10);
   --stroke: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.62);
-  --cyan: rgba(0,209,255,.95);
   --shadow: 0 18px 60px rgba(0,0,0,.55);
-  --r: 22px;
 
-  --railY: 52vh;           /* icon row vertical position */
-  --wheelSize: 280px;      /* wheel size */
-  --wheelInset: 110px;     /* how much wheel is off-screen to left */
+  --railTop: calc(env(safe-area-inset-top) + 18px);
+  --wheelSize: clamp(240px, 34vh, 320px);
+  --wheelLeft: 12px;
+  --wheelBottom: calc(12px + env(safe-area-inset-bottom));
 }
 
 *{ box-sizing:border-box; }
@@ -36,31 +32,30 @@ body{
 /* Prevent iOS zoom */
 input, textarea, button { font-size:16px; }
 
-/* App wrapper */
 .app{
   position:fixed;
   inset:0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* ICON RAIL */
+/* ICON RAIL (top) */
 .iconRail{
   position:absolute;
   left:50%;
-  top: var(--railY);
-  transform: translate(-50%, -50%);
+  top: var(--railTop);
+  transform: translateX(-50%);
   display:flex;
   gap:14px;
   align-items:center;
   justify-content:center;
-  z-index: 20;
+  z-index: 30;
   pointer-events:auto;
 }
 
 .railIcon{
-  width: 44px;
-  height: 44px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   display:grid;
   place-items:center;
   background: rgba(0,0,0,.18);
@@ -72,9 +67,9 @@ input, textarea, button { font-size:16px; }
 }
 
 .railIcon img{
-  width: 22px;
-  height: 22px;
-  opacity: .9;
+  width: 28px;
+  height: 28px;
+  opacity: .92;
 }
 
 .railIcon.active{
@@ -84,68 +79,7 @@ input, textarea, button { font-size:16px; }
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
 
-/* START AREA */
-.startArea{
-  position:absolute;
-  inset:0;
-  z-index: 5;
-  pointer-events:none;
-}
-
-/* Quick buttons (left side) */
-.startLeftStack{
-  position:absolute;
-  left: 14px;
-  top: 18px;
-  display:flex;
-  gap:10px;
-  pointer-events:auto;
-}
-.quickBtn{
-  width:44px;
-  height:44px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.22);
-  color: rgba(255,255,255,.92);
-  display:grid;
-  place-items:center;
-  box-shadow: 0 0 18px rgba(0,209,255,.10);
-}
-.quickBtn:active{ transform: scale(.98); }
-.quickIcon{ font-size: 18px; }
-
-/* Tape (bottom, subtle) */
-.tape{
-  position:absolute;
-  left: 14px;
-  right: 14px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  height: 34px;
-  pointer-events:none;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  opacity:.75;
-}
-.tapePill{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  font-weight: 900;
-  font-size: 12px;
-  white-space:nowrap;
-}
-.tapeSym{ opacity:.9; }
-.tapeVal{ opacity:.75; font-weight:800; }
-
-/* Timer bar on right side */
+/* Timer bar (right) */
 .timerBarWrap{
   position:absolute;
   top: 0;
@@ -155,30 +89,31 @@ input, textarea, button { font-size:16px; }
   pointer-events:none;
   opacity: 0;
   transition: opacity .20s ease;
+  z-index: 5;
 }
 body.timerRunning .timerBarWrap{ opacity: 1; }
+
 .timerBar{
   position:absolute;
-  right: 0;
   top: 0;
+  bottom: 0;
+  right: 0;
   width: 6px;
-  height: 100%;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: top;
-  transform: scaleY(1);
+  transform-origin: top;      /* shrink from TOP */
+  transform: scaleY(1);       /* JS scales 1 -> 0 */
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
 
-/* WHEEL */
+/* WHEEL (bottom-left) */
 .wheelWrap{
   position:absolute;
-  left: calc(0px - var(--wheelInset));
-  top: var(--railY);
-  transform: translateY(-50%);
+  left: var(--wheelLeft);
+  bottom: var(--wheelBottom);
   width: var(--wheelSize);
   height: var(--wheelSize);
-  z-index: 10;
+  z-index: 20;
   pointer-events:auto;
 }
 
@@ -191,8 +126,6 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.40));
   box-shadow: 0 0 34px rgba(0,209,255,.18), 0 18px 60px rgba(0,0,0,.55);
   touch-action: none;
-
-  /* stop iOS long-press */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -218,7 +151,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   transform: translate(-50%,-50%);
   background: rgba(0,209,255,.95);
   box-shadow: 0 0 18px rgba(0,209,255,.65);
-  opacity:.0; /* turned on in fidget */
+  opacity:0;
 }
 
 /* SHEET */
@@ -232,7 +165,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   position:absolute;
   left: 14px;
   right: 14px;
-  top: 14px;
+  top: calc(var(--railTop) + 64px);
   bottom: calc(14px + env(safe-area-inset-bottom));
   border-radius: 28px;
   background: linear-gradient(180deg, rgba(0,220,255,.10), rgba(255,255,255,.05));
@@ -294,7 +227,6 @@ body.sheetOpen .sheet{
   opacity:1;
   pointer-events:auto;
 }
-
 .overlayWrap::before{
   content:"";
   position:absolute;
@@ -336,6 +268,7 @@ body.sheetOpen .sheet{
   color: rgba(255,255,255,.92);
 }
 
+/* TIMER */
 .timerBig{
   margin-top: 10px;
   font-size: 64px;
@@ -350,7 +283,6 @@ body.sheetOpen .sheet{
   font-weight: 800;
   font-size: 13px;
 }
-
 .ctaBtn{
   margin: 14px auto 0 auto;
   display:block;
@@ -389,7 +321,7 @@ body.sheetOpen .sheet{
   100%{ transform: translate(-50%,-50%) scale(1); opacity:.65; }
 }
 
-/* Lists UI */
+/* Shared */
 .miniHint{ color: rgba(255,255,255,.60); font-size: 13px; }
 .miniForm{ display:flex; gap:10px; margin-bottom: 12px; }
 .miniInput{
@@ -452,7 +384,33 @@ body.sheetOpen .sheet{
   box-shadow: 0 0 16px rgba(0,209,255,.22);
 }
 
-/* FIDGET */
+/* TOOLS */
+.toolsTopRow, .toolsBottomRow{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  margin-top: 6px;
+}
+.toolsBackRow{
+  display:flex;
+  justify-content:flex-start;
+  gap:16px;
+  margin-top: 2px;
+}
+.toolsTxtBtn{
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.92);
+  font-weight: 950;
+  letter-spacing:.10em;
+  text-transform: uppercase;
+  padding: 8px 6px;
+  cursor:pointer;
+  opacity:.86;
+}
+.toolsTxtBtn:active{ transform: translateY(1px); opacity:1; }
+.toolsTxtBtn.ghost{ opacity:.70; }
+
 .fidgetCount{
   margin-top: 12px;
   text-align:center;
@@ -460,62 +418,16 @@ body.sheetOpen .sheet{
   font-weight: 950;
   letter-spacing: .06em;
 }
-.oddEvenRow{
-  margin-top: 12px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-.oddEvenBtn{
-  height: 46px;
-  min-width: 92px;
-  padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.22);
-  color: rgba(255,255,255,.92);
-  font-weight: 950;
-  letter-spacing:.10em;
-}
-.oddEvenBtn:active{ transform: scale(.99); }
-.oddEvenBtn.ghost{
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.78);
-}
-
-/* win pulse */
-.overlayCard.win{
-  animation: winPulse 480ms ease-out 1;
-  border-color: rgba(0,255,180,.30);
-  box-shadow: 0 0 40px rgba(0,255,180,.10), 0 18px 60px rgba(0,0,0,.65);
-}
-.overlayCard.lose{
-  animation: losePulse 480ms ease-out 1;
-  border-color: rgba(255,70,70,.30);
-}
-@keyframes winPulse{
-  0%{ transform: scale(1); }
-  50%{ transform: scale(1.01); }
-  100%{ transform: scale(1); }
-}
-@keyframes losePulse{
-  0%{ transform: scale(1); }
-  50%{ transform: scale(0.995); }
-  100%{ transform: scale(1); }
-}
 
 /* DART 501 */
-.dartWrap{
-  margin-top: 14px;
-}
+.dartWrap{ margin-top: 14px; }
 .dartGrid{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 .playerCard{
-  border-radius: 0; /* NOT rounded */
+  border-radius: 0;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.18);
   padding: 12px;
@@ -546,11 +458,4 @@ body.sheetOpen .sheet{
   color: rgba(255,255,255,.72);
   font-weight: 900;
   font-size: 12px;
-}
-
-/* small screens tweak */
-@media (max-height: 740px){
-  :root{ --railY: 50vh; --wheelSize: 260px; }
-  .timerBig{ font-size: 58px; }
-  .fidgetCount{ font-size: 74px; }
 }
