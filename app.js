@@ -382,19 +382,27 @@
     if (mode === "dart501") { renderDart(); dartWheelToScore(); }
   }
 
-  function openToolsOverlay() {
-    closeSheet();
-    closeTimerOverlay();
-    toolsOverlay?.classList.add("open");
-    toolsOverlay?.setAttribute("aria-hidden", "false");
-    setToolsMode("counter");
-    renderTools();
-  }
+ function openToolsOverlay() {
+  document.body.classList.remove("timerOpen");  // säkerhet
+  document.body.classList.add("toolsOpen");     // <-- NY
+
+  closeSheet();
+  closeTimerOverlay();
+
+  toolsOverlay?.classList.add("open");
+  toolsOverlay?.setAttribute("aria-hidden", "false");
+
+  setToolsMode("counter");
+  renderTools();
+}
   function closeToolsOverlay() {
-    toolsOverlay?.classList.remove("open");
-    toolsOverlay?.setAttribute("aria-hidden", "true");
-    setToolsMode("counter");
-  }
+  document.body.classList.remove("toolsOpen");  // <-- NY
+
+  toolsOverlay?.classList.remove("open");
+  toolsOverlay?.setAttribute("aria-hidden", "true");
+
+  setToolsMode("counter");
+}
 
   toolsClose?.addEventListener("click", closeToolsOverlay);
   toolsOverlay?.addEventListener("click", (e) => { if (e.target === toolsOverlay) closeToolsOverlay(); });
