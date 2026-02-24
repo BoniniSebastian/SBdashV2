@@ -199,6 +199,10 @@
   }, { passive: false });
 
   wheel?.addEventListener("pointerup", () => {
+    if (ambientBlob){
+  ambientBlob.style.transform = "scale(1)";
+  ambientBlob.style.opacity = ".45";
+}
     if (!dragging) return;
     dragging = false;
 
