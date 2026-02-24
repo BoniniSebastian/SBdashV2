@@ -10,6 +10,7 @@
   ========================= */
   const iconBar = $("iconBar");
   const wheel = $("wheel");
+  wheel?.addEventListener("contextmenu", (e) => e.preventDefault());
   const wheelRing = document.querySelector(".wheelRing");
 
   const sheetWrap = $("sheetWrap");
