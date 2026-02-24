@@ -1,120 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-  <title>SB Dash</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <!-- CSS -->
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#050b12" />
+
+  <title>SB Dash v2</title>
+
   <link rel="stylesheet" href="style.css?v=2" />
 </head>
-
 <body>
 
-  <!-- ================= TOPBAR ================= -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="brandDot"></div>
-      <div>
-        <div class="brandTitle">SB Dash</div>
-        <div class="brandSub">Control dashboard</div>
-      </div>
-    </div>
+  <div class="app">
 
-    <div class="topDate" id="topDate">—</div>
+    <!-- ===== ICON ROW (TOP) ===== -->
+    <header class="iconBar" id="iconBar" aria-label="Navigation"></header>
 
-    <div class="topRight">
-      <div class="topPrioMini">
-        Aktiva prios: <span id="topPrioCount">0</span>
-      </div>
-    </div>
-  </header>
+    <!-- ===== MAIN STAGE ===== -->
+    <main class="stage" id="stage">
 
-  <!-- ================= APP SHELL ================= -->
-  <div class="shell">
+      <!-- START CONTENT -->
+      <section class="start" id="startView" aria-label="Start">
+        <div class="startHint" id="startHint">START</div>
 
-    <!-- ===== PREVIEW (visas endast när sheet är stängd) ===== -->
-    <div class="previewWrap" id="previewWrap">
-      <div class="previewCard">
-        <div class="previewTitle" id="previewTitle">—</div>
-        <div class="previewBody" id="previewBody"></div>
-      </div>
-    </div>
-
-    <!-- ===== STOR STARTIKON (under preview) ===== -->
-    <div class="startIconWrap" id="startIconWrap">
-      <img
-        class="startIcon"
-        id="startIcon"
-        src="assets/ui/icon-calendar.svg"
-        alt="Startikon"
-      />
-    </div>
-
-    <!-- ===== SHEET (öppnas bakom hjulet) ===== -->
-    <div class="sheetWrap" id="sheetWrap" aria-hidden="true">
-      <div
-        class="sheet"
-        id="sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Panel"
-      >
-
-        <div class="sheetHeader">
-          <div class="sheetTitle" id="sheetTitle">—</div>
-          <button
-            class="sheetClose"
-            id="sheetCloseBtn"
-            aria-label="Stäng panel"
-          >
-            ✕
-          </button>
+        <!-- bottom tape on start -->
+        <div class="tapeWrap" id="tapeWrap" aria-hidden="false">
+          <div class="tape" id="tape">
+            <div class="tapeInner" id="tapeInner"></div>
+          </div>
         </div>
+      </section>
 
-        <div class="sheetContent" id="sheetContent">
-          <!-- JS renderar innehåll här -->
-        </div>
-
+      <!-- Right edge timer progress bar (global) -->
+      <div class="timerEdge" id="timerEdge" aria-hidden="true">
+        <div class="timerEdgeFill" id="timerEdgeFill"></div>
       </div>
-    </div>
 
-    <!-- ===== WHEEL ===== -->
-    <div class="wheelWrap" id="wheelWrap" aria-label="Scrollhjul">
-      <div class="wheel" id="wheel">
-
-        <!-- Roterande ring -->
-        <img
-          src="assets/ui/knob-ring.svg"
-          class="wheelRing"
-          alt="Ring"
-        />
-
-        <!-- Text i hjulet -->
-        <div
-          id="wheelCenterText"
-          class="wheelCenterText"
-        >
-          —
+      <!-- ===== WHEEL (CENTER / HIGH) ===== -->
+      <div class="wheelDock" id="wheelDock">
+        <div class="wheel" id="wheel" aria-label="Wheel control">
+          <img class="wheelRing" src="assets/ui/wheel-ring.svg" alt="" />
+          <div class="wheelGlow"></div>
         </div>
-
-        <!-- Timer SVG + Pulse injiceras av JS -->
-
       </div>
-    </div>
 
+      <!-- ===== SHEET (SECTIONS) ===== -->
+      <div class="sheetWrap" id="sheetWrap" aria-hidden="true">
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+          <div class="sheetHeader">
+            <div class="sheetTitle" id="sheetTitle">—</div>
+            <button class="sheetClose" id="sheetCloseBtn" aria-label="Stäng">✕</button>
+          </div>
+          <div class="sheetContent" id="sheetContent"></div>
+          <div class="sheetHandle" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- ===== TIMER OVERLAY (not a section) ===== -->
+      <div class="overlayWrap" id="timerOverlay" aria-hidden="true">
+        <div class="overlayCard">
+          <button class="overlayClose" id="timerClose" aria-label="Stäng timer">✕</button>
+
+          <div class="overlayTitle">TIMER</div>
+
+          <div class="timerSetRow">
+            <div class="timerWheelValue" id="timerPick">05</div>
+            <div class="timerWheelLabel">min</div>
+          </div>
+
+          <div class="timerButtons">
+            <button class="btnPrimary" id="timerStartBtn">Start</button>
+            <button class="btnGhost" id="timerStopBtn">Stop</button>
+            <button class="btnDanger" id="timerResetBtn">Reset</button>
+          </div>
+
+          <div class="timerBig" id="timerBig">05:00</div>
+
+          <!-- “Zen blob” -->
+          <div class="zenBlob" aria-hidden="true"></div>
+
+          <div class="miniHint" style="margin-top:10px; text-align:center;">
+            Snurra hjulet för: 1 • 5 • 10 • 15 • 20 • 30
+          </div>
+        </div>
+      </div>
+
+    </main>
   </div>
 
-  <!-- ===== ALARM (valfri ljudfil) ===== -->
-  <audio id="alarmAudio" preload="auto">
-    <!-- Om du lägger alarm.mp3 i assets/sfx kan du aktivera:
-    <source src="assets/sfx/alarm.mp3" type="audio/mpeg" />
-    -->
-  </audio>
+  <!-- optional alarm audio (leave empty or add your own file) -->
+  <audio id="alarmAudio" preload="auto"></audio>
 
-  <!-- JS -->
-  <script src="app.js?v=1"></script>
-
+  <script src="app.js?v=2"></script>
 </body>
 </html>
