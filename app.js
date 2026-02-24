@@ -68,9 +68,6 @@ function startInertia(){
   inertiaFrame = requestAnimationFrame(frame)
 }
 
-/* ===============================
-   APPLY ROTATION
-================================= */
 function applyRotation(deg) {
   // 1) overlay tar över (timer/fidget/dart)
   if (window.__SB_OVERLAY?.onRotate) {
@@ -79,11 +76,26 @@ function applyRotation(deg) {
   }
 
   // 2) annars normal rotation
-  const prev = rotationDeg;
   rotationDeg = deg;
 
   if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
-  
+
+  // 3) normal “byta sektion”-logik
+  const idx = sectorFromDeg(deg);
+  if (idx !== activeIndex) {
+    activeIndex = idx;
+    const v = VIEW_DEFS[activeIndex];
+    renderWheelNav();
+    setStartIcon(v.icon);
+    renderPreview(v.id);
+
+    if (document.body.classList.contains("sheetOpen")) {
+      renderView(v.id, { fast: true });
+    }
+  } else {
+    renderWheelNav();
+  }
+}
   }
 
   // 4) normal “byta sektion”-logik
@@ -156,8 +168,9 @@ wheel.addEventListener("pointercancel", ()=>{
 let FIDGET = {
   count: 0,
   lastRotation: 0
-   window.FIDGET = FIDGET;
-}
+};
+
+window.FIDGET = FIDGET;
 
 function fidgetSpin(delta){
 
