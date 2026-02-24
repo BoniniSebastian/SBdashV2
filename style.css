@@ -478,3 +478,8 @@ body.sheetOpen .sheet{
   font-weight: 900;
   font-size: 12px;
 }
+/* ===== Overlay wheel priority ===== */
+body.toolsOpen .wheelWrap,
+body.timerOpen .wheelWrap{
+  z-index: 200;
+}
