@@ -95,14 +95,22 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .timerBar{
   position:absolute;
-  top: 0;
-  bottom: 0;
   right: 0;
+  top: 0;
+  bottom: 0;          /* viktig */
   width: 6px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: top;      /* shrink from TOP */
-  transform: scaleY(1);       /* JS scales 1 -> 0 */
+
+  background: linear-gradient(
+    180deg,
+    rgba(0,209,255,.95),
+    rgba(255,100,180,.85),
+    rgba(0,255,180,.85)
+  );
+
+  transform-origin: top;   /* krymper från toppen */
+  transform: scaleY(1);
+
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
 
