@@ -108,7 +108,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
     rgba(0,255,180,.85)
   );
 
-  transform-origin: top;     /* IMPORTANT */
+  transform-origin: bottom;     /* IMPORTANT */
   transform: scaleY(1);      /* 1 -> 0 = empties downward */
 
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
