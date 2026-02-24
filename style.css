@@ -79,7 +79,7 @@ input, textarea, button { font-size:16px; }
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
 
-/* Timer bar (right) */
+/* ---- TIMER BAR (shrinks top -> down) ---- */
 .timerBarWrap{
   position:absolute;
   top: 0;
@@ -95,10 +95,10 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .timerBar{
   position:absolute;
-  right: 0;
   top: 0;
-  bottom: 0;          /* viktig */
+  right: 0;
   width: 6px;
+  height: 100%;
   border-radius: 999px;
 
   background: linear-gradient(
@@ -108,8 +108,8 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
     rgba(0,255,180,.85)
   );
 
-  transform-origin: top;   /* krymper från toppen */
-  transform: scaleY(1);
+  transform-origin: top;     /* IMPORTANT */
+  transform: scaleY(1);      /* 1 -> 0 = empties downward */
 
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
