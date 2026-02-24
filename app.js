@@ -782,6 +782,7 @@ const wcBot  = document.getElementById("wcBot");
     setRotation(activeIndex * STEP);
     updateTimerBar();
     ensureTimerBarVisible(false);
+    renderWheelCenter();
 
     // warn if wheel svg path is wrong
     const img = document.querySelector(".wheelRing");
