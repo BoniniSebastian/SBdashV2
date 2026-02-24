@@ -10,6 +10,7 @@
 
 (() => {
   const $ = (id) => document.getElementById(id);
+  const ambientBlob = document.querySelector(".ambientBlob");
 
   const wheel = $("wheel");
   const wheelRing = document.querySelector(".wheelRing");
@@ -163,6 +164,10 @@
   }
 
   wheel?.addEventListener("pointerdown", (e) => {
+    if (ambientBlob){
+  ambientBlob.style.transform = "scale(1.12)";
+  ambientBlob.style.opacity = ".85";
+}
     dragging = true;
     didDrag = false;
     tapStartX = e.clientX;
