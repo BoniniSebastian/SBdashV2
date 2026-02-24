@@ -561,3 +561,22 @@ body.sheetOpen .sheet{
   .timerBig{ font-size: 58px; }
   .fidgetCount{ font-size: 74px; }
 }
+/* --- Make blobs never block touches --- */
+.ambientBlob,
+.startZen,
+.zenBlob{
+  pointer-events: none !important;
+}
+
+/* --- Ensure wheel + icons are above background --- */
+.wheelWrap{
+  z-index: 50 !important;
+}
+
+.iconRail{
+  z-index: 60 !important;
+}
+
+/* Sheet + overlays must stay above everything when open */
+.sheetWrap{ z-index: 80 !important; }
+.overlayWrap{ z-index: 100 !important; }
