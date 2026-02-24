@@ -14,9 +14,7 @@
 
   const wheel = $("wheel");
   const wheelRing = document.querySelector(".wheelRing");
-const wcTop  = document.getElementById("wcTop");
-const wcMain = document.getElementById("wcMain");
-const wcBot  = document.getElementById("wcBot");
+
   const iconRail = $("iconRail");
 
   const sheetWrap = $("sheetWrap");
@@ -98,6 +96,7 @@ const wcBot  = document.getElementById("wcBot");
   const STEP = 360 / VIEW_DEFS.length;
   let rotationDeg = activeIndex * STEP;
   function renderWheelCenter(){
+    console.log("wheelCenter run", activeIndex, VIEW_DEFS[activeIndex]?.label);
   const top  = document.getElementById("wcTop");
   const main = document.getElementById("wcMain");
   const bot  = document.getElementById("wcBot");
@@ -306,7 +305,7 @@ if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
 
   function updateTimerBar() {
     if (!timerBar) return;
-    const pct = TIMER.total ? (1 - (TIMER.left / TIMER.total)) : 0;
+    const pct = TIMER.total ? (TIMER.left / TIMER.total) : 0;
     timerBar.style.transform = `scaleY(${clamp01(pct)})`; // origin top => shrinks downward
   }
 
