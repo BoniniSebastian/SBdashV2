@@ -157,13 +157,12 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 }
 
 .wheelWrap{
-  position:absolute;
-  left: 18px;
-  bottom: calc(24px + env(safe-area-inset-bottom));
-  width: var(--wheelSize);
-  height: var(--wheelSize);
-  z-index: 20;
-  pointer-events:auto;
+  position: absolute;
+  left: 20px;
+  bottom: 20px;          /* <-- flyttar ner den */
+  width: 220px;          /* lite mindre */
+  height: 220px;
+  z-index: 10;
 }
 
 .wheel{
