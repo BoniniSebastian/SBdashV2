@@ -107,10 +107,16 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 }
 
 /* WHEEL (bottom-left) */
+/* ---- WHEEL (bottom-left, smaller) ---- */
+
+:root{
+  --wheelSize: 240px;   /* mindre än tidigare */
+}
+
 .wheelWrap{
   position:absolute;
-  left: var(--wheelLeft);
-  bottom: var(--wheelBottom);
+  left: 16px; /* lite luft från kanten */
+  bottom: calc(20px + env(safe-area-inset-bottom));
   width: var(--wheelSize);
   height: var(--wheelSize);
   z-index: 20;
