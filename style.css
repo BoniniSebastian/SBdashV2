@@ -375,7 +375,26 @@ body.sheetOpen .sheet{
   50%{ transform: translate(-50%,-50%) scale(1.03); opacity:.9; }
   100%{ transform: translate(-50%,-50%) scale(1); opacity:.65; }
 }
+/* ---- Start Zen Blob (same as timer) ---- */
+.startZen{
+  position:absolute;
+  left: -140px;
+  bottom: -140px;
+  width: 520px;
+  height: 520px;
+  z-index: 0;
+  opacity: .55;
+  pointer-events:none;
+}
 
+/* Se till att UI ligger över blobben */
+.iconRail,
+.wheelWrap,
+.sheetWrap,
+.timerBarWrap{
+  position: relative;
+  z-index: 10;
+}
 /* Shared */
 .miniHint{ color: rgba(255,255,255,.60); font-size: 13px; }
 .miniForm{ display:flex; gap:10px; margin-bottom: 12px; }
