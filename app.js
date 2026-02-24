@@ -88,7 +88,7 @@ function applyRotation(deg){
   rotationDeg = deg
 
   if(wheelRing){
-    wheelRing.style.transform = `rotate(${deg}deg)`
+    if (window.__SB_OVERLAY?.onRotate) {   window.__SB_OVERLAY.onRotate(deg); } else {   wheelRing.style.transform = `rotate(${deg}deg)` }
   }
 }
 
