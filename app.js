@@ -796,19 +796,20 @@ if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
   }
 
   /* ---------- init ---------- */
-  function init(){
-    setActiveIndex(activeIndex);
-    setRotation(activeIndex * STEP);
-    updateTimerBar();
-    ensureTimerBarVisible(false);
-    renderWheelCenter();
+function init(){
+  setActiveIndex(activeIndex);
+  renderWheelCenter();
+  setRotation(activeIndex * STEP);
 
-    // warn if wheel svg path is wrong
-    const img = document.querySelector(".wheelRing");
-    img?.addEventListener("error", () => {
-      console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
-    });
-  }
+  updateTimerBar();
+  ensureTimerBarVisible(false);
 
-  init();
+  // warn if wheel svg path is wrong
+  const img = document.querySelector(".wheelRing");
+  img?.addEventListener("error", () => {
+    console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
+  });
+}
+
+init();
 })();
