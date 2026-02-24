@@ -37,6 +37,42 @@ input, textarea, button { font-size:16px; }
   inset:0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
+.app{
+  position:fixed;
+  inset:0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ===== AMBIENT START BLOB ===== */
+.ambientBlob{
+  position:absolute;
+  left: -120px;
+  bottom: -120px;
+  width: 520px;
+  height: 520px;
+  border-radius: 999px;
+  pointer-events:none;
+  z-index: 0;
+
+  background:
+    radial-gradient(circle at 35% 35%, rgba(0,209,255,.35), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(255,100,180,.25), transparent 60%),
+    radial-gradient(circle at 60% 30%, rgba(0,255,180,.18), transparent 65%);
+
+  filter: blur(60px);
+  opacity:.45;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+@keyframes ambientPulse{
+  0%{ transform: scale(1); opacity:.45; }
+  50%{ transform: scale(1.05); opacity:.65; }
+  100%{ transform: scale(1); opacity:.45; }
+}
+
+.ambientBlob.pulse{
+  animation: ambientPulse 3.5s ease-in-out infinite;
+}
 
 /* ICON RAIL (top) */
 .iconRail{
