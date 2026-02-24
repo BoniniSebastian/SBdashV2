@@ -203,14 +203,7 @@ document.addEventListener("click", (e)=>{
 
 })
 
-/* ===============================
-   PLACEHOLDERS (next parts)
-================================= */
 
-function fidgetSpin(){ }
-function dartSpin(){ }
-
-})()
 /* ===============================
    DEL 2/3 – FIDGET SYSTEM
 ================================= */
@@ -756,3 +749,4 @@ function openDartOverlay(){
 document.addEventListener("keydown", (e)=>{
   if (e.key === "Escape") sbCloseOverlay();
 });
+})()
