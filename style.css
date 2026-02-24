@@ -179,7 +179,10 @@ input, textarea, button { font-size:16px; }
   background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.38));
   box-shadow: 0 0 34px rgba(0,209,255,.16), 0 18px 60px rgba(0,0,0,.55);
   touch-action:none;
-  user-select:none;
+
+  -webkit-touch-callout: none;   /* 👈 lägg till */
+  -webkit-user-select: none;     /* 👈 lägg till */
+  user-select:none;              /* 👈 se till att denna finns */
 }
 
 .wheelRing{
@@ -190,6 +193,9 @@ input, textarea, button { font-size:16px; }
   filter: drop-shadow(0 0 18px rgba(0,209,255,.26));
   transform-origin: 50% 50%;
   opacity:.95;
+
+  pointer-events: none;          /* 👈 lägg till denna */
+  -webkit-touch-callout: none;   /* 👈 och denna */
 }
 
 .wheelGlow{
