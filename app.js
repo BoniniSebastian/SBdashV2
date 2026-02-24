@@ -97,6 +97,21 @@ const wcBot  = document.getElementById("wcBot");
   let activeIndex = 1; // Calendar
   const STEP = 360 / VIEW_DEFS.length;
   let rotationDeg = activeIndex * STEP;
+  function renderWheelCenter(){
+  const top  = document.getElementById("wcTop");
+  const main = document.getElementById("wcMain");
+  const bot  = document.getElementById("wcBot");
+  if (!top || !main || !bot) return;
+
+  const n = VIEW_DEFS.length;
+  const prev = VIEW_DEFS[(activeIndex - 1 + n) % n]?.label || "—";
+  const curr = VIEW_DEFS[activeIndex]?.label || "—";
+  const next = VIEW_DEFS[(activeIndex + 1) % n]?.label || "—";
+
+  top.textContent  = prev;
+  main.textContent = curr;
+  bot.textContent  = next;
+}
 
   function renderIconRail() {
     if (!iconRail) return;
