@@ -71,24 +71,45 @@ function startInertia(){
 /* ===============================
    APPLY ROTATION
 ================================= */
-
-function applyRotation(deg){
-
-  // FIDGET MODE
-  if(overlayOpen === "fidget"){
-    const delta = deg - rotationDeg
-    fidgetSpin(delta)
+function applyRotation(deg) {
+  // 1) overlay tar över (timer/fidget/dart)
+  if (window.__SB_OVERLAY?.onRotate) {
+    window.__SB_OVERLAY.onRotate(deg);
+    return;
   }
 
-  // DART MODE
-  if(overlayOpen === "dart"){
-    dartSpin(deg)
+  // 2) annars normal rotation
+  const prev = rotationDeg;
+  rotationDeg = deg;
+
+  if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
+
+  // 3) speciallägen utan overlay-hook (om du kör så)
+  if (overlayOpen === "fidget") {
+    const delta = deg - prev;
+    fidgetSpin(delta);
+    return;
   }
 
-  rotationDeg = deg
+  if (overlayOpen === "dart") {
+    dartSpin(deg);
+    return;
+  }
 
-  if(wheelRing){
-    if (window.__SB_OVERLAY?.onRotate) {   window.__SB_OVERLAY.onRotate(deg); } else {   wheelRing.style.transform = `rotate(${deg}deg)` }
+  // 4) normal “byta sektion”-logik
+  const idx = sectorFromDeg(deg);
+  if (idx !== activeIndex) {
+    activeIndex = idx;
+    const v = VIEW_DEFS[activeIndex];
+    renderWheelNav();
+    setStartIcon(v.icon);
+    renderPreview(v.id);
+
+    if (document.body.classList.contains("sheetOpen")) {
+      renderView(v.id, { fast: true });
+    }
+  } else {
+    renderWheelNav();
   }
 }
 
