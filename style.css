@@ -208,6 +208,42 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   box-shadow: 0 0 14px rgba(0,209,255,.65);
   opacity:0;
 }
+/* ---- Wheel Center Text ---- */
+.wheelCenter{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  z-index: 3;
+  transform: translateY(-2px);
+}
+
+.wcTop,
+.wcBot{
+  font-weight: 900;
+  letter-spacing:.22em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: rgba(255,255,255,.40);
+}
+
+.wcMain{
+  margin: 10px 0 8px 0;
+  font-weight: 950;
+  letter-spacing:.28em;
+  text-transform: uppercase;
+  font-size: 16px;
+  color: rgba(255,255,255,.82);
+}
+
+/* subtil fade när man drar */
+body.wheelDragging .wheelCenter{
+  opacity: .75;
+}
 
 /* SHEET */
 .sheetWrap{
