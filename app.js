@@ -101,7 +101,11 @@ const wcBot  = document.getElementById("wcBot");
   const top  = document.getElementById("wcTop");
   const main = document.getElementById("wcMain");
   const bot  = document.getElementById("wcBot");
-  if (!top || !main || !bot) return;
+
+  if (!top || !main || !bot) {
+    console.warn("wheelCenter saknas i DOM (wcTop/wcMain/wcBot)");
+    return;
+  }
 
   const n = VIEW_DEFS.length;
   const prev = VIEW_DEFS[(activeIndex - 1 + n) % n]?.label || "—";
@@ -222,20 +226,21 @@ const wcBot  = document.getElementById("wcBot");
   ambientBlob.style.opacity = ".45";
 }
     if (!dragging) return;
-    dragging = false;
+dragging = false;
 
-    const idx = sectorFromDeg(rotationDeg);
-    setRotation(idx * STEP);
+const idx = sectorFromDeg(rotationDeg);
+setRotation(idx * STEP);
 
-    if (!didDrag && !anyOverlayOpen()) {
-      openForView(VIEW_DEFS[activeIndex].id);
-    }
+renderWheelCenter(); // ✅ LÄGG HÄR
 
-    if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
-      commitDartRound();
-    }
-  }, { passive: true });
+if (!didDrag && !anyOverlayOpen()) {
+  openForView(VIEW_DEFS[activeIndex].id);
+}
 
+if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
+  commitDartRound();
+}
+}, { passive: true });
   wheel?.addEventListener("pointercancel", () => { dragging = false; }, { passive: true });
 
   wheel?.addEventListener("wheel", (e) => {
