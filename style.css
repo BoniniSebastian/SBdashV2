@@ -653,3 +653,7 @@ body.wheelFocus svg#wheel{
   position: relative !important;
   z-index: 1000000 !important;
 }
+/* Dölj zenBlob när Tools eller Timer är öppna */
+body.wheelFocus .zenBlob{
+  display: none !important;
+}
