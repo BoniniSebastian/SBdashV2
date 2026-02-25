@@ -578,25 +578,54 @@ body.sheetOpen .sheet{
 }
 
 /* Sheet + overlays must stay above everything when open */
-.sheetWrap{ z-index: 80 !important; }
-.overlayWrap{ z-index: 100 !important; }
+.sheetWrap{ 
+  z-index: 80 !important; 
+}
+
+.overlayWrap{ 
+  z-index: 100 !important; 
+}
+
 
 /* =========================
    WHEEL FOCUS MODE
    (Tools + Timer)
 ========================= */
 
+/* FIX: Se till att inga parents låser stacking context */
+html, body{
+  isolation: isolate;
+}
+
+/* Om du har en root-wrapper runt allt (ex .shell) */
+.shell{
+  transform: none !important;
+  filter: none !important;
+}
+
+
+/* WHEEL FOCUS – FULL OVERRIDE */
 body.wheelFocus .wheelWrap{
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 80vw;
-  max-width: 520px;
-  z-index: 400;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 80vw !important;
+  max-width: 520px !important;
+  z-index: 999999 !important;
   transition: transform .35s ease, width .35s ease;
-  transform: translate(-50%, -50%) scale(1.2);
+  transform: translate(-50%, -50%) scale(1.2) !important;
+}
+
+body.wheelFocus .iconRail{
+  z-index: 999998 !important;
 }
 
 body.wheelFocus #wheelCenterText{
-  display: none;
+  display: none !important;
+}
+
+/* Blob ska aldrig kunna ligga över */
+.ambientBlob{
+  z-index: 0 !important;
+  pointer-events: none;
 }
