@@ -437,7 +437,7 @@
   function updateTimerBar() {
     if (!timerBar) return;
     const pct = TIMER.total ? (TIMER.left / TIMER.total) : 0;
-    timerBar.style.transform = `scaleY(${clamp01(pct)})`;
+    timerBar.style.transform = `scaleX(${clamp01(pct)})`;
   }
 
   function beepFallback() {
