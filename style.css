@@ -170,7 +170,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   height: 6px;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: right; /* IMPORTANT */
+  transform-origin: left; /* IMPORTANT */
   transform: scaleX(1);
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
