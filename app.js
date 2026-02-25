@@ -7,6 +7,13 @@
    - Lists: Aktiva + Slutförda (dropdown) + subtasks via detail view
    - Timer bar shrinks from TOP down
    ========================= */
+function enterWheelFocus(){
+  document.body.classList.add("wheelFocus");
+}
+
+function exitWheelFocus(){
+  document.body.classList.remove("wheelFocus");
+}
 
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -170,11 +177,9 @@
       }
     }
 
-    if (document.body.classList.contains("sheetOpen")) {
-  const vid = VIEW_DEFS[activeIndex]?.id;
-  if (vid === "timer") timerWheelSelectFromDeg(deg);
-  if (vid === "tools") toolsWheelFromDeg(deg);
-}
+    if (timerOverlay?.classList.contains("open")) timerWheelSelectFromDeg(deg);
+    if (toolsOverlay?.classList.contains("open")) toolsWheelFromDeg(deg);
+  }
 
   /* ---------- wheel input ---------- */
   let dragging = false;
@@ -238,9 +243,7 @@ if (!didDrag && !anyOverlayOpen()) {
   openForView(VIEW_DEFS[activeIndex].id);
 }
 
-if (document.body.classList.contains("sheetOpen") &&
-    VIEW_DEFS[activeIndex]?.id === "tools" &&
-    toolsMode === "dart501") {
+if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
   commitDartRound();
 }
 }, { passive: true });
@@ -361,12 +364,14 @@ if (document.body.classList.contains("sheetOpen") &&
     }
   }
 
- function openTimerOverlay() {
+function openTimerOverlay() {
   document.body.classList.remove("toolsOpen");   // säkerhet
   document.body.classList.add("timerOpen");
 
   timerOverlay?.classList.add("open");
   timerOverlay?.setAttribute("aria-hidden", "false");
+
+  enterWheelFocus(); // ✅ kör efter att overlay är öppnad
 
   const m = TIMER_PRESETS[timerPresetIndex];
   if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
@@ -374,6 +379,7 @@ if (document.body.classList.contains("sheetOpen") &&
 }
   function closeTimerOverlay() {
   document.body.classList.remove("timerOpen");
+     exitWheelFocus();
 
   timerOverlay?.classList.remove("open");
   timerOverlay?.setAttribute("aria-hidden", "true");
@@ -426,6 +432,7 @@ if (document.body.classList.contains("sheetOpen") &&
 
   toolsOverlay?.classList.add("open");
   toolsOverlay?.setAttribute("aria-hidden", "false");
+    enterWheelFocus(); // ✅ NY: wheel fram, större, centrerad, göm centertext
 
   setToolsMode("counter");
   renderTools();
@@ -435,6 +442,7 @@ if (document.body.classList.contains("sheetOpen") &&
 
   toolsOverlay?.classList.remove("open");
   toolsOverlay?.setAttribute("aria-hidden", "true");
+      exitWheelFocus(); // ✅ NY: återställ hjulet till normalt läge
 
   setToolsMode("counter");
 }
@@ -532,13 +540,11 @@ if (document.body.classList.contains("sheetOpen") &&
 
   /* ---------- open per view ---------- */
   function openForView(id){
-  openSheet();
-
-  if (id === "timer") return renderTimerSection();
-  if (id === "tools") return renderToolsSection();
-
-  renderView(id);
-}
+    if (id === "timer") return openTimerOverlay();
+    if (id === "tools") return openToolsOverlay();
+    openSheet();
+    renderView(id);
+  }
 
   /* ---------- views ---------- */
   function renderStocks(){
@@ -800,36 +806,6 @@ if (document.body.classList.contains("sheetOpen") &&
     sheetTitle.textContent = "—";
     sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
-   function renderToolsSection(){
-  sheetTitle.textContent = "Tools";
-  sheetContent.innerHTML = "";
-
-  const card = toolsOverlay?.querySelector(".overlayCard");
-  if (card) sheetContent.appendChild(card);
-
-  toolsOverlay?.classList.remove("open");
-  toolsOverlay?.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("toolsOpen");
-
-  setToolsMode("counter");
-  renderTools();
-}
-
-function renderTimerSection(){
-  sheetTitle.textContent = "Timer";
-  sheetContent.innerHTML = "";
-
-  const card = timerOverlay?.querySelector(".overlayCard");
-  if (card) sheetContent.appendChild(card);
-
-  timerOverlay?.classList.remove("open");
-  timerOverlay?.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("timerOpen");
-
-  const m = TIMER_PRESETS[timerPresetIndex];
-  if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
-  if (timerSub) timerSub.textContent = `Vrid hjulet: ${TIMER_PRESETS.join(" / ")}`;
-}
 
   /* ---------- init ---------- */
 function init(){
