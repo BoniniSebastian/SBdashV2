@@ -10,12 +10,13 @@
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
   <title>SB Dash v2</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
   <div class="app">
-<div class="zenBlob startZen" aria-hidden="true"></div>
+    <div class="zenBlob startZen" aria-hidden="true"></div>
+
     <!-- ICON RAIL (top row) -->
     <div class="ambientBlob" aria-hidden="true"></div>
     <div class="iconRail" id="iconRail" aria-label="Menyikoner"></div>
@@ -28,14 +29,16 @@
     <!-- WHEEL (bottom-left, full visible) -->
     <div class="wheelWrap" id="wheelWrap">
       <div class="wheel" id="wheel">
-        
+
         <!-- IMPORTANT: this must match your repo path -->
         <img class="wheelRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+
         <div class="wheelCenter" id="wheelCenter" aria-hidden="true">
-  <div class="wcTop" id="wcTop">—</div>
-  <div class="wcMain" id="wcMain">—</div>
-  <div class="wcBot" id="wcBot">—</div>
-</div>
+          <div class="wcTop" id="wcTop">—</div>
+          <div class="wcMain" id="wcMain">—</div>
+          <div class="wcBot" id="wcBot">—</div>
+        </div>
+
         <div class="wheelDot" id="wheelDot" aria-hidden="true"></div>
       </div>
     </div>
@@ -63,6 +66,13 @@
         <div class="timerBig" id="timerBig">00:00</div>
         <div class="timerSub" id="timerSub">Vrid hjulet: 1 / 5 / 10 / 15 / 20 / 30</div>
 
+        <!-- TIMER WHEEL (normal) -->
+        <div class="overlayWheelWrap">
+          <div class="overlayWheel overlayWheel--normal" id="timerWheel" aria-label="Timer wheel">
+            <img class="overlayWheelRing" id="timerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+          </div>
+        </div>
+
         <button class="ctaBtn" id="timerStartBtn" type="button">START</button>
 
         <div class="zenBlob" aria-hidden="true"></div>
@@ -78,36 +88,56 @@
           <button class="overlayClose" id="toolsClose" type="button" aria-label="Stäng tools">✕</button>
         </div>
 
-        <!-- COUNTER MODE -->
-        <div id="toolsCounterMode">
-          <div class="toolsTopRow">
-            <button class="toolsTxtBtn" id="guessOdd" type="button">UDDA</button>
-            <button class="toolsTxtBtn" id="guessEven" type="button">JÄMNT</button>
-            <button class="toolsTxtBtn" id="btn501" type="button">501</button>
-          </div>
-
-          <div class="fidgetCount" id="fidgetCount">0</div>
-
-          <div class="toolsBottomRow">
-            <button class="toolsTxtBtn ghost" id="fidgetReset" type="button">RESET</button>
-          </div>
-
-          <div class="miniHint" id="fidgetHint">Vrid hjulet → räknar oändligt. Slut-siffra avgör udda/jämnt.</div>
+        <div class="toolsTopRow">
+          <button class="toolsTxtBtn" id="guessOdd" type="button">UDDA</button>
+          <button class="toolsTxtBtn" id="guessEven" type="button">JÄMNT</button>
+          <button class="toolsTxtBtn" id="btn501" type="button">501</button>
         </div>
 
-        <!-- 501 MODE -->
-        <div id="tools501Mode" hidden>
-          <div class="toolsBackRow">
-            <button class="toolsTxtBtn" id="btn501Back" type="button">← TILLBAKA</button>
+        <!-- SPINNER WHEEL (FAST) -->
+        <div class="overlayWheelWrap">
+          <div class="neonPointer" aria-hidden="true"></div>
+          <div class="overlayWheel overlayWheel--spinner" id="toolsSpinnerWheel" aria-label="Tools spinner wheel">
+            <img class="overlayWheelRing" id="toolsSpinnerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+            <div class="spinValue glitch" id="toolsSpinValue" data-text="0" aria-live="polite">0</div>
           </div>
-
-          <div class="dartWrap" id="dartWrap">
-            <div class="dartGrid" id="dartGrid"></div>
-          </div>
-
-          <div class="miniHint">Vrid hjulet för poäng. Släpp → sparar rundan och hoppar till nästa spelare.</div>
         </div>
 
+        <div class="toolsBottomRow">
+          <button class="toolsTxtBtn ghost" id="fidgetReset" type="button">RESET</button>
+        </div>
+
+        <div class="miniHint" id="fidgetHint">
+          Välj UDDA/JÄMNT → snurra hjulet → släpp. Resultatet visas i mitten.
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DART 501 OVERLAY (separate) -->
+    <div class="overlayWrap" id="dartOverlay" aria-hidden="true">
+      <div class="overlayCard">
+
+        <div class="overlayTop">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="assets/ui/icon-dart501.png" alt="" style="width:22px;height:22px;opacity:.95;" draggable="false"/>
+            <div class="overlayTitle">501</div>
+          </div>
+          <button class="overlayClose" id="dartClose" type="button" aria-label="Stäng 501">✕</button>
+        </div>
+
+        <div class="overlayWheelWrap">
+          <div class="overlayWheel overlayWheel--normal" id="dartWheel" aria-label="501 wheel">
+            <img class="overlayWheelRing" id="dartRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+            <div class="spinValue" id="dartValue" data-text="0" aria-live="polite">0</div>
+          </div>
+        </div>
+
+        <div class="dartWrap" id="dartWrap">
+          <div class="dartGrid" id="dartGrid"></div>
+        </div>
+
+        <div class="miniHint">Vrid hjulet för poäng. Släpp → sparar rundan och hoppar till nästa spelare.</div>
       </div>
     </div>
 
@@ -116,6 +146,6 @@
 
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
