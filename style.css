@@ -580,3 +580,114 @@ body.sheetOpen .sheet{
 /* Sheet + overlays must stay above everything when open */
 .sheetWrap{ z-index: 80 !important; }
 .overlayWrap{ z-index: 100 !important; }
+/* =========================
+   OVERLAY WHEELS
+========================= */
+
+.overlayWheelWrap{
+  margin: 14px auto 10px auto;
+  width: 220px;
+  height: 220px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.overlayWheel{
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,.28));
+  box-shadow: 0 0 28px rgba(0,209,255,.16), 0 18px 60px rgba(0,0,0,.45);
+  touch-action: none;
+  position: relative;
+  overflow: visible;
+}
+
+.overlayWheelRing{
+  position: absolute;
+  inset: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  transform-origin: 50% 50%;
+  opacity: .95;
+  filter: drop-shadow(0 0 18px rgba(0,209,255,.22));
+}
+
+/* Center value */
+.spinValue{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size: 92px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  color: rgba(255,255,255,.92);
+  text-shadow:
+    0 0 18px rgba(0,209,255,.18),
+    0 0 30px rgba(255,100,180,.10);
+  user-select:none;
+  pointer-events:none;
+}
+
+/* Neon pointer (fixed at 12 o'clock) */
+.neonPointer{
+  position:absolute;
+  top: 2px;
+  left: 50%;
+  width: 0; height: 0;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 18px solid rgba(0,209,255,.95);
+  filter:
+    drop-shadow(0 0 10px rgba(0,209,255,.55))
+    drop-shadow(0 0 18px rgba(255,100,180,.22));
+  animation: pointerPulse 1.4s ease-in-out infinite;
+  z-index: 5;
+  pointer-events:none;
+}
+@keyframes pointerPulse{
+  0%,100%{ transform: translateX(-50%) scale(1); opacity:.85; }
+  50%{ transform: translateX(-50%) scale(1.06); opacity:1; }
+}
+
+/* Glitch effect (Mode C) */
+.spinValue.glitch{
+  animation: glitchFlicker .55s infinite steps(2,end);
+}
+.spinValue.glitch::before,
+.spinValue.glitch::after{
+  content: attr(data-text);
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%,-50%);
+  opacity:.85;
+  pointer-events:none;
+}
+.spinValue.glitch::before{
+  color: rgba(0,209,255,.85);
+  transform: translate(calc(-50% - 2px), calc(-50% - 1px));
+  filter: blur(.2px);
+}
+.spinValue.glitch::after{
+  color: rgba(255,100,180,.75);
+  transform: translate(calc(-50% + 2px), calc(-50% + 1px));
+  filter: blur(.2px);
+}
+@keyframes glitchFlicker{
+  0%{ filter: blur(0); opacity:1; }
+  50%{ filter: blur(.6px); opacity:.92; }
+  100%{ filter: blur(0); opacity:1; }
+}
+
+/* Sizing tweaks if needed */
+.overlayWheel--spinner{ }
+.overlayWheel--normal{ }
+
+@media (max-height: 740px){
+  .overlayWheelWrap{ width: 205px; height: 205px; }
+  .spinValue{ font-size: 82px; }
+}
