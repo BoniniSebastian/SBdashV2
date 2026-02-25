@@ -7,13 +7,6 @@
    - Lists: Aktiva + Slutförda (dropdown) + subtasks via detail view
    - Timer bar shrinks from TOP down
    ========================= */
-function enterWheelFocus(){
-  document.body.classList.add("wheelFocus");
-}
-
-function exitWheelFocus(){
-  document.body.classList.remove("wheelFocus");
-}
 
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -364,14 +357,12 @@ if (toolsOverlay?.classList.contains("open") && toolsMode === "dart501") {
     }
   }
 
-function openTimerOverlay() {
+ function openTimerOverlay() {
   document.body.classList.remove("toolsOpen");   // säkerhet
   document.body.classList.add("timerOpen");
 
   timerOverlay?.classList.add("open");
   timerOverlay?.setAttribute("aria-hidden", "false");
-
-  enterWheelFocus(); // ✅ kör efter att overlay är öppnad
 
   const m = TIMER_PRESETS[timerPresetIndex];
   if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
@@ -379,7 +370,6 @@ function openTimerOverlay() {
 }
   function closeTimerOverlay() {
   document.body.classList.remove("timerOpen");
-     exitWheelFocus();
 
   timerOverlay?.classList.remove("open");
   timerOverlay?.setAttribute("aria-hidden", "true");
@@ -432,7 +422,6 @@ function openTimerOverlay() {
 
   toolsOverlay?.classList.add("open");
   toolsOverlay?.setAttribute("aria-hidden", "false");
-    enterWheelFocus(); // ✅ NY: wheel fram, större, centrerad, göm centertext
 
   setToolsMode("counter");
   renderTools();
@@ -442,7 +431,6 @@ function openTimerOverlay() {
 
   toolsOverlay?.classList.remove("open");
   toolsOverlay?.setAttribute("aria-hidden", "true");
-      exitWheelFocus(); // ✅ NY: återställ hjulet till normalt läge
 
   setToolsMode("counter");
 }
