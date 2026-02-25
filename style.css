@@ -146,14 +146,15 @@ input, textarea, button { font-size:16px; }
 }
 
 /* =========================
-   TIMER BAR (RIGHT)
+   TIMER BAR (BOTTOM)
+   - shrink from RIGHT to LEFT
 ========================= */
 .timerBarWrap{
   position:absolute;
-  top: 0;
-  right: 8px;
-  bottom: 0;
-  width: 10px;
+  left: 14px;
+  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  height: 10px;
   pointer-events:none;
   opacity: 0;
   transition: opacity .20s ease;
@@ -163,14 +164,14 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .timerBar{
   position:absolute;
-  right: 0;
-  top: 0;
-  width: 6px;
-  height: 100%;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 6px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: top;
-  transform: scaleY(1);
+  background: linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
+  transform-origin: right; /* IMPORTANT */
+  transform: scaleX(1);
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
 
