@@ -1,29 +1,121 @@
 /* =========================
-   SB Dash v2 – app.js
-   Clean build:
-   - Main wheel = navigation
-   - Tools = FAST spinner (glitch while spinning)
-   - 501 = separate precision wheel
-   - Timer = preset wheel
+   SB Dash v2 – app.js (FULL)
+   - Main wheel = navigation (sheet sections)
+   - Tools = separate FAST spinner wheel overlay (glitch while spinning)
+   - 501 = separate overlay with NORMAL wheel + dart icon + players grid
+   - Timer = separate overlay with NORMAL wheel to pick preset + start countdown + side bar
+   - Lists = Aktiva/Slutförda + detail view + subtasks
    ========================= */
 
 (() => {
-
   const $ = (id) => document.getElementById(id);
+  const ambientBlob = document.querySelector(".ambientBlob");
 
-  /* ======================================================
-     MAIN NAV WHEEL
-  ====================================================== */
-
+  /* =========================
+     ELEMENTS
+  ========================= */
   const wheel = $("wheel");
   const wheelRing = document.querySelector(".wheelRing");
   const iconRail = $("iconRail");
 
   const sheetWrap = $("sheetWrap");
+  const sheet = $("sheet");
   const sheetTitle = $("sheetTitle");
   const sheetContent = $("sheetContent");
   const sheetCloseBtn = $("sheetCloseBtn");
 
+  // Timer overlay
+  const timerOverlay = $("timerOverlay");
+  const timerClose = $("timerClose");
+  const timerStartBtn = $("timerStartBtn");
+  const timerBigEl = $("timerBig");
+  const timerSub = $("timerSub");
+  const timerBar = $("timerBar");
+  const timerBarWrap = $("timerBarWrap");
+  const timerWheel = $("timerWheel");
+  const timerRing = $("timerRing");
+
+  // Tools overlay (spinner)
+  const toolsOverlay = $("toolsOverlay");
+  const toolsClose = $("toolsClose");
+  const guessOdd = $("guessOdd");
+  const guessEven = $("guessEven");
+  const fidgetReset = $("fidgetReset");
+  const btn501 = $("btn501");
+
+  const toolsSpinnerWheel = $("toolsSpinnerWheel");
+  const toolsSpinnerRing = $("toolsSpinnerRing");
+  const toolsSpinValue = $("toolsSpinValue");
+
+  // Dart 501 overlay
+  const dartOverlay = $("dartOverlay");
+  const dartClose = $("dartClose");
+  const dartWheel = $("dartWheel");
+  const dartRing = $("dartRing");
+  const dartValue = $("dartValue");
+  const dartGrid = $("dartGrid");
+
+  const alarmAudio = $("alarmAudio");
+
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const pad2 = (n) => String(n).padStart(2, "0");
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function setText(el, t) {
+    if (!el) return;
+    el.textContent = String(t);
+    el.setAttribute("data-text", String(t));
+  }
+
+  function flashOverlay(cardEl, win) {
+    if (!cardEl) return;
+    cardEl.classList.remove("win", "lose");
+    void cardEl.offsetWidth;
+    cardEl.classList.add(win ? "win" : "lose");
+  }
+
+  /* =========================
+     STORAGE
+  ========================= */
+  const LS_KEY = "sbdashv2_store_v4";
+
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const d = raw ? JSON.parse(raw) : null;
+      return {
+        lists: Array.isArray(d?.lists) ? d.lists : [],
+        done: Array.isArray(d?.done) ? d.done : [],
+        ui: d?.ui && typeof d.ui === "object" ? d.ui : { doneOpen: false },
+        tools: d?.tools && typeof d.tools === "object" ? d.tools : { fidgetCount: 0 },
+      };
+    } catch {
+      return { lists: [], done: [], ui: { doneOpen: false }, tools: { fidgetCount: 0 } };
+    }
+  }
+  const store = loadStore();
+  const saveStore = () => localStorage.setItem(LS_KEY, JSON.stringify(store));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+
+  const fmt = (ts) =>
+    new Date(ts).toLocaleString("sv-SE", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  /* =========================
+     VIEWS (NAV)
+  ========================= */
   const VIEW_DEFS = [
     { id: "stocks", label: "AKTIER", icon: "assets/ui/icon-stocks.svg" },
     { id: "calendar", label: "KALENDER", icon: "assets/ui/icon-calendar.svg" },
@@ -33,251 +125,999 @@
     { id: "timer", label: "TIMER", icon: "assets/ui/icon-pomodoro.svg" },
   ];
 
+  let activeIndex = 1; // Calendar
   const STEP = 360 / VIEW_DEFS.length;
-  let activeIndex = 1;
   let rotationDeg = activeIndex * STEP;
 
   function renderWheelCenter() {
     const top = $("wcTop");
     const main = $("wcMain");
     const bot = $("wcBot");
+    if (!top || !main || !bot) return;
 
     const n = VIEW_DEFS.length;
-    top.textContent  = VIEW_DEFS[(activeIndex - 1 + n) % n].label;
-    main.textContent = VIEW_DEFS[activeIndex].label;
-    bot.textContent  = VIEW_DEFS[(activeIndex + 1) % n].label;
+    top.textContent = VIEW_DEFS[(activeIndex - 1 + n) % n]?.label || "—";
+    main.textContent = VIEW_DEFS[activeIndex]?.label || "—";
+    bot.textContent = VIEW_DEFS[(activeIndex + 1) % n]?.label || "—";
   }
 
   function renderIconRail() {
+    if (!iconRail) return;
     iconRail.innerHTML = "";
-    VIEW_DEFS.forEach((v, i) => {
-      const btn = document.createElement("button");
-      btn.className = "railIcon" + (i === activeIndex ? " active" : "");
+    VIEW_DEFS.forEach((v, idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "railIcon" + (idx === activeIndex ? " active" : "");
+      b.setAttribute("aria-label", v.label);
+
       const img = document.createElement("img");
       img.src = v.icon;
-      btn.appendChild(img);
-      btn.onclick = () => {
-        setRotation(i * STEP);
+      img.alt = "";
+      img.draggable = false;
+      b.appendChild(img);
+
+      b.addEventListener("click", () => {
+        setRotation(idx * STEP);
         openForView(v.id);
-      };
-      iconRail.appendChild(btn);
+      });
+
+      iconRail.appendChild(b);
     });
+  }
+
+  function setActiveIndex(idx) {
+    activeIndex = ((idx % VIEW_DEFS.length) + VIEW_DEFS.length) % VIEW_DEFS.length;
+    renderIconRail();
+    renderWheelCenter();
+  }
+
+  function sectorFromDeg(deg) {
+    const raw = Math.round(deg / STEP);
+    return ((raw % VIEW_DEFS.length) + VIEW_DEFS.length) % VIEW_DEFS.length;
+  }
+
+  function anyOverlayOpen() {
+    return (
+      timerOverlay?.classList.contains("open") ||
+      toolsOverlay?.classList.contains("open") ||
+      dartOverlay?.classList.contains("open")
+    );
   }
 
   function setRotation(deg) {
     rotationDeg = deg;
-    wheelRing.style.transform = `rotate(${deg}deg)`;
-    const idx = Math.round(deg / STEP) % VIEW_DEFS.length;
-    activeIndex = (idx + VIEW_DEFS.length) % VIEW_DEFS.length;
-    renderIconRail();
-    renderWheelCenter();
+    if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
+
+    if (!anyOverlayOpen()) {
+      const idx = sectorFromDeg(deg);
+      if (idx !== activeIndex) setActiveIndex(idx);
+
+      if (document.body.classList.contains("sheetOpen")) {
+        renderView(VIEW_DEFS[activeIndex].id, { fast: true });
+      }
+    }
   }
 
-  /* wheel interaction */
+  /* =========================
+     MAIN WHEEL INPUT (NAV)
+  ========================= */
   let dragging = false;
   let startAngle = 0;
+  let tapStartX = 0,
+    tapStartY = 0;
+  let didDrag = false;
 
   function angle(cx, cy, x, y) {
-    return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+    return (Math.atan2(y - cy, x - cx) * 180) / Math.PI;
   }
 
-  wheel.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    const r = wheel.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    startAngle = angle(cx, cy, e.clientX, e.clientY) - rotationDeg;
-    wheel.setPointerCapture(e.pointerId);
-  });
+  wheel?.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (ambientBlob) {
+        ambientBlob.style.transform = "scale(1.12)";
+        ambientBlob.style.opacity = ".85";
+      }
+      dragging = true;
+      didDrag = false;
+      tapStartX = e.clientX;
+      tapStartY = e.clientY;
 
-  wheel.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const r = wheel.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    const deg = angle(cx, cy, e.clientX, e.clientY) - startAngle;
-    setRotation(deg);
-  });
+      const r = wheel.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      startAngle = angle(cx, cy, e.clientX, e.clientY) - rotationDeg;
 
-  wheel.addEventListener("pointerup", () => {
+      wheel.setPointerCapture?.(e.pointerId);
+    },
+    { passive: true }
+  );
+
+  wheel?.addEventListener(
+    "pointermove",
+    (e) => {
+      if (!dragging) return;
+
+      const dx = e.clientX - tapStartX;
+      const dy = e.clientY - tapStartY;
+      if (!didDrag && Math.hypot(dx, dy) > 12) didDrag = true;
+
+      if (didDrag) {
+        const r = wheel.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const deg = angle(cx, cy, e.clientX, e.clientY) - startAngle;
+        setRotation(deg);
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  wheel?.addEventListener(
+    "pointerup",
+    () => {
+      if (ambientBlob) {
+        ambientBlob.style.transform = "scale(1)";
+        ambientBlob.style.opacity = ".45";
+      }
+      if (!dragging) return;
+      dragging = false;
+
+      const idx = sectorFromDeg(rotationDeg);
+      setRotation(idx * STEP);
+
+      if (!didDrag && !anyOverlayOpen()) {
+        openForView(VIEW_DEFS[activeIndex].id);
+      }
+    },
+    { passive: true }
+  );
+
+  wheel?.addEventListener("pointercancel", () => {
     dragging = false;
-    const idx = Math.round(rotationDeg / STEP);
-    setRotation(idx * STEP);
   });
 
-  /* ======================================================
-     SHEET
-  ====================================================== */
+  wheel?.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const idx = (activeIndex + dir + VIEW_DEFS.length) % VIEW_DEFS.length;
+      setRotation(idx * STEP);
+    },
+    { passive: false }
+  );
 
+  /* =========================
+     SHEET
+  ========================= */
   function openSheet() {
     document.body.classList.add("sheetOpen");
-    sheetWrap.setAttribute("aria-hidden", "false");
+    sheetWrap?.setAttribute("aria-hidden", "false");
   }
-
   function closeSheet() {
     document.body.classList.remove("sheetOpen");
-    sheetWrap.setAttribute("aria-hidden", "true");
+    sheetWrap?.setAttribute("aria-hidden", "true");
+  }
+  sheetCloseBtn?.addEventListener("click", closeSheet);
+
+  let sheetDragStartY = null;
+  sheet?.addEventListener(
+    "pointerdown",
+    (e) => {
+      sheetDragStartY = e.clientY;
+      sheet.setPointerCapture?.(e.pointerId);
+    },
+    { passive: true }
+  );
+
+  sheet?.addEventListener(
+    "pointermove",
+    (e) => {
+      if (sheetDragStartY == null) return;
+      const delta = e.clientY - sheetDragStartY;
+      if (delta > 0) {
+        sheet.style.transform = `translateY(${delta}px)`;
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  sheet?.addEventListener(
+    "pointerup",
+    () => {
+      if (sheetDragStartY == null) return;
+      const m = sheet.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+      const delta = m ? parseFloat(m[1]) : 0;
+      sheet.style.transform = "";
+      sheetDragStartY = null;
+      if (delta > 140) closeSheet();
+    },
+    { passive: true }
+  );
+
+  sheet?.addEventListener("pointercancel", () => {
+    sheet.style.transform = "";
+    sheetDragStartY = null;
+  });
+
+  sheetWrap?.addEventListener("click", (e) => {
+    if (e.target === sheetWrap) closeSheet();
+  });
+
+  /* =========================
+     WHEEL ENGINE (OVERLAYS)
+  ========================= */
+  function makeWheelEngine(opts) {
+    const el = opts.el;
+    const ring = opts.ring;
+    if (!el || !ring) return null;
+
+    const state = {
+      deg: 0,
+      dragging: false,
+      startAngle: 0,
+      lastT: 0,
+      lastDeg: 0,
+      vel: 0,
+      raf: 0,
+      spinning: false,
+    };
+
+    const getCenter = () => {
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    };
+    const ang = (cx, cy, x, y) => (Math.atan2(y - cy, x - cx) * 180) / Math.PI;
+
+    const apply = (deg) => {
+      state.deg = deg;
+      ring.style.transform = `rotate(${deg}deg)`;
+      opts.onChange?.(deg, state);
+    };
+
+    const stopSpin = () => {
+      state.spinning = false;
+      if (state.raf) cancelAnimationFrame(state.raf);
+      state.raf = 0;
+      opts.onStop?.(state.deg, state);
+    };
+
+    const startInertia = () => {
+      state.spinning = true;
+      opts.onSpinStart?.(state);
+
+      let last = performance.now();
+      const step = (t) => {
+        if (!state.spinning) return;
+        const dt = Math.max(0.001, (t - last) / 1000);
+        last = t;
+
+        state.vel *= Math.pow(opts.friction ?? 0.92, dt * 60);
+
+        const next = state.deg + state.vel * dt;
+        apply(next);
+
+        if (Math.abs(state.vel) < (opts.stopVel ?? 18)) {
+          if (opts.snapStep) {
+            const s = opts.snapStep;
+            apply(Math.round(state.deg / s) * s);
+          }
+          return stopSpin();
+        }
+        state.raf = requestAnimationFrame(step);
+      };
+
+      state.raf = requestAnimationFrame(step);
+    };
+
+    el.addEventListener(
+      "pointerdown",
+      (e) => {
+        state.dragging = true;
+        state.spinning = false;
+        if (state.raf) cancelAnimationFrame(state.raf);
+        state.raf = 0;
+
+        const { cx, cy } = getCenter();
+        state.startAngle = ang(cx, cy, e.clientX, e.clientY) - state.deg;
+
+        state.lastT = performance.now();
+        state.lastDeg = state.deg;
+        state.vel = 0;
+
+        el.setPointerCapture?.(e.pointerId);
+      },
+      { passive: true }
+    );
+
+    el.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!state.dragging) return;
+
+        const { cx, cy } = getCenter();
+        const raw = ang(cx, cy, e.clientX, e.clientY) - state.startAngle;
+        const deg = raw * (opts.sensitivity ?? 1);
+
+        const now = performance.now();
+        const dt = Math.max(0.001, (now - state.lastT) / 1000);
+        const v = (deg - state.lastDeg) / dt;
+
+        state.lastT = now;
+        state.lastDeg = deg;
+        state.vel = v;
+
+        apply(deg);
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    el.addEventListener(
+      "pointerup",
+      () => {
+        if (!state.dragging) return;
+        state.dragging = false;
+
+        if (opts.noInertia) {
+          if (opts.snapStep) {
+            const s = opts.snapStep;
+            apply(Math.round(state.deg / s) * s);
+          }
+          opts.onStop?.(state.deg, state);
+          return;
+        }
+        startInertia();
+      },
+      { passive: true }
+    );
+
+    el.addEventListener("pointercancel", () => {
+      state.dragging = false;
+    });
+
+    return { apply, stop: stopSpin, state };
   }
 
-  sheetCloseBtn.onclick = closeSheet;
+  /* =========================
+     TIMER
+  ========================= */
+  const TIMER_PRESETS = [1, 5, 10, 15, 20, 30];
+  let timerPresetIndex = 1;
 
-  function renderView(id) {
-    sheetTitle.textContent = id.toUpperCase();
-    sheetContent.innerHTML = `<div class="miniHint">${id}</div>`;
+  const TIMER = { total: 300, left: 300, running: false, endAt: 0, intervalId: 0 };
+
+  function ensureTimerBarVisible(on) {
+    timerBarWrap?.setAttribute("aria-hidden", on ? "false" : "true");
   }
 
+  function updateTimerBar() {
+    if (!timerBar) return;
+    const pct = TIMER.total ? TIMER.left / TIMER.total : 0;
+    timerBar.style.transform = `scaleY(${clamp01(pct)})`;
+  }
+
+  function beepFallback() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 880;
+      g.gain.value = 0.08;
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => {
+        o.stop();
+        ctx.close();
+      }, 900);
+    } catch {}
+  }
+
+  function alarm() {
+    if (alarmAudio?.querySelector("source")) {
+      alarmAudio.currentTime = 0;
+      alarmAudio.play().catch(() => beepFallback());
+      return;
+    }
+    beepFallback();
+  }
+
+  function stopTimerInternal() {
+    TIMER.running = false;
+    if (TIMER.intervalId) clearInterval(TIMER.intervalId);
+    TIMER.intervalId = 0;
+    document.body.classList.remove("timerRunning");
+    ensureTimerBarVisible(false);
+  }
+
+  function tickTimer() {
+    if (!TIMER.running) return;
+    const left = Math.max(0, Math.ceil((TIMER.endAt - Date.now()) / 1000));
+    TIMER.left = left;
+    updateTimerBar();
+
+    if (timerOverlay?.classList.contains("open") && timerBigEl) {
+      const mm = Math.floor(left / 60),
+        ss = left % 60;
+      timerBigEl.textContent = `${pad2(mm)}:${pad2(ss)}`;
+    }
+    if (left <= 0) {
+      stopTimerInternal();
+      updateTimerBar();
+      alarm();
+    }
+  }
+
+  function openTimerOverlay() {
+    closeSheet();
+    closeToolsOverlay();
+    closeDartOverlay();
+
+    timerOverlay?.classList.add("open");
+    timerOverlay?.setAttribute("aria-hidden", "false");
+
+    const m = TIMER_PRESETS[timerPresetIndex];
+    if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
+    if (timerSub) timerSub.textContent = `Vrid hjulet: ${TIMER_PRESETS.join(" / ")}`;
+
+    // align timer wheel to current preset
+    timerWheelEngine?.apply(timerPresetIndex * (360 / TIMER_PRESETS.length));
+  }
+
+  function closeTimerOverlay() {
+    timerOverlay?.classList.remove("open");
+    timerOverlay?.setAttribute("aria-hidden", "true");
+  }
+
+  function setTimerMinutesAndStart(min) {
+    const m = Number(min);
+    if (!Number.isFinite(m) || m <= 0) return;
+
+    stopTimerInternal();
+    TIMER.total = Math.round(m * 60);
+    TIMER.left = TIMER.total;
+    TIMER.endAt = Date.now() + TIMER.total * 1000;
+    TIMER.running = true;
+
+    document.body.classList.add("timerRunning");
+    ensureTimerBarVisible(true);
+
+    tickTimer();
+    TIMER.intervalId = setInterval(tickTimer, 250);
+  }
+
+  timerClose?.addEventListener("click", closeTimerOverlay);
+  timerOverlay?.addEventListener("click", (e) => {
+    if (e.target === timerOverlay) closeTimerOverlay();
+  });
+  timerStartBtn?.addEventListener("click", () => {
+    setTimerMinutesAndStart(TIMER_PRESETS[timerPresetIndex]);
+    closeTimerOverlay();
+  });
+
+  const timerWheelEngine = makeWheelEngine({
+    el: timerWheel,
+    ring: timerRing,
+    sensitivity: 1.0,
+    friction: 0.78,
+    stopVel: 40,
+    snapStep: 360 / TIMER_PRESETS.length,
+    noInertia: true,
+    onChange: (deg) => {
+      const step = 360 / TIMER_PRESETS.length;
+      const idx =
+        ((Math.round(deg / step) % TIMER_PRESETS.length) + TIMER_PRESETS.length) %
+        TIMER_PRESETS.length;
+      timerPresetIndex = idx;
+      const m = TIMER_PRESETS[idx];
+      if (timerBigEl) timerBigEl.textContent = `${pad2(m)}:00`;
+    },
+  });
+
+  /* =========================
+     TOOLS SPINNER (FAST)
+  ========================= */
+  const toolsCard = toolsOverlay?.querySelector(".overlayCard");
+  let spinGuess = null; // "odd" | "even"
+  let fidgetCount = Number(store.tools?.fidgetCount ?? 0);
+
+  const SPIN_SEGMENTS = 30;
+  const SPIN_STEP = 360 / SPIN_SEGMENTS;
+
+  function spinSectorFromDeg(deg) {
+    const raw = Math.round(deg / SPIN_STEP);
+    return ((raw % SPIN_SEGMENTS) + SPIN_SEGMENTS) % SPIN_SEGMENTS;
+  }
+
+  function openToolsOverlay() {
+    closeSheet();
+    closeTimerOverlay();
+    closeDartOverlay();
+
+    toolsOverlay?.classList.add("open");
+    toolsOverlay?.setAttribute("aria-hidden", "false");
+
+    spinGuess = null;
+    toolsCard?.classList.remove("win", "lose");
+
+    // show current last digit
+    setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
+  }
+
+  function closeToolsOverlay() {
+    toolsOverlay?.classList.remove("open");
+    toolsOverlay?.setAttribute("aria-hidden", "true");
+
+    spinGuess = null;
+    toolsSpinValue?.classList.remove("glitch");
+    toolsCard?.classList.remove("win", "lose");
+
+    store.tools.fidgetCount = fidgetCount;
+    saveStore();
+  }
+
+  toolsClose?.addEventListener("click", closeToolsOverlay);
+  toolsOverlay?.addEventListener("click", (e) => {
+    if (e.target === toolsOverlay) closeToolsOverlay();
+  });
+
+  guessOdd?.addEventListener("click", () => (spinGuess = "odd"));
+  guessEven?.addEventListener("click", () => (spinGuess = "even"));
+
+  fidgetReset?.addEventListener("click", () => {
+    fidgetCount = 0;
+    spinGuess = null;
+    toolsCard?.classList.remove("win", "lose");
+    setText(toolsSpinValue, 0);
+    store.tools.fidgetCount = fidgetCount;
+    saveStore();
+  });
+
+  let lastSpinSector = null;
+
+  const toolsSpinnerEngine = makeWheelEngine({
+    el: toolsSpinnerWheel,
+    ring: toolsSpinnerRing,
+    sensitivity: 1.55, // fast feel
+    friction: 0.945,   // long inertia
+    stopVel: 20,
+    snapStep: SPIN_STEP,
+    onSpinStart: () => {
+      // Mode C: glitch while spinning
+      toolsSpinValue?.classList.add("glitch");
+    },
+    onChange: (deg) => {
+      const s = spinSectorFromDeg(deg);
+      if (lastSpinSector === null) lastSpinSector = s;
+      if (s !== lastSpinSector) {
+        let diff = s - lastSpinSector;
+        if (diff > SPIN_SEGMENTS / 2) diff -= SPIN_SEGMENTS;
+        if (diff < -SPIN_SEGMENTS / 2) diff += SPIN_SEGMENTS;
+        fidgetCount += diff;
+        lastSpinSector = s;
+      }
+      const v = Math.abs(fidgetCount) % 10;
+      setText(toolsSpinValue, v);
+    },
+    onStop: () => {
+      toolsSpinValue?.classList.remove("glitch");
+      const v = Math.abs(fidgetCount) % 10;
+      setText(toolsSpinValue, v);
+
+      if (spinGuess) {
+        const win = spinGuess === "odd" ? v % 2 === 1 : v % 2 === 0;
+        flashOverlay(toolsCard, win);
+      }
+
+      store.tools.fidgetCount = fidgetCount;
+      saveStore();
+    },
+  });
+
+  /* =========================
+     DART 501 (SEPARATE OVERLAY)
+  ========================= */
+  const DART = {
+    activePlayer: 0,
+    players: [
+      { name: "Spelare 1", left: 501, last: 0, round: 0 },
+      { name: "Spelare 2", left: 501, last: 0, round: 0 },
+      { name: "Spelare 3", left: 501, last: 0, round: 0 },
+      { name: "Spelare 4", left: 501, last: 0, round: 0 },
+    ],
+  };
+
+  function renderDart() {
+    if (!dartGrid) return;
+    dartGrid.innerHTML = "";
+    DART.players.forEach((p, idx) => {
+      const card = document.createElement("div");
+      card.className = "playerCard" + (idx === DART.activePlayer ? " active" : "");
+      card.innerHTML = `
+        <div class="pName">${escapeHtml(p.name)}</div>
+        <div class="pScore">${p.left}</div>
+        <div class="pSub">
+          <span>Senaste: ${p.last}</span>
+          <span>Omgång: <b>${p.round}</b></span>
+        </div>`;
+      card.addEventListener("click", () => {
+        DART.activePlayer = idx;
+        renderDart();
+        // keep value shown for active player
+        setText(dartValue, DART.players[DART.activePlayer].round || 0);
+      });
+      dartGrid.appendChild(card);
+    });
+  }
+
+  function commitDartRound() {
+    const p = DART.players[DART.activePlayer];
+    const add = Math.max(0, Math.min(180, Math.round(p.round || 0)));
+    p.last = add;
+    p.left = Math.max(0, p.left - add);
+    DART.activePlayer = (DART.activePlayer + 1) % DART.players.length;
+    renderDart();
+    setText(dartValue, DART.players[DART.activePlayer].round || 0);
+  }
+
+  function openDartOverlay() {
+    closeSheet();
+    closeToolsOverlay();
+    closeTimerOverlay();
+
+    dartOverlay?.classList.add("open");
+    dartOverlay?.setAttribute("aria-hidden", "false");
+
+    renderDart();
+    setText(dartValue, DART.players[DART.activePlayer].round || 0);
+    dartWheelEngine?.apply(0);
+  }
+
+  function closeDartOverlay() {
+    dartOverlay?.classList.remove("open");
+    dartOverlay?.setAttribute("aria-hidden", "true");
+  }
+
+  dartClose?.addEventListener("click", closeDartOverlay);
+  dartOverlay?.addEventListener("click", (e) => {
+    if (e.target === dartOverlay) closeDartOverlay();
+  });
+
+  btn501?.addEventListener("click", () => openDartOverlay());
+
+  const dartWheelEngine = makeWheelEngine({
+    el: dartWheel,
+    ring: dartRing,
+    sensitivity: 1.0,
+    noInertia: true, // precision
+    snapStep: 360 / 18,
+    onChange: (deg) => {
+      const t = Math.abs(deg) / (360 / 18);
+      const score = Math.max(0, Math.min(180, Math.round((t * 20) % 181)));
+      DART.players[DART.activePlayer].round = score;
+      setText(dartValue, score);
+      renderDart();
+    },
+    onStop: () => {
+      commitDartRound();
+    },
+  });
+
+  /* =========================
+     OPEN PER VIEW
+  ========================= */
   function openForView(id) {
-    if (id === "tools") return openToolsOverlay();
     if (id === "timer") return openTimerOverlay();
+    if (id === "tools") return openToolsOverlay();
     openSheet();
     renderView(id);
   }
 
-  /* ======================================================
-     TOOLS SPINNER
-  ====================================================== */
-
-  const toolsOverlay = $("toolsOverlay");
-  const toolsClose = $("toolsClose");
-  const toolsWheel = $("toolsSpinnerWheel");
-  const toolsRing = $("toolsSpinnerRing");
-  const toolsValue = $("toolsSpinValue");
-  const guessOdd = $("guessOdd");
-  const guessEven = $("guessEven");
-  const btn501 = $("btn501");
-
-  let guess = null;
-
-  function openToolsOverlay() {
-    closeSheet();
-    toolsOverlay.classList.add("open");
-    toolsValue.classList.add("glitch");
+  /* =========================
+     VIEWS RENDER
+  ========================= */
+  function renderStocks() {
+    sheetTitle.textContent = "Aktier";
+    sheetContent.innerHTML = `
+      <div class="miniHint" style="margin-bottom:10px;">
+        (Tape borttagen tills vidare) TradingView kan vi bygga vidare på sen.
+      </div>
+      <div class="row"><div class="rowLeft"><div class="rowTitle">Placeholder</div></div></div>
+    `;
   }
 
-  function closeToolsOverlay() {
-    toolsOverlay.classList.remove("open");
-    guess = null;
+  function renderCalendar() {
+    sheetTitle.textContent = "Kalender";
+    const CAL_SRC =
+      "https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%230b1118&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0";
+    sheetContent.innerHTML = `
+      <div style="border-radius:24px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:#0b1118;">
+        <iframe src="${CAL_SRC}" style="width:100%; height:78vh; border:0; display:block;" loading="lazy"></iframe>
+      </div>`;
   }
 
-  toolsClose.onclick = closeToolsOverlay;
+  async function renderWeather() {
+    sheetTitle.textContent = "Väder";
+    sheetContent.innerHTML = `<div class="miniHint">Laddar väder…</div>`;
+    try {
+      const lat = 59.3293,
+        lon = 18.0686;
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${lat}&longitude=${lon}` +
+        `&current=temperature_2m,apparent_temperature,wind_speed_10m` +
+        `&hourly=temperature_2m` +
+        `&daily=temperature_2m_max,temperature_2m_min` +
+        `&timezone=Europe%2FStockholm`;
+      const r = await fetch(url, { cache: "no-store" });
+      const data = await r.json();
 
-  guessOdd.onclick = () => guess = "odd";
-  guessEven.onclick = () => guess = "even";
+      const nowT = Math.round(data.current.temperature_2m);
+      const feels = Math.round(data.current.apparent_temperature);
+      const wind = Math.round(data.current.wind_speed_10m);
 
-  const SEGMENTS = 30;
-  const SPIN_STEP = 360 / SEGMENTS;
-
-  function valueFromDeg(deg) {
-    const idx = Math.round(deg / SPIN_STEP);
-    return ((idx % 10) + 10) % 10;
-  }
-
-  let spinDeg = 0;
-  let spinVel = 0;
-  let spinning = false;
-
-  function spinLoop() {
-    if (!spinning) return;
-    spinVel *= 0.97;
-    spinDeg += spinVel;
-    toolsRing.style.transform = `rotate(${spinDeg}deg)`;
-    toolsValue.textContent = valueFromDeg(spinDeg);
-    toolsValue.setAttribute("data-text", toolsValue.textContent);
-
-    if (Math.abs(spinVel) < 0.3) {
-      spinning = false;
-      toolsValue.classList.remove("glitch");
-      return;
+      sheetContent.innerHTML = `
+        <div class="row" style="margin-bottom:12px;">
+          <div class="rowLeft">
+            <div class="rowTitle">${nowT}° • Känns ${feels}°</div>
+            <div class="miniHint">Vind ${wind} m/s</div>
+          </div>
+          <div class="rowMeta">${new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}</div>
+        </div>
+        <div class="miniHint">Nästa steg: full SB Dash-väder med ikoner/nederbörd.</div>`;
+    } catch {
+      sheetContent.innerHTML = `<div class="miniHint">Kunde inte hämta väder.</div>`;
     }
-    requestAnimationFrame(spinLoop);
   }
 
-  toolsWheel.addEventListener("pointerdown", () => {
-    spinning = false;
-    spinVel = 20 + Math.random() * 25;
-    toolsValue.classList.add("glitch");
-    spinning = true;
-    spinLoop();
-  });
+  function renderTaskDetail({ id, fromDone }) {
+    const item = (fromDone ? store.done : store.lists).find((x) => x.id === id);
+    if (!item) return renderLists();
 
-  /* ======================================================
-     501 DART (SEPARATE OVERLAY)
-  ====================================================== */
+    item.subtasks = Array.isArray(item.subtasks) ? item.subtasks : [];
 
-  const dartOverlay = $("dartOverlay");
-  const dartClose = $("dartClose");
-  const dartWheel = $("dartWheel");
-  const dartRing = $("dartRing");
-  const dartValue = $("dartValue");
+    sheetTitle.textContent = "Listor";
+    sheetContent.innerHTML = `
+      <div class="row" id="taskBack" style="cursor:pointer;">
+        <div class="rowLeft"><div class="rowTitle">← Tillbaka</div></div>
+      </div>
 
-  btn501.onclick = () => {
-    toolsOverlay.classList.remove("open");
-    dartOverlay.classList.add("open");
-  };
+      <div class="row">
+        <div class="rowLeft">
+          <div class="rowTitle">${escapeHtml(item.text)}</div>
+          <div class="miniHint">Skapad: ${fmt(item.createdAt || Date.now())}</div>
+        </div>
+      </div>
 
-  dartClose.onclick = () => {
-    dartOverlay.classList.remove("open");
-  };
+      <div class="miniHint" style="margin:12px 0 10px 0;">Deluppgifter</div>
+      <ul class="miniList" id="subtaskList"></ul>
 
-  let dartDeg = 0;
+      <div style="display:flex; gap:10px; margin-top:12px;">
+        <input id="subtaskInput" class="miniInput" placeholder="Ny deluppgift..." maxlength="160"/>
+        <button id="subtaskAdd" class="miniBtn">+</button>
+      </div>
+    `;
 
-  dartWheel.addEventListener("pointermove", (e) => {
-    if (!e.pressure) return;
-    dartDeg += e.movementX;
-    dartRing.style.transform = `rotate(${dartDeg}deg)`;
-    const score = Math.abs(Math.round(dartDeg)) % 180;
-    dartValue.textContent = score;
-    dartValue.setAttribute("data-text", score);
-  });
+    $("taskBack")?.addEventListener("click", () => renderLists());
 
-  /* ======================================================
-     TIMER
-  ====================================================== */
+    const listEl = $("subtaskList");
+    const draw = () => {
+      listEl.innerHTML = "";
+      if (!item.subtasks.length) {
+        listEl.innerHTML = `<li class="miniHint">Inga deluppgifter ännu.</li>`;
+        return;
+      }
+      item.subtasks.forEach((st) => {
+        const li = document.createElement("li");
+        li.className = "row";
+        li.innerHTML = `
+          <input class="roundCheck" type="checkbox" ${st.done ? "checked" : ""}/>
+          <div class="rowLeft"><div class="rowTitle">${escapeHtml(st.text)}</div></div>
+          <div class="rowMeta"></div>
+        `;
+        const cb = li.querySelector("input");
+        cb.addEventListener("change", () => {
+          st.done = !!cb.checked;
+          saveStore();
+        });
+        listEl.appendChild(li);
+      });
+    };
 
-  const timerOverlay = $("timerOverlay");
-  const timerClose = $("timerClose");
-  const timerWheel = $("timerWheel");
-  const timerRing = $("timerRing");
-  const timerBig = $("timerBig");
+    const add = () => {
+      const input = $("subtaskInput");
+      const t = (input.value || "").trim();
+      if (!t) return;
+      item.subtasks.unshift({ id: uid(), text: t, done: false });
+      input.value = "";
+      saveStore();
+      draw();
+    };
 
-  const PRESETS = [1,5,10,15,20,30];
-  let presetIndex = 1;
+    $("subtaskAdd")?.addEventListener("click", add);
+    $("subtaskInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") add();
+    });
 
-  function openTimerOverlay() {
-    closeSheet();
-    timerOverlay.classList.add("open");
-    updateTimerDisplay();
+    draw();
   }
 
-  function closeTimerOverlay() {
-    timerOverlay.classList.remove("open");
+  function renderLists() {
+    sheetTitle.textContent = "Listor";
+
+    const doneOpen = !!store.ui.doneOpen;
+
+    sheetContent.innerHTML = `
+      <div class="miniForm">
+        <input id="listInput" class="miniInput" placeholder="Ny sak..." maxlength="160"/>
+        <button id="listAdd" class="miniBtn">+</button>
+      </div>
+
+      <div class="row" style="margin-bottom:10px;">
+        <div class="rowLeft"><div class="rowTitle">Aktiva</div></div>
+      </div>
+      <ul class="miniList" id="todoList"></ul>
+
+      <div class="row" id="doneToggle" style="margin-top:14px; cursor:pointer;">
+        <div class="rowLeft">
+          <div class="rowTitle">Slutförda</div>
+          <div class="miniHint">${doneOpen ? "Tryck för att dölja" : "Tryck för att visa"}</div>
+        </div>
+      </div>
+      <div id="doneWrap" style="display:${doneOpen ? "block" : "none"};">
+        <ul class="miniList" id="doneList"></ul>
+      </div>
+    `;
+
+    const input = $("listInput");
+    const addBtn = $("listAdd");
+    const todoEl = $("todoList");
+    const doneEl = $("doneList");
+
+    $("doneToggle")?.addEventListener("click", () => {
+      store.ui.doneOpen = !store.ui.doneOpen;
+      saveStore();
+      renderLists();
+    });
+
+    const draw = () => {
+      todoEl.innerHTML = "";
+      doneEl.innerHTML = "";
+
+      if (!store.lists.length) {
+        todoEl.innerHTML = `<li class="miniHint">Inget här ännu.</li>`;
+      } else {
+        store.lists.forEach((item) => {
+          item.subtasks = Array.isArray(item.subtasks) ? item.subtasks : [];
+          const li = document.createElement("li");
+          li.className = "row";
+          li.innerHTML = `
+            <input class="roundCheck" type="checkbox" />
+            <div class="rowLeft" style="cursor:pointer;">
+              <div class="rowTitle">${escapeHtml(item.text)}</div>
+              <div class="miniHint">${
+                item.subtasks.length
+                  ? `${item.subtasks.filter((s) => s.done).length}/${item.subtasks.length} deluppgifter`
+                  : "Inga deluppgifter"
+              }</div>
+            </div>
+            <div class="rowMeta">${fmt(item.createdAt)}</div>
+          `;
+
+          li.querySelector(".rowLeft")?.addEventListener("click", () => {
+            renderTaskDetail({ id: item.id, fromDone: false });
+          });
+
+          const cb = li.querySelector("input");
+          cb.addEventListener("change", () => {
+            if (!cb.checked) return;
+            store.lists = store.lists.filter((x) => x.id !== item.id);
+            store.done.unshift({ ...item, doneAt: Date.now() });
+            saveStore();
+            renderLists();
+          });
+
+          todoEl.appendChild(li);
+        });
+      }
+
+      if (store.ui.doneOpen) {
+        if (!store.done.length) {
+          doneEl.innerHTML = `<li class="miniHint">Inget slutfört ännu.</li>`;
+        } else {
+          store.done.forEach((item) => {
+            item.subtasks = Array.isArray(item.subtasks) ? item.subtasks : [];
+            const li = document.createElement("li");
+            li.className = "row";
+            li.style.opacity = ".88";
+            li.innerHTML = `
+              <input class="roundCheck" type="checkbox" checked />
+              <div class="rowLeft" style="cursor:pointer;">
+                <div class="rowTitle">${escapeHtml(item.text)}</div>
+                <div class="miniHint">${
+                  item.subtasks.length
+                    ? `${item.subtasks.filter((s) => s.done).length}/${item.subtasks.length} deluppgifter`
+                    : "—"
+                }</div>
+              </div>
+              <div class="rowMeta">${fmt(item.doneAt || Date.now())}</div>
+            `;
+
+            li.querySelector(".rowLeft")?.addEventListener("click", () => {
+              renderTaskDetail({ id: item.id, fromDone: true });
+            });
+
+            const cb = li.querySelector("input");
+            cb.addEventListener("change", () => {
+              if (cb.checked) return;
+              store.done = store.done.filter((x) => x.id !== item.id);
+              store.lists.unshift({
+                id: item.id,
+                text: item.text,
+                createdAt: item.createdAt || Date.now(),
+                subtasks: item.subtasks,
+              });
+              saveStore();
+              renderLists();
+            });
+
+            doneEl.appendChild(li);
+          });
+        }
+      }
+    };
+
+    const add = () => {
+      const t = (input.value || "").trim();
+      if (!t) return;
+      store.lists.unshift({ id: uid(), text: t, createdAt: Date.now(), subtasks: [] });
+      input.value = "";
+      saveStore();
+      renderLists();
+    };
+
+    addBtn?.addEventListener("click", add);
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") add();
+    });
+
+    draw();
   }
 
-  timerClose.onclick = closeTimerOverlay;
-
-  function updateTimerDisplay() {
-    const m = PRESETS[presetIndex];
-    timerBig.textContent = String(m).padStart(2,"0") + ":00";
+  function renderView(id) {
+    if (id === "stocks") return renderStocks();
+    if (id === "calendar") return renderCalendar();
+    if (id === "weather") return renderWeather();
+    if (id === "lists") return renderLists();
+    sheetTitle.textContent = "—";
+    sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
 
-  timerWheel.addEventListener("pointermove", (e) => {
-    if (!e.pressure) return;
-    presetIndex += e.movementX > 0 ? 1 : -1;
-    presetIndex = (presetIndex + PRESETS.length) % PRESETS.length;
-    timerRing.style.transform = `rotate(${presetIndex * 20}deg)`;
-    updateTimerDisplay();
-  });
-
-  /* ======================================================
+  /* =========================
      INIT
-  ====================================================== */
-
+  ========================= */
   function init() {
-    setRotation(activeIndex * STEP);
+    setActiveIndex(activeIndex);
     renderWheelCenter();
-    renderIconRail();
+    setRotation(activeIndex * STEP);
+
+    updateTimerBar();
+    ensureTimerBarVisible(false);
+
+    // seed tools value
+    setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
+
+    // warn if wheel svg path is wrong
+    const img = document.querySelector(".wheelRing");
+    img?.addEventListener("error", () => {
+      console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
+    });
   }
 
   init();
-
 })();
