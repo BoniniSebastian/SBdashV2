@@ -580,23 +580,3 @@ body.sheetOpen .sheet{
 /* Sheet + overlays must stay above everything when open */
 .sheetWrap{ z-index: 80 !important; }
 .overlayWrap{ z-index: 100 !important; }
-
-/* =========================
-   WHEEL FOCUS MODE
-   (Tools + Timer)
-========================= */
-
-body.wheelFocus .wheelWrap{
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 80vw;
-  max-width: 520px;
-  z-index: 400;
-  transition: transform .35s ease, width .35s ease;
-  transform: translate(-50%, -50%) scale(1.2);
-}
-
-body.wheelFocus #wheelCenterText{
-  display: none;
-}
