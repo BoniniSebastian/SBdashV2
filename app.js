@@ -111,6 +111,7 @@
     { id: "lists", label: "LISTOR", icon: "assets/ui/icon-todo.svg" },
     { id: "tools", label: "TOOLS", icon: "assets/ui/icon-tools.svg" },
     { id: "timer", label: "TIMER", icon: "assets/ui/icon-pomodoro.svg" },
+    { id: "dart501", label: "501", icon: "assets/ui/icon-dart501.png" }, 
   ];
 
   let activeIndex = 1; // Calendar
@@ -740,11 +741,12 @@
      OPEN PER VIEW
   ====================================================== */
   function openForView(id) {
-    if (id === "tools") return openToolsOverlay();
-    if (id === "timer") return openTimerOverlay();
-    openSheet();
-    renderView(id);
-  }
+  if (id === "tools") return openToolsOverlay();
+  if (id === "dart501") return openDartOverlay();   // <-- NY
+  if (id === "timer") return openTimerOverlay();
+  openSheet();
+  renderView(id);
+}
     /* ======================================================
      VIEWS (sheet content)
   ====================================================== */
