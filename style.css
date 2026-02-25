@@ -629,3 +629,27 @@ body.wheelFocus #wheelCenterText{
   z-index: 0 !important;
   pointer-events: none;
 }
+/* =========================
+   WHEEL FOCUS – SAFEST OVERRIDES
+   - wheel above ALL its own backgrounds
+   - move wheel DOWN a bit
+========================= */
+
+body.wheelFocus .wheelWrap{
+  top: 58% !important;               /* ✅ flytta ner (justera 55–62% vid behov) */
+  z-index: 999999 !important;        /* ✅ över allt */
+}
+
+/* ✅ SÄKRAST: stäng av bakplattan/pill i focus-läge (den som täcker hjulet) */
+body.wheelFocus .wheelWrap::before,
+body.wheelFocus .wheelWrap::after{
+  display: none !important;
+}
+
+/* ✅ tvinga själva ringen att ligga ovanpå allt inuti wheelWrap */
+body.wheelFocus .wheelRing,
+body.wheelFocus #wheel,
+body.wheelFocus svg#wheel{
+  position: relative !important;
+  z-index: 1000000 !important;
+}
