@@ -45,11 +45,8 @@ input, textarea, button { font-size:16px; }
 
 /* =========================
    BACKGROUND BLOBS (START)
-   - startZen: always pulsing “timer style”
-   - ambientBlob: extra layer that JS can “boost” on rotation
 ========================= */
 
-/* Always-on pulse blob (same “zen” look) */
 .zenBlob{
   position:absolute;
   left:50%;
@@ -74,7 +71,6 @@ input, textarea, button { font-size:16px; }
   100%{ transform: translate(-50%,-50%) scale(1); opacity:.55; }
 }
 
-/* Start-page blob – bigger + placed for “background mood” */
 .startZen{
   width: 620px;
   height: 620px;
@@ -84,7 +80,6 @@ input, textarea, button { font-size:16px; }
   opacity: .55;
 }
 
-/* Ambient layer that JS boosts on wheel movement */
 .ambientBlob{
   position:absolute;
   left: 52%;
@@ -104,7 +99,6 @@ input, textarea, button { font-size:16px; }
   filter: blur(70px);
   opacity:.45;
 
-  /* JS ändrar transform/opacity vid rotation */
   transition: transform .18s ease, opacity .18s ease;
 }
 
@@ -153,7 +147,6 @@ input, textarea, button { font-size:16px; }
 
 /* =========================
    TIMER BAR (RIGHT)
-   - shrink from TOP down
 ========================= */
 .timerBarWrap{
   position:absolute;
@@ -176,7 +169,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: top; /* IMPORTANT */
+  transform-origin: top;
   transform: scaleY(1);
   filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
 }
@@ -251,7 +244,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   color: rgba(255,255,255,.82);
 }
 
-/* Dot (used in tools mode) */
+/* Dot (unused right now) */
 .wheelDot{
   position:absolute;
   left:50%;
@@ -485,12 +478,6 @@ body.sheetOpen .sheet{
   gap:16px;
   margin-top: 6px;
 }
-.toolsBackRow{
-  display:flex;
-  justify-content:flex-start;
-  gap:16px;
-  margin-top: 2px;
-}
 .toolsTxtBtn{
   border: 0;
   background: transparent;
@@ -504,15 +491,6 @@ body.sheetOpen .sheet{
 }
 .toolsTxtBtn:active{ transform: translateY(1px); opacity:1; }
 .toolsTxtBtn.ghost{ opacity:.70; }
-
-/* Counter number */
-.fidgetCount{
-  margin-top: 12px;
-  text-align:center;
-  font-size: 84px;
-  font-weight: 950;
-  letter-spacing: .06em;
-}
 
 /* DART 501 */
 .dartWrap{ margin-top: 14px; }
@@ -555,33 +533,8 @@ body.sheetOpen .sheet{
   font-size: 12px;
 }
 
-/* Small screens */
-@media (max-height: 740px){
-  :root{ --wheelSize: 205px; }
-  .timerBig{ font-size: 58px; }
-  .fidgetCount{ font-size: 74px; }
-}
-/* --- Make blobs never block touches --- */
-.ambientBlob,
-.startZen,
-.zenBlob{
-  pointer-events: none !important;
-}
-
-/* --- Ensure wheel + icons are above background --- */
-.wheelWrap{
-  z-index: 50 !important;
-}
-
-.iconRail{
-  z-index: 60 !important;
-}
-
-/* Sheet + overlays must stay above everything when open */
-.sheetWrap{ z-index: 80 !important; }
-.overlayWrap{ z-index: 100 !important; }
 /* =========================
-   OVERLAY WHEELS
+   OVERLAY WHEELS (NEW)
 ========================= */
 
 .overlayWheelWrap{
@@ -683,11 +636,38 @@ body.sheetOpen .sheet{
   100%{ filter: blur(0); opacity:1; }
 }
 
-/* Sizing tweaks if needed */
-.overlayWheel--spinner{ }
-.overlayWheel--normal{ }
+/* win/lose flash (nice feedback) */
+.overlayCard.win{
+  box-shadow: 0 0 0 1px rgba(0,255,180,.35), 0 0 40px rgba(0,255,180,.18), 0 18px 60px rgba(0,0,0,.65);
+}
+.overlayCard.lose{
+  box-shadow: 0 0 0 1px rgba(255,80,120,.32), 0 0 40px rgba(255,80,120,.16), 0 18px 60px rgba(0,0,0,.65);
+}
 
+/* Small screens */
 @media (max-height: 740px){
+  :root{ --wheelSize: 205px; }
+  .timerBig{ font-size: 58px; }
   .overlayWheelWrap{ width: 205px; height: 205px; }
   .spinValue{ font-size: 82px; }
 }
+
+/* --- Make blobs never block touches --- */
+.ambientBlob,
+.startZen,
+.zenBlob{
+  pointer-events: none !important;
+}
+
+/* --- Ensure wheel + icons are above background --- */
+.wheelWrap{
+  z-index: 50 !important;
+}
+
+.iconRail{
+  z-index: 60 !important;
+}
+
+/* Sheet + overlays must stay above everything when open */
+.sheetWrap{ z-index: 80 !important; }
+.overlayWrap{ z-index: 100 !important; }
