@@ -426,7 +426,7 @@
      TIMER (preset wheel + countdown)
   ====================================================== */
   const TIMER_PRESETS = [1, 5, 10, 15, 20, 30];
-  let timerPresetIndex = 1;
+  let timerPresetIndex = 0;
 
   const TIMER = { total: 300, left: 300, running: false, endAt: 0, intervalId: 0 };
 
