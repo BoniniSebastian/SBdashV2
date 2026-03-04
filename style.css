@@ -102,23 +102,32 @@ input, textarea, button { font-size:16px; }
   transition: transform .18s ease, opacity .18s ease;
 }
 
-/* =========================
-   ICON RAIL (TOP)
-========================= */
+/* Bottom icon dock (no container pill, no scrollbar) */
 .iconRail{
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  left: calc(6% + min(78vmin, 520px) + 40px);
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
 
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
 
-  max-height: 70vh;
-  overflow-y: auto;
+  padding: 0;
+  margin: 0;
 
-  padding-right: 6px; /* lite space för scrollbar */
+  background: transparent;      /* tar bort ovalen */
+  border: 0;                    /* tar bort ovalen */
+  border-radius: 0;             /* tar bort ovalen */
+  box-shadow: none;             /* tar bort ovalen */
+  backdrop-filter: none;        /* tar bort ovalen */
+  -webkit-backdrop-filter: none;
+
+  overflow: visible;            /* ingen scrollbar */
+  max-height: none;
+  z-index: 70;
 }
 
 .railIcon{
@@ -182,13 +191,11 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 ========================= */
 .navWrap{
   position: absolute;
-  left: 40px;              /* alternativt 6% */
+  left: 40px;
   top: 50%;
   transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  z-index: 50;
+  display: block;   /* ingen flex här längre */
+  z-index: 60;
 }
 
 .wheelWrap{
