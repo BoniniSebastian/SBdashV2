@@ -1024,19 +1024,6 @@
   function init() {
     setActiveIndex(activeIndex);
     renderWheelCenter();
-     function updateDateBlock(){
-  const now = new Date();
-
-  const dayName = now.toLocaleDateString("sv-SE", { weekday: "long" });
-  const dayNumber = now.getDate();
-  const monthName = now.toLocaleDateString("sv-SE", { month: "long" });
-
-  document.getElementById("dateDay").textContent = dayName;
-  document.getElementById("dateFull").textContent = `${dayNumber} ${monthName}`;
-}
-
-updateDateBlock();
-     setInterval(updateDateBlock, 60 * 1000); // uppdatera varje minut
     setRotation(activeIndex * STEP);
 
     updateTimerBar();
