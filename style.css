@@ -1,4 +1,5 @@
 :root{
+  --dock-left: 220px;   /* ändra här om du vill flytta allt */
   --bg:#050b12;
   --stroke: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.92);
@@ -107,14 +108,13 @@ input, textarea, button { font-size:16px; }
 ========================= */
 .iconRail{
   position: fixed;
-  left: 220px;  /* samma som hjulet */
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  transform: none;
+  left: var(--dock-left);
+  bottom: 20px;
 
   display: flex;
-  flex-direction: row;
   gap: 12px;
   align-items: center;
+}
 
   background: transparent;
   border: 0;
@@ -157,7 +157,30 @@ input, textarea, button { font-size:16px; }
   border-color: rgba(0,209,255,.35);
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
+/* DATE ABOVE ICON DOCK */
+.dateBlock{
+  position: fixed;
+  left: var(--dock-left);  /* eller 220px om du inte kör variabel */
+  bottom: 90px;
+  z-index: 90;
+}
 
+.dateDay{
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+
+.dateFull{
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.95);
+}
 /* =========================
    TIMER BAR (BOTTOM)
    - shrink from RIGHT to LEFT
