@@ -107,7 +107,7 @@ input, textarea, button { font-size:16px; }
 ========================= */
 .iconRail{
   position: fixed;
-  left: 40px;  /* samma som hjulet */
+  left: 80px;  /* samma som hjulet */
   bottom: calc(16px + env(safe-area-inset-bottom));
   transform: none;
 
