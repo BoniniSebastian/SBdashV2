@@ -179,13 +179,11 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
    WHEEL (BOTTOM-LEFT)
 ========================= */
 .wheelWrap{
-  position:absolute;
-  left: var(--wheelLeft);
-  bottom: var(--wheelBottom);
-  width: var(--wheelSize);
-  height: var(--wheelSize);
-  z-index: 20;
-  pointer-events:auto;
+  position: absolute;
+  left: 50%;
+  top: 58%;                 /* lite under mitten */
+  transform: translate(-50%, -50%) scale(0.5);
+  transform-origin: center;
 }
 
 .wheel{
