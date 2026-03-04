@@ -102,28 +102,32 @@ input, textarea, button { font-size:16px; }
   transition: transform .18s ease, opacity .18s ease;
 }
 
-/* =========================
-   ICON RAIL (TOP)
-========================= */
+/* Bottom icon dock (no container pill, no scrollbar) */
 .iconRail{
   position: fixed;
   left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  bottom: calc(14px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
 
   display: flex;
   flex-direction: row;
-  gap: 12px;
   align-items: center;
   justify-content: center;
+  gap: 14px;
 
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  backdrop-filter: none;
+  padding: 0;
+  margin: 0;
+
+  background: transparent;      /* tar bort ovalen */
+  border: 0;                    /* tar bort ovalen */
+  border-radius: 0;             /* tar bort ovalen */
+  box-shadow: none;             /* tar bort ovalen */
+  backdrop-filter: none;        /* tar bort ovalen */
   -webkit-backdrop-filter: none;
 
-  z-index: 80;
+  overflow: visible;            /* ingen scrollbar */
+  max-height: none;
+  z-index: 70;
 }
 
 .railIcon{
@@ -132,14 +136,10 @@ input, textarea, button { font-size:16px; }
   border-radius: 14px;
   display:grid;
   place-items:center;
-  flex: 0 0 auto;
-  aspect-ratio: 1 / 1;
-
   background: rgba(0,0,0,.18);
   border: 1px solid rgba(255,255,255,.10);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease;
   opacity: .55;
 }
@@ -147,9 +147,6 @@ input, textarea, button { font-size:16px; }
 .railIcon img{
   width: 22px;
   height: 22px;
-  opacity: .92;
-  display:block;
-  object-fit: contain;
 }
 
 .railIcon.active{
@@ -192,15 +189,23 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 /* =========================
    WHEEL (BOTTOM-LEFT)
 ========================= */
-.wheelWrap{
+.navWrap{
   position: absolute;
-  left: 40px;         /* vänster, snyggt på desktop */
+  left: 40px;
   top: 50%;
   transform: translateY(-50%);
+  display: block;   /* ingen flex här längre */
+  z-index: 60;
+}
+
+.wheelWrap{
+  position: relative;      /* viktigt: inte absolute längre */
+  left: auto;
+  top: auto;
+  transform: none;
+  transform-origin: center;
   width: min(78vmin, 520px);
   aspect-ratio: 1 / 1;
-  transform-origin: center;
-  z-index: 60;
 }
 
 .wheel{
@@ -681,7 +686,27 @@ body.sheetOpen .sheet{
 }
 
 .iconRail{
-  z-index: 60 !important;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+.iconRail::-webkit-scrollbar{ width: 8px; }
+.iconRail::-webkit-scrollbar-track{ background: transparent; }
+.iconRail::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
 }
 
 /* Sheet + overlays must stay above everything when open */
