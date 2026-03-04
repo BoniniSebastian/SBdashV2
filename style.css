@@ -180,14 +180,25 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 /* =========================
    WHEEL (BOTTOM-LEFT)
 ========================= */
-.wheelWrap{
+.navWrap{
   position: absolute;
-  left: 6%;              /* eller 40px om du kör fast offset */
+  left: 40px;              /* alternativt 6% */
   top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  z-index: 50;
+}
+
+.wheelWrap{
+  position: relative;      /* viktigt: inte absolute längre */
+  left: auto;
+  top: auto;
+  transform: none;
+  transform-origin: center;
   width: min(78vmin, 520px);
   aspect-ratio: 1 / 1;
-  transform: translateY(-50%);
-  transform-origin: center;
 }
 
 .wheel{
@@ -668,7 +679,27 @@ body.sheetOpen .sheet{
 }
 
 .iconRail{
-  z-index: 60 !important;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+.iconRail::-webkit-scrollbar{ width: 8px; }
+.iconRail::-webkit-scrollbar-track{ background: transparent; }
+.iconRail::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
 }
 
 /* Sheet + overlays must stay above everything when open */
