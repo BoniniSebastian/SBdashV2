@@ -1017,7 +1017,14 @@
     sheetTitle.textContent = "—";
     sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
-function updateDateBlock(){
+
+  /* ======================================================
+     INIT
+  ====================================================== */
+  function init() {
+    setActiveIndex(activeIndex);
+    renderWheelCenter();
+     function updateDateBlock(){
   const now = new Date();
 
   const dayName = now.toLocaleDateString("sv-SE", { weekday: "long" });
@@ -1029,12 +1036,7 @@ function updateDateBlock(){
 }
 
 updateDateBlock();
-  /* ======================================================
-     INIT
-  ====================================================== */
-  function init() {
-    setActiveIndex(activeIndex);
-    renderWheelCenter();
+     setInterval(updateDateBlock, 60 * 1000); // uppdatera varje minut
     setRotation(activeIndex * STEP);
 
     updateTimerBar();
