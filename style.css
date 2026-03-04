@@ -181,7 +181,9 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 .wheelWrap{
   position: absolute;
   left: 50%;
-  top: 58%;                 /* lite under mitten */
+  top: 58%;
+  width: min(78vmin, 520px);
+  aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%) scale(0.5);
   transform-origin: center;
 }
