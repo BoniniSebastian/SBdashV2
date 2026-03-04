@@ -689,43 +689,46 @@ body.sheetOpen .sheet{
 
 /* =========================
    DATE PANEL
-   ========================= */
+========================= */
 
 .datePanel{
   position: fixed;
   top: var(--railTop);
-  left: calc(var(--wheelLeft) + var(--wheelSize) + 18px);
+  left: calc(var(--wheelLeft) + var(--wheelSize) + 26px);
   z-index: 50;
 
-  text-align: left;
-  color: rgba(255,255,255,.92);
+  width: 130px;
 
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0,0,0,.22);
+  padding: 16px 18px;
+  border-radius: 20px;
+
+  background: rgba(0,0,0,.35);
   border: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 
-  pointer-events: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  text-align:left;
+  color:white;
+
+  pointer-events:none;
 }
 
 .dpDay{
-  font-size: 14px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  opacity: .75;
+  font-size:12px;
+  letter-spacing:2px;
+  opacity:.7;
 }
 
 .dpDate{
-  font-size: 54px;
-  font-weight: 650;
-  line-height: 1;
+  font-size:46px;
+  font-weight:700;
+  line-height:1;
+  margin:4px 0;
 }
 
 .dpMonth{
-  font-size: 14px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  opacity: .75;
+  font-size:12px;
+  letter-spacing:2px;
+  opacity:.7;
 }
