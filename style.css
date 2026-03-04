@@ -686,3 +686,46 @@ body.sheetOpen .sheet{
 /* Sheet + overlays must stay above everything when open */
 .sheetWrap{ z-index: 80 !important; }
 .overlayWrap{ z-index: 100 !important; }
+
+/* =========================
+   DATE PANEL
+   ========================= */
+
+.datePanel{
+  position: fixed;
+  top: var(--railTop);
+  left: calc(var(--wheelLeft) + var(--wheelSize) + 18px);
+  z-index: 50;
+
+  text-align: left;
+  color: rgba(255,255,255,.92);
+
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  pointer-events: none;
+}
+
+.dpDay{
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: .75;
+}
+
+.dpDate{
+  font-size: 54px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.dpMonth{
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: .75;
+}
