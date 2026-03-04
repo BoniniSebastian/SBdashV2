@@ -60,7 +60,7 @@ input, textarea, button { font-size:16px; }
     radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
     radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
   filter: blur(10px);
-  opacity:.75;
+  opacity:.30;
   animation: zenPulse 2.4s ease-in-out infinite;
   pointer-events:none;
   z-index: 0;
