@@ -166,7 +166,7 @@ input, textarea, button { font-size:16px; }
 }
 
 .dateDay{
-  font-size: 13px;
+  font-size: 33px;
   font-weight: 800;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -175,7 +175,7 @@ input, textarea, button { font-size:16px; }
 
 .dateFull{
   margin-top: 6px;
-  font-size: 26px;
+  font-size: 46px;
   font-weight: 950;
   letter-spacing: .12em;
   text-transform: uppercase;
