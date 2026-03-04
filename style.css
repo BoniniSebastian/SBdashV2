@@ -125,25 +125,21 @@ input, textarea, button { font-size:16px; }
   z-index: 80;
 }
 
-.railIcon{
+.iconRail .railIcon{
   width: 44px;
   height: 44px;
   border-radius: 14px;
   display:grid;
   place-items:center;
-  flex: 0 0 auto;
-  aspect-ratio: 1 / 1;
-
   background: rgba(0,0,0,.18);
   border: 1px solid rgba(255,255,255,.10);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease;
   opacity: .55;
 }
 
-.railIcon img{
+.iconRail .railIcon img{
   width: 22px;
   height: 22px;
   opacity: .92;
@@ -151,7 +147,7 @@ input, textarea, button { font-size:16px; }
   object-fit: contain;
 }
 
-.railIcon.active{
+.iconRail .railIcon.active{
   opacity: 1;
   transform: scale(1.08);
   border-color: rgba(0,209,255,.35);
