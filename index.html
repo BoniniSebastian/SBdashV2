@@ -1,707 +1,153 @@
-:root{
-  --bg:#050b12;
-  --stroke: rgba(255,255,255,.10);
-  --text: rgba(255,255,255,.92);
-  --shadow: 0 18px 60px rgba(0,0,0,.55);
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050b12" />
 
-  /* Top row position */
-  --railTop: calc(env(safe-area-inset-top) + 18px);
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SB Dash">
 
-  /* Wheel */
-  --wheelSize: 220px;
-  --wheelLeft: 16px;
-  --wheelBottom: calc(74px + env(safe-area-inset-bottom));
-}
+  <title>SB Dash v2</title>
+  <link rel="stylesheet" href="style.css?v=4">
+</head>
 
-*{ box-sizing:border-box; }
+<body>
+  <div class="app">
+    <div class="zenBlob startZen" aria-hidden="true"></div>
+    <div class="ambientBlob" aria-hidden="true"></div>
 
-html,body{
-  height:100%;
-  min-height:100%;
-  background: var(--bg);
-}
+    <!-- NAV: Wheel + Icon rail (icons on the RIGHT of wheel) -->
+    <div class="navWrap" id="navWrap">
 
-body{
-  margin:0;
-  color: var(--text);
-  overflow:hidden;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  background:
-    radial-gradient(1200px 800px at 40% 15%, rgba(0,220,255,.12), transparent 60%),
-    radial-gradient(900px 700px at 70% 70%, rgba(255,100,180,.07), transparent 60%),
-    linear-gradient(180deg, #050b12, #050b12);
-}
+      <div class="wheelWrap" id="wheelWrap">
+        <div class="wheel" id="wheel">
 
-/* Prevent iOS zoom */
-input, textarea, button { font-size:16px; }
+          <img class="wheelRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
 
-/* App wrapper */
-.app{
-  position:fixed;
-  inset:0;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow:hidden;
-}
+          <div class="wheelCenter" id="wheelCenter" aria-hidden="true">
+            <div class="wcTop" id="wcTop">—</div>
+            <div class="wcMain" id="wcMain">—</div>
+            <div class="wcBot" id="wcBot">—</div>
+          </div>
 
-/* =========================
-   BACKGROUND BLOBS (START)
-========================= */
+          <div class="wheelDot" id="wheelDot" aria-hidden="true"></div>
+        </div>
+      </div>
 
-.zenBlob{
-  position:absolute;
-  left:50%;
-  top:55%;
-  width: 320px;
-  height: 320px;
-  transform: translate(-50%,-50%);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(0,209,255,.35), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
-    radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
-  filter: blur(10px);
-  opacity:.75;
-  animation: zenPulse 2.4s ease-in-out infinite;
-  pointer-events:none;
-  z-index: 0;
-}
-@keyframes zenPulse{
-  0%{ transform: translate(-50%,-50%) scale(1); opacity:.55; }
-  50%{ transform: translate(-50%,-50%) scale(1.03); opacity:.85; }
-  100%{ transform: translate(-50%,-50%) scale(1); opacity:.55; }
-}
+      <div class="iconRail" id="iconRail" aria-label="Menyikoner"></div>
 
-.startZen{
-  width: 620px;
-  height: 620px;
-  left: 54%;
-  top: 56%;
-  filter: blur(60px);
-  opacity: .55;
-}
+    </div>
 
-.ambientBlob{
-  position:absolute;
-  left: 52%;
-  top: 58%;
-  width: 640px;
-  height: 640px;
-  transform: translate(-50%,-50%);
-  border-radius: 999px;
-  pointer-events:none;
-  z-index: 0;
+    <!-- Right-side timer bar -->
+    <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
+      <div class="timerBar" id="timerBar"></div>
+    </div>
 
-  background:
-    radial-gradient(circle at 35% 35%, rgba(0,209,255,.22), transparent 55%),
-    radial-gradient(circle at 70% 65%, rgba(255,100,180,.16), transparent 60%),
-    radial-gradient(circle at 60% 30%, rgba(0,255,180,.12), transparent 65%);
+    <!-- SECTION SHEET -->
+    <div class="sheetWrap" id="sheetWrap" aria-hidden="true">
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+        <div class="sheetHeader">
+          <div class="sheetTitle" id="sheetTitle">—</div>
+          <button class="sheetClose" id="sheetCloseBtn" type="button" aria-label="Stäng">✕</button>
+        </div>
+        <div class="sheetContent" id="sheetContent"></div>
+        <div class="sheetHandle" aria-hidden="true"></div>
+      </div>
+    </div>
 
-  filter: blur(70px);
-  opacity:.45;
+    <!-- TIMER OVERLAY -->
+    <div class="overlayWrap" id="timerOverlay" aria-hidden="true">
+      <div class="overlayCard">
+        <div class="overlayTop">
+          <div class="overlayTitle">TIMER</div>
+          <button class="overlayClose" id="timerClose" type="button" aria-label="Stäng timer">✕</button>
+        </div>
 
-  transition: transform .18s ease, opacity .18s ease;
-}
+        <div class="timerBig" id="timerBig">00:00</div>
+        <div class="timerSub" id="timerSub">Vrid hjulet: 1 / 5 / 10 / 15 / 20 / 30</div>
 
-/* =========================
-   ICON RAIL (TOP)
-========================= */
-.iconRail{
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  left: calc(6% + min(78vmin, 520px) + 40px);
+        <!-- TIMER WHEEL (normal) -->
+        <div class="overlayWheelWrap">
+          <div class="overlayWheel overlayWheel--normal" id="timerWheel" aria-label="Timer wheel">
+            <img class="overlayWheelRing" id="timerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+          </div>
+        </div>
 
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+        <button class="ctaBtn" id="timerStartBtn" type="button">START</button>
 
-  max-height: 70vh;
-  overflow-y: auto;
+        <div class="zenBlob" aria-hidden="true"></div>
+      </div>
+    </div>
 
-  padding-right: 6px; /* lite space för scrollbar */
-}
+    <!-- TOOLS OVERLAY -->
+    <div class="overlayWrap" id="toolsOverlay" aria-hidden="true">
+      <div class="overlayCard">
 
-.railIcon{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display:grid;
-  place-items:center;
-  background: rgba(0,0,0,.18);
-  border: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease;
-  opacity: .55;
-}
+        <div class="overlayTop">
+          <div class="overlayTitle">TOOLS</div>
+          <button class="overlayClose" id="toolsClose" type="button" aria-label="Stäng tools">✕</button>
+        </div>
 
-.railIcon img{
-  width: 22px;
-  height: 22px;
-}
+        <div class="toolsTopRow">
+          <button class="toolsTxtBtn" id="guessOdd" type="button">UDDA</button>
+          <button class="toolsTxtBtn" id="guessEven" type="button">JÄMNT</button>
+          <button class="toolsTxtBtn" id="btn501" type="button">501</button>
+        </div>
 
-.railIcon.active{
-  opacity: 1;
-  transform: scale(1.08);
-  border-color: rgba(0,209,255,.35);
-  box-shadow: 0 0 22px rgba(0,209,255,.26);
-}
+        <!-- SPINNER WHEEL (FAST) -->
+        <div class="overlayWheelWrap">
+          <div class="neonPointer" aria-hidden="true"></div>
+          <div class="overlayWheel overlayWheel--spinner" id="toolsSpinnerWheel" aria-label="Tools spinner wheel">
+            <img class="overlayWheelRing" id="toolsSpinnerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+            <div class="spinValue glitch" id="toolsSpinValue" data-text="0" aria-live="polite">0</div>
+          </div>
+        </div>
 
-/* =========================
-   TIMER BAR (BOTTOM)
-   - shrink from RIGHT to LEFT
-========================= */
-.timerBarWrap{
-  position:absolute;
-  left: 14px;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  height: 10px;
-  pointer-events:none;
-  opacity: 0;
-  transition: opacity .20s ease;
-  z-index: 10;
-}
-body.timerRunning .timerBarWrap{ opacity: 1; }
+        <div class="toolsBottomRow">
+          <button class="toolsTxtBtn ghost" id="fidgetReset" type="button">RESET</button>
+        </div>
 
-.timerBar{
-  position:absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
-  transform-origin: left; /* IMPORTANT */
-  transform: scaleX(1);
-  filter: drop-shadow(0 0 10px rgba(0,209,255,.22));
-}
+        <div class="miniHint" id="fidgetHint">
+          Välj UDDA/JÄMNT → snurra hjulet → släpp. Resultatet visas i mitten.
+        </div>
 
-/* =========================
-   WHEEL (BOTTOM-LEFT)
-========================= */
-.navWrap{
-  position: absolute;
-  left: 40px;              /* alternativt 6% */
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  z-index: 50;
-}
+      </div>
+    </div>
 
-.wheelWrap{
-  position: relative;      /* viktigt: inte absolute längre */
-  left: auto;
-  top: auto;
-  transform: none;
-  transform-origin: center;
-  width: min(78vmin, 520px);
-  aspect-ratio: 1 / 1;
-}
+    <!-- DART 501 OVERLAY (separate) -->
+    <div class="overlayWrap" id="dartOverlay" aria-hidden="true">
+      <div class="overlayCard">
 
-.wheel{
-  width:100%;
-  height:100%;
-  border-radius: 999px;
-  position:relative;
-  display:block;
-  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.62), rgba(0,0,0,.40));
-  box-shadow: 0 0 34px rgba(0,209,255,.18), 0 18px 60px rgba(0,0,0,.55);
-  touch-action: none;
+        <div class="overlayTop">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="assets/ui/icon-dart501.png" alt="" style="width:22px;height:22px;opacity:.95;" draggable="false"/>
+            <div class="overlayTitle">501</div>
+          </div>
+          <button class="overlayClose" id="dartClose" type="button" aria-label="Stäng 501">✕</button>
+        </div>
 
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
+        <div class="overlayWheelWrap">
+          <div class="overlayWheel overlayWheel--normal" id="dartWheel" aria-label="501 wheel">
+            <img class="overlayWheelRing" id="dartRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+            <div class="spinValue" id="dartValue" data-text="0" aria-live="polite">0</div>
+          </div>
+        </div>
 
-.wheelRing{
-  position:absolute;
-  inset:-10px;
-  width: calc(100% + 20px);
-  height: calc(100% + 20px);
-  transform-origin: 50% 50%;
-  opacity:.95;
-  filter: drop-shadow(0 0 18px rgba(0,209,255,.22));
-}
+        <div class="dartWrap" id="dartWrap">
+          <div class="dartGrid" id="dartGrid"></div>
+        </div>
 
-/* Center text in wheel */
-.wheelCenter{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  pointer-events:none;
-  z-index: 3;
-  transform: translateY(-2px);
-}
+        <div class="miniHint">Vrid hjulet för poäng. Släpp → sparar rundan och hoppar till nästa spelare.</div>
+      </div>
+    </div>
 
-.wcTop,
-.wcBot{
-  font-weight: 900;
-  letter-spacing:.22em;
-  text-transform: uppercase;
-  font-size: 11px;
-  color: rgba(255,255,255,.40);
-}
+    <!-- optional alarm audio -->
+    <audio id="alarmAudio" preload="auto"></audio>
 
-.wcMain{
-  margin: 10px 0 8px 0;
-  font-weight: 950;
-  letter-spacing:.28em;
-  text-transform: uppercase;
-  font-size: 16px;
-  color: rgba(255,255,255,.82);
-}
+  </div>
 
-/* Dot (unused right now) */
-.wheelDot{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  transform: translate(-50%,-50%);
-  background: rgba(0,209,255,.95);
-  box-shadow: 0 0 18px rgba(0,209,255,.65);
-  opacity:0;
-}
-
-/* =========================
-   SHEET
-========================= */
-.sheetWrap{
-  position:absolute;
-  inset:0;
-  z-index: 40;
-  pointer-events:none;
-}
-
-.sheet{
-  position:absolute;
-  left: 14px;
-  right: 14px;
-  top: calc(var(--railTop) + 64px);
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  border-radius: 28px;
-  background: linear-gradient(180deg, rgba(0,220,255,.10), rgba(255,255,255,.05));
-  border: 1px solid var(--stroke);
-  box-shadow: var(--shadow);
-  overflow:hidden;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-
-  transform: translateY(22px);
-  opacity: 0;
-  transition: transform .22s ease, opacity .22s ease;
-  pointer-events:none;
-}
-body.sheetOpen .sheet{
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events:auto;
-}
-
-.sheetHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 14px 14px 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.sheetTitle{
-  font-weight: 950;
-  letter-spacing:.18em;
-  text-transform: uppercase;
-  font-size: 13px;
-  color: rgba(255,255,255,.78);
-}
-.sheetClose{
-  width: 40px; height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.22);
-  color: rgba(255,255,255,.9);
-}
-.sheetContent{
-  height: calc(100% - 56px);
-  overflow:auto;
-  padding: 14px 14px 20px 14px;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* =========================
-   OVERLAYS
-========================= */
-.overlayWrap{
-  position:fixed;
-  inset:0;
-  z-index: 70;
-  pointer-events:none;
-  opacity:0;
-  transition: opacity .20s ease;
-}
-.overlayWrap.open{
-  opacity:1;
-  pointer-events:auto;
-}
-
-.overlayWrap::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: rgba(0,0,0,.62);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.overlayCard{
-  position:absolute;
-  inset: 14px;
-  border-radius: 28px;
-  background: rgba(10,15,20,.62);
-  border: 1px solid rgba(255,255,255,.10);
-  box-shadow: 0 18px 60px rgba(0,0,0,.65);
-  overflow:hidden;
-  padding: 14px;
-}
-
-.overlayTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding: 4px 2px 12px 2px;
-}
-.overlayTitle{
-  font-weight: 950;
-  letter-spacing:.18em;
-  text-transform: uppercase;
-  font-size: 13px;
-  color: rgba(255,255,255,.78);
-}
-.overlayClose{
-  width: 40px; height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.22);
-  color: rgba(255,255,255,.92);
-}
-
-/* TIMER */
-.timerBig{
-  margin-top: 10px;
-  font-size: 64px;
-  font-weight: 950;
-  letter-spacing:.06em;
-  text-align:center;
-}
-.timerSub{
-  margin-top: 8px;
-  text-align:center;
-  color: rgba(255,255,255,.70);
-  font-weight: 800;
-  font-size: 13px;
-}
-.ctaBtn{
-  margin: 14px auto 0 auto;
-  display:block;
-  width: min(340px, 92%);
-  height: 54px;
-  border-radius: 18px;
-  border: 1px solid rgba(0,209,255,.35);
-  background: rgba(0,209,255,.16);
-  color: rgba(255,255,255,.92);
-  font-weight: 950;
-  letter-spacing:.18em;
-  text-transform: uppercase;
-}
-.ctaBtn:active{ transform: scale(.99); }
-
-/* Shared UI */
-.miniHint{ color: rgba(255,255,255,.60); font-size: 13px; }
-.miniForm{ display:flex; gap:10px; margin-bottom: 12px; }
-.miniInput{
-  flex:1;
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.20);
-  color: rgba(255,255,255,.92);
-  outline:none;
-}
-.miniBtn{
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,209,255,.18);
-  color: rgba(255,255,255,.92);
-  font-weight: 900;
-}
-.miniList{ list-style:none; padding:0; margin: 0; }
-
-.row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding: 12px 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  margin-bottom: 10px;
-}
-.rowLeft{ flex:1; min-width:0; }
-.rowTitle{
-  font-weight: 900;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-}
-.rowMeta{
-  color: rgba(255,255,255,.55);
-  font-size: 12px;
-  text-align:right;
-  white-space:nowrap;
-}
-.roundCheck{
-  width: 22px; height: 22px;
-  border-radius: 999px;
-  border: 2px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.06);
-  appearance:none;
-  -webkit-appearance:none;
-  outline:none;
-  box-shadow: inset 0 0 0 2px rgba(0,0,0,.20);
-}
-.roundCheck:checked{
-  border-color: rgba(0,209,255,.65);
-  background: rgba(0,209,255,.20);
-  box-shadow: 0 0 16px rgba(0,209,255,.22);
-}
-
-/* TOOLS buttons text-only */
-.toolsTopRow, .toolsBottomRow{
-  display:flex;
-  justify-content:center;
-  gap:16px;
-  margin-top: 6px;
-}
-.toolsTxtBtn{
-  border: 0;
-  background: transparent;
-  color: rgba(255,255,255,.92);
-  font-weight: 950;
-  letter-spacing:.10em;
-  text-transform: uppercase;
-  padding: 8px 6px;
-  cursor:pointer;
-  opacity:.86;
-}
-.toolsTxtBtn:active{ transform: translateY(1px); opacity:1; }
-.toolsTxtBtn.ghost{ opacity:.70; }
-
-/* DART 501 */
-.dartWrap{ margin-top: 14px; }
-.dartGrid{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.playerCard{
-  border-radius: 0;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  padding: 12px;
-  min-height: 140px;
-}
-.playerCard.active{
-  border-color: rgba(0,209,255,.40);
-  box-shadow: 0 0 22px rgba(0,209,255,.18);
-}
-.pName{
-  font-weight: 950;
-  letter-spacing:.12em;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: rgba(255,255,255,.78);
-}
-.pScore{
-  margin-top: 10px;
-  font-size: 46px;
-  font-weight: 950;
-  letter-spacing:.04em;
-}
-.pSub{
-  margin-top: 6px;
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  color: rgba(255,255,255,.72);
-  font-weight: 900;
-  font-size: 12px;
-}
-
-/* =========================
-   OVERLAY WHEELS (NEW)
-========================= */
-
-.overlayWheelWrap{
-  margin: 14px auto 10px auto;
-  width: 220px;
-  height: 220px;
-  position: relative;
-  display: grid;
-  place-items: center;
-}
-
-.overlayWheel{
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,.28));
-  box-shadow: 0 0 28px rgba(0,209,255,.16), 0 18px 60px rgba(0,0,0,.45);
-  touch-action: none;
-  position: relative;
-  overflow: visible;
-}
-
-.overlayWheelRing{
-  position: absolute;
-  inset: -10px;
-  width: calc(100% + 20px);
-  height: calc(100% + 20px);
-  transform-origin: 50% 50%;
-  opacity: .95;
-  filter: drop-shadow(0 0 18px rgba(0,209,255,.22));
-}
-
-/* Center value */
-.spinValue{
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  font-size: 92px;
-  font-weight: 950;
-  letter-spacing: .06em;
-  color: rgba(255,255,255,.92);
-  text-shadow:
-    0 0 18px rgba(0,209,255,.18),
-    0 0 30px rgba(255,100,180,.10);
-  user-select:none;
-  pointer-events:none;
-}
-
-/* Neon pointer (fixed at 12 o'clock) */
-.neonPointer{
-  position:absolute;
-  top: 2px;
-  left: 50%;
-  width: 0; height: 0;
-  transform: translateX(-50%);
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 18px solid rgba(0,209,255,.95);
-  filter:
-    drop-shadow(0 0 10px rgba(0,209,255,.55))
-    drop-shadow(0 0 18px rgba(255,100,180,.22));
-  animation: pointerPulse 1.4s ease-in-out infinite;
-  z-index: 5;
-  pointer-events:none;
-}
-@keyframes pointerPulse{
-  0%,100%{ transform: translateX(-50%) scale(1); opacity:.85; }
-  50%{ transform: translateX(-50%) scale(1.06); opacity:1; }
-}
-
-/* Glitch effect (Mode C) */
-.spinValue.glitch{
-  animation: glitchFlicker .55s infinite steps(2,end);
-}
-.spinValue.glitch::before,
-.spinValue.glitch::after{
-  content: attr(data-text);
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform: translate(-50%,-50%);
-  opacity:.85;
-  pointer-events:none;
-}
-.spinValue.glitch::before{
-  color: rgba(0,209,255,.85);
-  transform: translate(calc(-50% - 2px), calc(-50% - 1px));
-  filter: blur(.2px);
-}
-.spinValue.glitch::after{
-  color: rgba(255,100,180,.75);
-  transform: translate(calc(-50% + 2px), calc(-50% + 1px));
-  filter: blur(.2px);
-}
-@keyframes glitchFlicker{
-  0%{ filter: blur(0); opacity:1; }
-  50%{ filter: blur(.6px); opacity:.92; }
-  100%{ filter: blur(0); opacity:1; }
-}
-
-/* win/lose flash (nice feedback) */
-.overlayCard.win{
-  box-shadow: 0 0 0 1px rgba(0,255,180,.35), 0 0 40px rgba(0,255,180,.18), 0 18px 60px rgba(0,0,0,.65);
-}
-.overlayCard.lose{
-  box-shadow: 0 0 0 1px rgba(255,80,120,.32), 0 0 40px rgba(255,80,120,.16), 0 18px 60px rgba(0,0,0,.65);
-}
-
-/* Small screens */
-@media (max-height: 740px){
-  :root{ --wheelSize: 205px; }
-  .timerBig{ font-size: 58px; }
-  .overlayWheelWrap{ width: 205px; height: 205px; }
-  .spinValue{ font-size: 82px; }
-}
-
-/* --- Make blobs never block touches --- */
-.ambientBlob,
-.startZen,
-.zenBlob{
-  pointer-events: none !important;
-}
-
-/* --- Ensure wheel + icons are above background --- */
-.wheelWrap{
-  z-index: 50 !important;
-}
-
-.iconRail{
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
-
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
-  max-height: 70vh;
-  overflow-y: auto;
-  padding-right: 10px;
-
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.25) transparent;
-}
-.iconRail::-webkit-scrollbar{ width: 8px; }
-.iconRail::-webkit-scrollbar-track{ background: transparent; }
-.iconRail::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.18);
-  border-radius: 999px;
-}
-
-/* Sheet + overlays must stay above everything when open */
-.sheetWrap{ z-index: 80 !important; }
-.overlayWrap{ z-index: 100 !important; }
+  <script src="app.js?v=4"></script>
+</body>
+</html>
