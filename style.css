@@ -180,11 +180,11 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 ========================= */
 .wheelWrap{
   position: absolute;
-  left: 50%;
-  top: 58%;
+  left: 6%;                  /* flyttar till vänster */
+  top: 60%;
   width: min(78vmin, 520px);
   aspect-ratio: 1 / 1;
-  transform: translate(-50%, -50%) scale(0.5);
+  transform: translateY(-50%);  /* INTE translateX längre */
   transform-origin: center;
 }
 
