@@ -170,11 +170,11 @@ input, textarea, button { font-size:16px; }
   font-weight: 800;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.95);
 }
 
 .dateFull{
-  margin-top: 6px;
+  margin-top: 0px;
   font-size: 46px;
   font-weight: 950;
   letter-spacing: .12em;
