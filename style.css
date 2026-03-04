@@ -60,7 +60,7 @@ input, textarea, button { font-size:16px; }
     radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
     radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
   filter: blur(10px);
-  opacity:.75;
+  opacity:.5;
   animation: zenPulse 2.4s ease-in-out infinite;
   pointer-events:none;
   z-index: 0;
@@ -107,13 +107,13 @@ input, textarea, button { font-size:16px; }
 ========================= */
 .iconRail{
   position: fixed;
-  left: 200px;  /* samma som hjulet */
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: 240px;  /* samma som hjulet */
+  bottom: calc(12px + env(safe-area-inset-bottom));
   transform: none;
 
   display: flex;
   flex-direction: row;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
 
   background: transparent;
