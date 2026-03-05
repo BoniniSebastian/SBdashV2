@@ -181,7 +181,7 @@ body.sheetOpen .centerNow,
 .quickTimerBadge{
   position:absolute;
   left:50%;
-  bottom:-10px;
+  top:-10px;
   transform: translateX(-50%);
   min-width: 18px;
   height: 18px;
