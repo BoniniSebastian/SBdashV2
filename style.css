@@ -824,3 +824,83 @@ body.sheetOpen .sheet{
   background: rgba(255,255,255,.45);
   display:inline-block;
 }
+
+/* =========================
+   LEFT STACK (right of wheel)
+   - icons + centerNow + dock
+========================= */
+
+:root{
+  /* extra luft så vi inte hamnar på glow-ringen */
+  --leftStackGap: 64px;  /* justera 52–80px vid behov */
+  --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
+}
+
+/* ICON RAIL: från center -> vänster (bredvid hjulet) */
+.iconRail{
+  left: var(--leftStackLeft) !important;
+  top: var(--railTop) !important;
+  transform: none !important;
+
+  justify-content: flex-start !important;
+}
+
+/* CENTER DATE/TIME: lägg under ikonraden, vänsterjusterat */
+.centerNow{
+  position: fixed !important;
+  left: var(--leftStackLeft) !important;
+  top: calc(var(--railTop) + 78px) !important; /* under ikonerna */
+  transform: none !important;
+
+  width: auto !important;
+  text-align: left !important;
+}
+
+/* DOCK (väder): flytta upp till vänster-stack, inte i botten-center */
+.dock{
+  position: fixed !important;
+  left: var(--leftStackLeft) !important;
+  bottom: calc(var(--wheelBottom) + 10px) !important; /* ovanför wheel-botten */
+  transform: none !important;
+
+  width: auto !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+}
+
+/* =========================
+   WEATHER DOCK: no box + tight
+========================= */
+
+.dockCard{
+  /* tar bort rutan */
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+
+  /* tajtare */
+  padding: 0 !important;
+  border-radius: 0 !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+/* tajtare innehåll */
+.dwTop{ gap: 8px !important; }
+.dwIcon{ width: 22px !important; height: 22px !important; }
+.dwTemp{ font-size: 22px !important; font-weight: 900 !important; }
+
+.dwMeta{
+  margin-top: 2px !important;
+  font-size: 11px !important;
+  opacity: .85 !important;
+}
+
+.dwForecast{
+  margin-top: 4px !important;
+  gap: 8px !important;
+  font-size: 10px !important;
+  opacity: .75 !important;
+}
