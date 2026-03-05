@@ -130,7 +130,7 @@ input, textarea, button { font-size:16px; }
   text-align:center;
   pointer-events:none;
   z-index: 5; /* above blobs, below rail + sheet */
-  opacity: .42;
+  opacity: .2;
   mix-blend-mode: screen;
 }
 
