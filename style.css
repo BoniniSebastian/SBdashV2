@@ -119,6 +119,7 @@ input, textarea, button { font-size:16px; }
 }
 
 .railIcon{
+  position: relative;
   width: 52px;
   height: 52px;
   border-radius: 18px;
@@ -145,6 +146,19 @@ input, textarea, button { font-size:16px; }
   opacity: 1;
   transform: scale(1.08);
   filter: drop-shadow(0 0 14px rgba(0,209,255,.35));
+}
+
+.railIcon.active::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-8px;
+  transform: translateX(-50%);
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 0 10px rgba(255,255,255,.22);
 }
 
 /* =========================
