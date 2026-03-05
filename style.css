@@ -860,7 +860,7 @@ body.sheetOpen .sheet{
 .dock{
   position: fixed !important;
   left: var(--leftStackLeft) !important;
-  bottom: calc(var(--wheelBottom) + 10px) !important; /* ovanför wheel-botten */
+ top: calc(10px + env(safe-area-inset-top)) !important;
   transform: none !important;
 
   width: auto !important;
@@ -903,4 +903,53 @@ body.sheetOpen .sheet{
   gap: 8px !important;
   font-size: 10px !important;
   opacity: .75 !important;
+}
+:root{
+  /* vänsterkolumnens x-position (du har redan wheel-variabler) */
+  --leftStackGap: 64px;
+  --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
+
+  /* vertikala avstånd */
+  --weatherTop: calc(10px + env(safe-area-inset-top));
+  --weatherToIcons: 74px;  /* hur långt ner ikonraden ska ligga under vädret */
+  --iconsToDate: 64px;     /* hur långt ner datumet ska ligga under ikonerna */
+}
+
+/* =========================
+   LEFT COLUMN ORDER
+   Weather (top) -> Icons -> Date
+========================= */
+
+/* 1) VÄDER högst upp */
+.dock{
+  position: fixed !important;
+  left: var(--leftStackLeft) !important;
+  top: var(--weatherTop) !important;
+  bottom: auto !important;
+  transform: none !important;
+
+  width: auto !important;
+  justify-content: flex-start !important;
+}
+
+/* 2) IKONRADEN under väder */
+.iconRail{
+  position: fixed !important;
+  left: var(--leftStackLeft) !important;
+  top: calc(var(--weatherTop) + var(--weatherToIcons)) !important;
+  transform: none !important;
+
+  justify-content: flex-start !important;
+}
+
+/* 3) DATUM under ikoner */
+.centerNow{
+  position: fixed !important;
+  left: var(--leftStackLeft) !important;
+  top: calc(var(--weatherTop) + var(--weatherToIcons) + var(--iconsToDate)) !important;
+  transform: none !important;
+
+  width: auto !important;
+  text-align: left !important;
+  white-space: nowrap;
 }
