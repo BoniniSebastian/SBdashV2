@@ -888,12 +888,12 @@ body.sheetOpen .sheet{
 }
 
 /* tajtare innehåll */
-.dwTop{ gap: 8px !important; }
+.dwTop{ gap: 5px !important; }
 .dwIcon{ width: 22px !important; height: 22px !important; }
 .dwTemp{ font-size: 22px !important; font-weight: 900 !important; }
 
 .dwMeta{
-  margin-top: 2px !important;
+  margin-top: 22px !important;
   font-size: 11px !important;
   opacity: .85 !important;
 }
