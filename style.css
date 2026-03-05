@@ -92,12 +92,12 @@ input, textarea, button { font-size:16px; }
   z-index: 0;
 
   background:
-    radial-gradient(circle at 35% 35%, rgba(0,209,255,.22), transparent 55%),
-    radial-gradient(circle at 70% 65%, rgba(255,100,180,.16), transparent 60%),
-    radial-gradient(circle at 60% 30%, rgba(0,255,180,.12), transparent 65%);
+    radial-gradient(circle at 35% 35%, rgba(0,209,255,.30), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(255,100,180,.22), transparent 60%),
+    radial-gradient(circle at 60% 30%, rgba(0,255,180,.18), transparent 65%);
 
-  filter: blur(60px);
-  opacity:.62;
+  filter: blur(50px);
+  opacity:.72;
 
   transition: transform .18s ease, opacity .18s ease;
 }
