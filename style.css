@@ -183,7 +183,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 6px;
+  height: 2px;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.85), rgba(0,255,180,.85));
   transform-origin: left; /* IMPORTANT */
