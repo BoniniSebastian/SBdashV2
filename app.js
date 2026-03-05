@@ -1072,6 +1072,130 @@ if (v.id === "timer") {
     sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
 
+   /* =========================
+   WEATHER (Dock)
+========================= */
+
+const WEATHER_ICONS = {
+  clear: "assets/ui/weather/clear.svg",
+  cloudy: "assets/ui/weather/cloudy.svg",
+  rain: "assets/ui/weather/rain.svg",
+  snow: "assets/ui/weather/snow.svg",
+  fog: "assets/ui/weather/fog.svg",
+  thunder: "assets/ui/weather/thunder.svg",
+  na: "assets/ui/weather/na.svg",
+};
+
+// fallback (Stockholm-ish). Du kan byta senare.
+const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.500 };
+
+function pickWeatherIcon(code){
+  // Open-Meteo weather_code
+  if (code === 0) return WEATHER_ICONS.clear;
+  if (code >= 1 && code <= 3) return WEATHER_ICONS.cloudy;
+  if (code === 45 || code === 48) return WEATHER_ICONS.fog;
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return WEATHER_ICONS.rain;
+  if (code >= 71 && code <= 77) return WEATHER_ICONS.snow;
+  if (code >= 95) return WEATHER_ICONS.thunder;
+  return WEATHER_ICONS.na;
+}
+
+function fmtHour(iso){
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2,"0");
+  return `${hh}:00`;
+}
+
+async function getCoords(){
+  if ("geolocation" in navigator) {
+    try {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, {
+          enableHighAccuracy: false,
+          timeout: 2500,
+          maximumAge: 60_000
+        })
+      );
+      return { name: "Här", lat: pos.coords.latitude, lon: pos.coords.longitude };
+    } catch(e){}
+  }
+  return DEFAULT_LOC;
+}
+
+async function fetchWeather(lat, lon){
+  const url =
+    `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${encodeURIComponent(lat)}` +
+    `&longitude=${encodeURIComponent(lon)}` +
+    `&current=temperature_2m,weather_code` +
+    `&hourly=temperature_2m,weather_code` +
+    `&daily=temperature_2m_max,temperature_2m_min` +
+    `&timezone=auto`;
+
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error("Weather fetch failed");
+  return r.json();
+}
+
+function renderWeatherDock(locName, data){
+  const elTemp = document.getElementById("dwTemp");
+  const elCity = document.getElementById("dwCity");
+  const elRange = document.getElementById("dwRange");
+  const elForecast = document.getElementById("dwForecast");
+  const elIcon = document.getElementById("dwIcon");
+
+  if (!elTemp || !elCity || !elRange || !elForecast || !elIcon) return;
+
+  const t = Math.round(data.current.temperature_2m);
+  const code = data.current.weather_code;
+
+  elTemp.textContent = `${t}°`;
+  elCity.textContent = locName;
+
+  const max = Math.round(data.daily.temperature_2m_max?.[0]);
+  const min = Math.round(data.daily.temperature_2m_min?.[0]);
+  if (Number.isFinite(min) && Number.isFinite(max)) elRange.textContent = `${min}° / ${max}°`;
+
+  elIcon.src = pickWeatherIcon(code);
+
+  // Forecast: nästa 3 timmar
+  const now = new Date();
+  const times = data.hourly.time || [];
+  const temps = data.hourly.temperature_2m || [];
+
+  let i0 = times.findIndex(ti => new Date(ti) >= now);
+  if (i0 < 0) i0 = 0;
+
+  const items = [];
+  for (let k = 0; k < 3; k++){
+    const i = i0 + k;
+    if (!times[i]) break;
+    const hh = fmtHour(times[i]);
+    const tt = Math.round(temps[i]);
+    items.push(`<div class="dwFItem">${hh}<span class="dwDot"></span>${tt}°</div>`);
+  }
+  elForecast.innerHTML = items.join("");
+}
+
+async function initWeatherDock(){
+  try{
+    const loc = await getCoords();
+    const data = await fetchWeather(loc.lat, loc.lon);
+    renderWeatherDock(loc.name, data);
+  } catch(e){
+    console.warn("Weather dock error:", e);
+  }
+
+  // refresh var 10:e minut
+  setInterval(async () => {
+    try{
+      const loc = await getCoords();
+      const data = await fetchWeather(loc.lat, loc.lon);
+      renderWeatherDock(loc.name, data);
+    } catch(e){}
+  }, 10 * 60 * 1000);
+}
+   
   /* ======================================================
      INIT
   ====================================================== */
