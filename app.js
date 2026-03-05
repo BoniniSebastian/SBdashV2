@@ -161,6 +161,23 @@ function setCenterNowVisible(on){
       img.alt = "";
       img.draggable = false;
       b.appendChild(img);
+       // Quick-start 5 min timer badge under TIMER icon
+if (v.id === "timer") {
+  const badge = document.createElement("div");
+  badge.className = "quickTimerBadge";
+  badge.textContent = "5";
+
+  badge.addEventListener("click", (e) => {
+    e.stopPropagation(); // prevent opening timer overlay
+    // start 5 min immediately
+    setTimerMinutesAndStart(5);
+    closeTimerOverlay();
+    closeToolsOverlay();
+    closeDartOverlay();
+  });
+
+  b.appendChild(badge);
+}
 
       b.addEventListener("click", () => {
         setRotation(idx * STEP);
