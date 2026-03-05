@@ -1018,45 +1018,25 @@
     sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
 
-   /* ======================================================
-   DATE HEADER
-====================================================== */
-
-function renderDateHeader(){
-
-  const dayNames = [
-  "Söndag","Måndag","Tisdag","Onsdag","Torsdag","Fredag","Lördag"
-  ];
-
-  const monthNames = [
-  "Januari","Februari","Mars","April","Maj","Juni",
-  "Juli","Augusti","September","Oktober","November","December"
-  ];
-
-  const now = new Date();
-
-  const day = dayNames[now.getDay()];
-  const date = now.getDate();
-  const month = monthNames[now.getMonth()];
-  const year = now.getFullYear();
-
-  const elDay = document.getElementById("dayName");
-  const elDate = document.getElementById("dateNumber");
-  const elMonth = document.getElementById("monthName");
-
-  if(!elDay) return;
-
-  elDay.textContent = day.toUpperCase();
-  elDate.textContent = date;
-  elMonth.textContent = month.toUpperCase() + " " + year;
-}
-
   /* ======================================================
      INIT
   ====================================================== */
   function init() {
     setActiveIndex(activeIndex);
     renderWheelCenter();
+     function updateDateBlock(){
+  const now = new Date();
+
+  const dayName = now.toLocaleDateString("sv-SE", { weekday: "long" });
+  const dayNumber = now.getDate();
+  const monthName = now.toLocaleDateString("sv-SE", { month: "long" });
+
+  document.getElementById("dateDay").textContent = dayName;
+  document.getElementById("dateFull").textContent = `${dayNumber} ${monthName}`;
+}
+
+updateDateBlock();
+     setInterval(updateDateBlock, 60 * 1000); // uppdatera varje minut
     setRotation(activeIndex * STEP);
 
     updateTimerBar();
@@ -1070,8 +1050,6 @@ function renderDateHeader(){
     img?.addEventListener("error", () => {
       console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
     });
-     
-     renderDateHeader();
   }
 
   init();
