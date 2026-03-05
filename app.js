@@ -10,6 +10,10 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const ambientBlob = document.querySelector(".ambientBlob");
+   const cnDay = $("cnDay");
+const cnDate = $("cnDate");
+const cnTime = $("cnTime");
+const centerNow = $("centerNow");
 
   /* ---------- main elements ---------- */
   const wheel = $("wheel");
@@ -58,6 +62,19 @@
 
   const clamp01 = (x) => Math.max(0, Math.min(1, x));
   const pad2 = (n) => String(n).padStart(2, "0");
+  function updateCenterNow(){
+  if (!cnDay || !cnDate || !cnTime) return;
+
+  const d = new Date();
+  cnDay.textContent = d.toLocaleDateString("sv-SE", { weekday: "long" }).toUpperCase();
+  cnDate.textContent = d.toLocaleDateString("sv-SE", { day: "numeric", month: "long" }).toUpperCase();
+  cnTime.textContent = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function setCenterNowVisible(on){
+  if (!centerNow) return;
+  centerNow.style.opacity = on ? "" : "0";
+} 
 
   function setText(el, t) {
     if (!el) return;
@@ -263,10 +280,12 @@
   function openSheet() {
     document.body.classList.add("sheetOpen");
     sheetWrap?.setAttribute("aria-hidden", "false");
+     setCenterNowVisible(false);
   }
   function closeSheet() {
     document.body.classList.remove("sheetOpen");
     sheetWrap?.setAttribute("aria-hidden", "true");
+     setCenterNowVisible(true);
   }
   sheetCloseBtn?.addEventListener("click", closeSheet);
 
@@ -493,6 +512,7 @@
     closeSheet();
     closeToolsOverlay();
     closeDartOverlay();
+     setCenterNowVisible(false);
 
     timerOverlay?.classList.add("open");
     timerOverlay?.setAttribute("aria-hidden", "false");
@@ -508,6 +528,7 @@
   function closeTimerOverlay() {
     timerOverlay?.classList.remove("open");
     timerOverlay?.setAttribute("aria-hidden", "true");
+     setCenterNowVisible(true);
   }
 
   function setTimerMinutesAndStart(min) {
@@ -567,6 +588,7 @@
     closeSheet();
     closeTimerOverlay();
     closeDartOverlay();
+     setCenterNowVisible(false);
 
     toolsOverlay?.classList.add("open");
     toolsOverlay?.setAttribute("aria-hidden", "false");
@@ -587,6 +609,7 @@
 
     store.tools.fidgetCount = fidgetCount;
     saveStore();
+     setCenterNowVisible(true);
   }
 
   toolsClose?.addEventListener("click", closeToolsOverlay);
@@ -701,6 +724,7 @@
     closeSheet();
     closeToolsOverlay();
     closeTimerOverlay();
+     setCenterNowVisible(false);
 
     dartOverlay?.classList.add("open");
     dartOverlay?.setAttribute("aria-hidden","false");
@@ -712,6 +736,7 @@
   function closeDartOverlay() {
     dartOverlay?.classList.remove("open");
     dartOverlay?.setAttribute("aria-hidden","true");
+     setCenterNowVisible(true);
   }
 
   dartClose?.addEventListener("click", closeDartOverlay);
@@ -1021,23 +1046,27 @@
   /* ======================================================
      INIT
   ====================================================== */
-  function init() {
-    setActiveIndex(activeIndex);
-    renderWheelCenter();
-    setRotation(activeIndex * STEP);
+ function init() {
+  setActiveIndex(activeIndex);
+  renderWheelCenter();
+  setRotation(activeIndex * STEP);
 
-    updateTimerBar();
-    ensureTimerBarVisible(false);
+  updateTimerBar();
+  ensureTimerBarVisible(false);
 
-    // seed tools digit
-    setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
+  // seed tools digit
+  setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
 
-    // warn if wheel svg path is wrong
-    const img = document.querySelector(".wheelRing");
-    img?.addEventListener("error", () => {
-      console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
-    });
-  }
+  // warn if wheel svg path is wrong
+  const img = document.querySelector(".wheelRing");
+  img?.addEventListener("error", () => {
+    console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
+  });
 
-  init();
+  // center date / time
+  updateCenterNow();
+  setInterval(updateCenterNow, 1000 * 20);
+}
+
+init();
 })();
