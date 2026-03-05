@@ -1,5 +1,4 @@
 :root{
-  --dock-left: 220px;   /* ändra här om du vill flytta allt */
   --bg:#050b12;
   --stroke: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.92);
@@ -107,22 +106,19 @@ input, textarea, button { font-size:16px; }
    ICON RAIL (TOP)
 ========================= */
 .iconRail{
-  position: fixed;
-  left: var(--dock-left);
-  bottom: 20px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: calc(6% + min(78vmin, 520px) + 40px);
 
   display: flex;
-  gap: 12px;
-  align-items: center;
-}
+  flex-direction: column;
+  gap: 18px;
 
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  max-height: 70vh;
+  overflow-y: auto;
 
-  z-index: 80;
+  padding-right: 6px; /* lite space för scrollbar */
 }
 
 .railIcon{
@@ -131,14 +127,10 @@ input, textarea, button { font-size:16px; }
   border-radius: 14px;
   display:grid;
   place-items:center;
-  flex: 0 0 auto;
-  aspect-ratio: 1 / 1;
-
   background: rgba(0,0,0,.18);
   border: 1px solid rgba(255,255,255,.10);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease;
   opacity: .55;
 }
@@ -146,9 +138,6 @@ input, textarea, button { font-size:16px; }
 .railIcon img{
   width: 22px;
   height: 22px;
-  opacity: .92;
-  display:block;
-  object-fit: contain;
 }
 
 .railIcon.active{
@@ -157,30 +146,7 @@ input, textarea, button { font-size:16px; }
   border-color: rgba(0,209,255,.35);
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
-/* DATE ABOVE ICON DOCK */
-.dateBlock{
-  position: fixed;
-  left: var(--dock-left);  /* eller 220px om du inte kör variabel */
-  bottom: 90px;
-  z-index: 90;
-}
 
-.dateDay{
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.4);
-}
-
-.dateFull{
-  margin-top: 6px;
-  font-size: 26px;
-  font-weight: 950;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.95);
-}
 /* =========================
    TIMER BAR (BOTTOM)
    - shrink from RIGHT to LEFT
@@ -214,15 +180,25 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 /* =========================
    WHEEL (BOTTOM-LEFT)
 ========================= */
-.wheelWrap{
+.navWrap{
   position: absolute;
-  left: 40px;         /* vänster, snyggt på desktop */
+  left: 40px;              /* alternativt 6% */
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  z-index: 50;
+}
+
+.wheelWrap{
+  position: relative;      /* viktigt: inte absolute längre */
+  left: auto;
+  top: auto;
+  transform: none;
+  transform-origin: center;
   width: min(78vmin, 520px);
   aspect-ratio: 1 / 1;
-  transform-origin: center;
-  z-index: 60;
 }
 
 .wheel{
@@ -703,7 +679,27 @@ body.sheetOpen .sheet{
 }
 
 .iconRail{
-  z-index: 60 !important;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+.iconRail::-webkit-scrollbar{ width: 8px; }
+.iconRail::-webkit-scrollbar-track{ background: transparent; }
+.iconRail::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
 }
 
 /* Sheet + overlays must stay above everything when open */
