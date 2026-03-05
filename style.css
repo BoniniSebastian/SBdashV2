@@ -126,7 +126,7 @@ input, textarea, button { font-size:16px; }
   left:50%;
   top:45%;
   transform: translate(-50%,-52%);
-  width: min(320px, calc(52px * 5 + 10px * 3)); /* ~5 icons width */
+  width: min(420px, calc(52px * 5 + 10px * 3)); /* ~5 icons width */
   text-align:center;
   pointer-events:none;
   z-index: 5; /* above blobs, below rail + sheet */
