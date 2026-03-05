@@ -124,7 +124,7 @@ input, textarea, button { font-size:16px; }
 .centerNow{
   position:absolute;
   left:50%;
-  top:45%;
+  top:5%;
   transform: translate(-50%,-52%);
  width:100%;
   text-align:center;
@@ -137,8 +137,8 @@ input, textarea, button { font-size:16px; }
 
 .cnLine{
   font-weight: 950;
-  letter-spacing: .08em;
-  font-size: 30px;
+  letter-spacing: .06em;
+  font-size: 20px;
   line-height: 1;
   color: rgba(255,255,255,.78);
   text-shadow: 0 0 18px rgba(0,209,255,.08);
