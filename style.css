@@ -134,33 +134,13 @@ input, textarea, button { font-size:16px; }
   mix-blend-mode: screen;
 }
 
-.cnDay{
+.cnLine{
   font-weight: 950;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  font-size: 12px;
-  line-height: 1.05;
-  color: rgba(255,255,255,.80);
-}
-
-.cnDate{
-  margin-top: 6px;
-  font-weight: 950;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  font-size: 18px;
-  line-height: 1.05;
-  color: rgba(255,255,255,.86);
-}
-
-.cnTime{
-  margin-top: 6px;
-  font-weight: 950;
-  letter-spacing: .20em;
+  letter-spacing: .08em;
   font-size: 20px;
-  line-height: 1.05;
-  color: rgba(255,255,255,.70);
-  text-shadow: 0 0 18px rgba(0,209,255,.10);
+  line-height: 1;
+  color: rgba(255,255,255,.78);
+  text-shadow: 0 0 18px rgba(0,209,255,.08);
 }
 
 /* Hide when sheet/overlays open (keeps it "start" feeling) */
