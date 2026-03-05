@@ -10,9 +10,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const ambientBlob = document.querySelector(".ambientBlob");
-   const cnDay = $("cnDay");
-const cnDate = $("cnDate");
-const cnTime = $("cnTime");
+   const cnLine = $("cnLine");
 const centerNow = $("centerNow");
 
   /* ---------- main elements ---------- */
@@ -63,13 +61,27 @@ const centerNow = $("centerNow");
   const clamp01 = (x) => Math.max(0, Math.min(1, x));
   const pad2 = (n) => String(n).padStart(2, "0");
   function updateCenterNow(){
-  if (!cnDay || !cnDate || !cnTime) return;
+  if (!cnLine) return;
 
   const d = new Date();
-  cnDay.textContent = d.toLocaleDateString("sv-SE", { weekday: "long" }).toUpperCase();
-  cnDate.textContent = d.toLocaleDateString("sv-SE", { day: "numeric", month: "long" }).toUpperCase();
-  cnTime.textContent = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
+  const time = d.toLocaleTimeString("sv-SE", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const weekday = d.toLocaleDateString("sv-SE", {
+    weekday: "long"
+  });
+
+  const date = d.toLocaleDateString("sv-SE", {
+    day: "numeric",
+    month: "long"
+  }).toUpperCase();
+
+  cnLine.textContent = `${time} | ${weekday} | ${date}`;
 }
+
 
 function setCenterNowVisible(on){
   if (!centerNow) return;
