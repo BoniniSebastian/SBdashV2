@@ -1,4 +1,5 @@
 :root{
+  --dock-left: 220px;   /* ändra här om du vill flytta allt */
   --bg:#050b12;
   --stroke: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.92);
@@ -60,7 +61,7 @@ input, textarea, button { font-size:16px; }
     radial-gradient(circle at 70% 70%, rgba(255,100,180,.25), transparent 55%),
     radial-gradient(circle at 65% 35%, rgba(0,255,180,.18), transparent 60%);
   filter: blur(10px);
-  opacity:.5;
+  opacity:.75;
   animation: zenPulse 2.4s ease-in-out infinite;
   pointer-events:none;
   z-index: 0;
@@ -107,14 +108,13 @@ input, textarea, button { font-size:16px; }
 ========================= */
 .iconRail{
   position: fixed;
-  left: 240px;  /* samma som hjulet */
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  transform: none;
+  left: var(--dock-left);
+  bottom: 20px;
 
   display: flex;
-  flex-direction: row;
-  gap: 6px;
+  gap: 12px;
   align-items: center;
+}
 
   background: transparent;
   border: 0;
@@ -126,8 +126,8 @@ input, textarea, button { font-size:16px; }
 }
 
 .railIcon{
-  width: 35px;
-  height: 35px;
+  width: 44px;
+  height: 44px;
   border-radius: 14px;
   display:grid;
   place-items:center;
@@ -157,7 +157,30 @@ input, textarea, button { font-size:16px; }
   border-color: rgba(0,209,255,.35);
   box-shadow: 0 0 22px rgba(0,209,255,.26);
 }
+/* DATE ABOVE ICON DOCK */
+.dateBlock{
+  position: fixed;
+  left: var(--dock-left);  /* eller 220px om du inte kör variabel */
+  bottom: 90px;
+  z-index: 90;
+}
 
+.dateDay{
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+
+.dateFull{
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.95);
+}
 /* =========================
    TIMER BAR (BOTTOM)
    - shrink from RIGHT to LEFT
@@ -686,49 +709,3 @@ body.sheetOpen .sheet{
 /* Sheet + overlays must stay above everything when open */
 .sheetWrap{ z-index: 80 !important; }
 .overlayWrap{ z-index: 100 !important; }
-
-/* =========================
-   DATE PANEL
-========================= */
-
-.datePanel{
-  position: fixed;
-  top: var(--railTop);
-  left: calc(var(--wheelLeft) + var(--wheelSize) + 26px);
-  z-index: 50;
-
-  width: 130px;
-
-  padding: 16px 18px;
-  border-radius: 20px;
-
-  background: rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.10);
-
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  text-align:left;
-  color:white;
-
-  pointer-events:none;
-}
-
-.dpDay{
-  font-size:12px;
-  letter-spacing:2px;
-  opacity:.7;
-}
-
-.dpDate{
-  font-size:46px;
-  font-weight:700;
-  line-height:1;
-  margin:4px 0;
-}
-
-.dpMonth{
-  font-size:12px;
-  letter-spacing:2px;
-  opacity:.7;
-}
