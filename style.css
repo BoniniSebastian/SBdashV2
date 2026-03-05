@@ -776,7 +776,7 @@ body.sheetOpen .sheet{
 .dwTop{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
 }
 
 .dwIcon{
@@ -786,7 +786,7 @@ body.sheetOpen .sheet{
 }
 
 .dwTemp{
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: .5px;
 }
@@ -794,19 +794,19 @@ body.sheetOpen .sheet{
 .dwMeta{
   display:flex;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 12px;
-  opacity: .85;
+  opacity: .7;
   letter-spacing: .4px;
 }
 
 .dwForecast{
-  margin-top: 8px;
+  margin-top: 6px;
   display:flex;
   gap: 10px;
   align-items:center;
-  font-size: 11px;
-  opacity: .85;
+  font-size: 12px;
+  opacity: .8;
   overflow: hidden;
 }
 
