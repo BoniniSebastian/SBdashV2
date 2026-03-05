@@ -1219,6 +1219,8 @@ async function initWeatherDock(){
   // center date / time
   updateCenterNow();
   setInterval(updateCenterNow, 1000 * 20);
+
+    initWeatherDock();
 }
 
 init();
