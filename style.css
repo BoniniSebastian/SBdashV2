@@ -118,6 +118,57 @@ input, textarea, button { font-size:16px; }
   pointer-events:auto;
 }
 
+/* =========================
+   CENTER DATE/TIME (AMBIENT)
+========================= */
+.centerNow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%,-52%);
+  width: min(320px, calc(52px * 4 + 10px * 3)); /* ~4 icons width */
+  text-align:center;
+  pointer-events:none;
+  z-index: 5; /* above blobs, below rail + sheet */
+  opacity: .42;
+  mix-blend-mode: screen;
+}
+
+.cnDay{
+  font-weight: 950;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  font-size: 12px;
+  line-height: 1.05;
+  color: rgba(255,255,255,.80);
+}
+
+.cnDate{
+  margin-top: 6px;
+  font-weight: 950;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: 18px;
+  line-height: 1.05;
+  color: rgba(255,255,255,.86);
+}
+
+.cnTime{
+  margin-top: 6px;
+  font-weight: 950;
+  letter-spacing: .20em;
+  font-size: 20px;
+  line-height: 1.05;
+  color: rgba(255,255,255,.70);
+  text-shadow: 0 0 18px rgba(0,209,255,.10);
+}
+
+/* Hide when sheet/overlays open (keeps it "start" feeling) */
+body.sheetOpen .centerNow,
+.overlayWrap.open ~ .centerNow{
+  opacity: 0;
+}
+
 .railIcon{
   position: relative;
   width: 52px;
