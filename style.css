@@ -911,7 +911,7 @@ body.sheetOpen .sheet{
 
   /* vertikala avstånd */
   --weatherTop: calc(8px + env(safe-area-inset-top));
-  --weatherToIcons: 75px;  /* hur långt ner ikonraden ska ligga under vädret */
+  --weatherToIcons: 90px;  /* hur långt ner ikonraden ska ligga under vädret */
   --iconsToDate: 55px;     /* hur långt ner datumet ska ligga under ikonerna */
 }
 
