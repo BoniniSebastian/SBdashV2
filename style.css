@@ -8,7 +8,7 @@
   --railTop: calc(env(safe-area-inset-top) + 18px);
 
   /* Wheel */
-  --wheelSize: 140px;
+  --wheelSize: 120px;
   --wheelLeft: 16px;
   --wheelBottom: calc(40px + env(safe-area-inset-bottom));
 }
