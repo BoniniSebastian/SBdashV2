@@ -909,9 +909,9 @@ body.sheetOpen .sheet{
   --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
 
   /* vertikala avstånd */
-  --weatherTop: calc(8px + env(safe-area-inset-top));
+  --weatherTop: calc(28px + env(safe-area-inset-top));
   --weatherToIcons: 90px;  /* hur långt ner ikonraden ska ligga under vädret */
-  --iconsToDate: 55px;     /* hur långt ner datumet ska ligga under ikonerna */
+  --iconsToDate: 70px;     /* hur långt ner datumet ska ligga under ikonerna */
 }
 
 /* =========================
