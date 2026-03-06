@@ -19,7 +19,8 @@
   const sheetTitle = $("sheetTitle");
   const sheetContent = $("sheetContent");
   const sheetCloseBtn = $("sheetCloseBtn");
-
+  const calendarOverlay = $("calendarOverlay");
+  const calendarClose = $("calendarClose");
   const timerOverlay = $("timerOverlay");
   const timerClose = $("timerClose");
   const timerStartBtn = $("timerStartBtn");
@@ -698,6 +699,23 @@
   const SPIN_STEP = 360 / SPIN_SEGMENTS;
   let lastSpinSector = null;
 
+  function openCalendarOverlay() {
+    closeSheet();
+    closeTimerOverlay();
+    closeToolsOverlay();
+    closeDartOverlay();
+    setCenterNowVisible(false);
+
+    calendarOverlay?.classList.add("open");
+    calendarOverlay?.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCalendarOverlay() {
+    calendarOverlay?.classList.remove("open");
+    calendarOverlay?.setAttribute("aria-hidden", "true");
+    setCenterNowVisible(true);
+  }
+   
   function openToolsOverlay() {
     closeSheet();
     closeTimerOverlay();
