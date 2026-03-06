@@ -105,18 +105,7 @@ input, textarea, button { font-size:16px; }
 /* =========================
    ICON RAIL (TOP)
 ========================= */
-.iconRail{
-  position:absolute;
-  left:50%;
-  top: var(--railTop);
-  transform: translateX(-50%);
-  display:flex;
-  gap:2px;
-  align-items:center;
-  justify-content:center;
-  z-index: 30;
-  pointer-events:auto;
-}
+
 
 /* =========================
    CENTER DATE/TIME (AMBIENT)
@@ -835,19 +824,7 @@ body.sheetOpen .sheet{
   --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
 }
 
-.iconRail{
-  position: fixed !important;
-  left: calc(var(--wheelLeft) + var(--wheelSize) / 2) !important;
-  top: calc(100dvh - var(--wheelBottom) + 20px) !important;
-  transform: translateX(-50%) !important;
 
-  display: flex !important;
-  gap: 4px !important;
-  justify-content: center !important;
-  align-items: center !important;
-
-  z-index: 60 !important;
-}
 
 /* CENTER DATE/TIME: lägg under ikonraden, vänsterjusterat */
 .centerNow{
@@ -937,14 +914,7 @@ body.sheetOpen .sheet{
 }
 
 /* 2) IKONRADEN under väder */
-.iconRail{
-  position: fixed !important;
-  left: var(--leftStackLeft) !important;
-  top: calc(var(--weatherTop) + var(--weatherToIcons)) !important;
-  transform: none !important;
 
-  justify-content: flex-start !important;
-}
 
 /* 3) DATUM under ikoner */
 .centerNow{
