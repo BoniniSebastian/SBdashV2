@@ -111,23 +111,16 @@ input, textarea, button { font-size:16px; }
    CENTER DATE/TIME (AMBIENT)
 ========================= */
 .centerNow{
-  position:absolute;
-
-  left:50%;
-  top:calc(env(safe-area-inset-top) + 6px);
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 10px);
 
   transform: translateX(-50%);
 
-  width:auto;
-  text-align:center;
+  text-align: center;
+  width: auto;
 
-  pointer-events:none;
-  z-index: 5;
-
-  opacity:.95;
-  mix-blend-mode: screen;
-
-  white-space:nowrap;
+  white-space: nowrap;
 }
 
 .cnLine{
