@@ -217,8 +217,8 @@ body.sheetOpen .centerNow,
   position:absolute;
   left: 14px;
   right: 14px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  height: 7px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  height: 5px;
   pointer-events:none;
   opacity: 0;
   transition: opacity .20s ease;
