@@ -1018,8 +1018,8 @@ body.timerRunning .wheelCenter .wcBot{
 
 .dashboard{
   position: absolute;
-  left: 250px;
-  top: 86px;
+  left: 320px;
+  top: 110px;
 
   display: flex;
   gap: 28px;
@@ -1037,12 +1037,12 @@ body.timerRunning .wheelCenter .wcBot{
 
   padding:22px;
 
-  background: rgba(15,20,28,.45);
+  background: rgba(15,20,28,.35);
 
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(22px);
 
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
 
   box-shadow:
     0 20px 60px rgba(0,0,0,.35),
