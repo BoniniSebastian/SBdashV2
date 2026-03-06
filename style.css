@@ -838,7 +838,7 @@ body.sheetOpen .sheet{
 .iconRail{
   position: fixed !important;
   left: calc(var(--wheelLeft) + var(--wheelSize) / 2) !important;
-  top: calc(100dvh - var(--wheelBottom) + 10px) !important;
+  top: calc(100dvh - var(--wheelBottom) + 20px) !important;
   transform: translateX(-50%) !important;
 
   display: flex !important;
