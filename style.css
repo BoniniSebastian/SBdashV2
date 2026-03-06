@@ -141,11 +141,11 @@ body.sheetOpen .centerNow,
 
 .railIcon{
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 18px;
-  display:grid;
-  place-items:center;
+  display: grid;
+  place-items: center;
 
   background: transparent;
   border: 0;
@@ -179,8 +179,8 @@ body.sheetOpen .centerNow,
 
 
 .railIcon img{
-  width: 20px;
-  height: 20px;
+  width: 18px !important;
+  height: 18px !important;
   opacity: .92;
 }
 
