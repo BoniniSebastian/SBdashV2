@@ -112,16 +112,22 @@ input, textarea, button { font-size:16px; }
 ========================= */
 .centerNow{
   position:absolute;
+
   left:50%;
-  top:2%;
-  transform: translate(-50%,-52%);
- width:100%;
+  top:calc(env(safe-area-inset-top) + 6px);
+
+  transform: translateX(-50%);
+
+  width:auto;
   text-align:center;
+
   pointer-events:none;
-  z-index: 5; /* above blobs, below rail + sheet */
-  opacity: .95;
+  z-index: 5;
+
+  opacity:.95;
   mix-blend-mode: screen;
-  white-space: nowrap;
+
+  white-space:nowrap;
 }
 
 .cnLine{
