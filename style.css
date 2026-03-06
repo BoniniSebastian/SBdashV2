@@ -10,7 +10,7 @@
   /* Wheel */
   --wheelSize: 120px;
   --wheelLeft: 16px;
-  --wheelBottom: calc(40px + env(safe-area-inset-bottom));
+  --wheelBottom: calc(48px + env(safe-area-inset-bottom));
 }
 
 *{ box-sizing:border-box; }
