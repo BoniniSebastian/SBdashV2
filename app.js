@@ -19,8 +19,10 @@
   const sheetTitle = $("sheetTitle");
   const sheetContent = $("sheetContent");
   const sheetCloseBtn = $("sheetCloseBtn");
+
   const calendarOverlay = $("calendarOverlay");
   const calendarClose = $("calendarClose");
+
   const timerOverlay = $("timerOverlay");
   const timerClose = $("timerClose");
   const timerStartBtn = $("timerStartBtn");
@@ -205,7 +207,7 @@
     timerMode = true;
     timerPresetIndex = 0;
     rotationDeg = 0;
-    if (wheelRing) wheelRing.style.transform = `rotate(0deg)`;
+    if (wheelRing) wheelRing.style.transform = "rotate(0deg)";
     renderTimerWheelCenter();
   }
 
@@ -254,6 +256,7 @@
 
   function anyOverlayOpen() {
     return (
+      calendarOverlay?.classList.contains("open") ||
       timerOverlay?.classList.contains("open") ||
       toolsOverlay?.classList.contains("open") ||
       dartOverlay?.classList.contains("open")
@@ -630,6 +633,7 @@
 
   function openTimerOverlay() {
     closeSheet();
+    closeCalendarOverlay();
     closeToolsOverlay();
     closeDartOverlay();
     setCenterNowVisible(false);
@@ -691,14 +695,7 @@
     },
   });
 
-  /* ---------- tools ---------- */
-  const toolsCard = toolsOverlay?.querySelector(".overlayCard");
-  let spinGuess = null;
-  let fidgetCount = Number(store.tools?.fidgetCount ?? 0);
-  const SPIN_SEGMENTS = 30;
-  const SPIN_STEP = 360 / SPIN_SEGMENTS;
-  let lastSpinSector = null;
-
+  /* ---------- calendar ---------- */
   function openCalendarOverlay() {
     closeSheet();
     closeTimerOverlay();
@@ -715,9 +712,23 @@
     calendarOverlay?.setAttribute("aria-hidden", "true");
     setCenterNowVisible(true);
   }
-   
+
+  calendarClose?.addEventListener("click", closeCalendarOverlay);
+  calendarOverlay?.addEventListener("click", (e) => {
+    if (e.target === calendarOverlay) closeCalendarOverlay();
+  });
+
+  /* ---------- tools ---------- */
+  const toolsCard = toolsOverlay?.querySelector(".overlayCard");
+  let spinGuess = null;
+  let fidgetCount = Number(store.tools?.fidgetCount ?? 0);
+  const SPIN_SEGMENTS = 30;
+  const SPIN_STEP = 360 / SPIN_SEGMENTS;
+  let lastSpinSector = null;
+
   function openToolsOverlay() {
     closeSheet();
+    closeCalendarOverlay();
     closeTimerOverlay();
     closeDartOverlay();
     setCenterNowVisible(false);
@@ -747,8 +758,13 @@
     if (e.target === toolsOverlay) closeToolsOverlay();
   });
 
-  guessOdd?.addEventListener("click", () => { spinGuess = "odd"; });
-  guessEven?.addEventListener("click", () => { spinGuess = "even"; });
+  guessOdd?.addEventListener("click", () => {
+    spinGuess = "odd";
+  });
+
+  guessEven?.addEventListener("click", () => {
+    spinGuess = "even";
+  });
 
   fidgetReset?.addEventListener("click", () => {
     fidgetCount = 0;
@@ -850,6 +866,7 @@
 
   function openDartOverlay() {
     closeSheet();
+    closeCalendarOverlay();
     closeToolsOverlay();
     closeTimerOverlay();
     setCenterNowVisible(false);
@@ -893,6 +910,7 @@
 
   /* ---------- open per view ---------- */
   function openForView(id) {
+    if (id === "calendar") return openCalendarOverlay();
     if (id === "tools") return openToolsOverlay();
     if (id === "dart501") return openDartOverlay();
     if (id === "timer") return enterTimerMode();
