@@ -1021,3 +1021,100 @@ body.timerRunning .wheelCenter .wcBot{
   display: block;
   background: #0b1118;
 }
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard{
+  position: absolute;
+
+  left: 220px;
+  top: 120px;
+
+  display:flex;
+  gap:28px;
+}
+
+/* =========================
+   WIDGET BASE
+========================= */
+
+.widget{
+  width: 460px;
+  height: 250px;
+
+  border-radius: 28px;
+
+  padding:22px;
+
+  background: rgba(15,20,28,.45);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255,255,255,.08);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.widgetHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:18px;
+}
+
+.widgetTitle{
+  font-weight:900;
+  letter-spacing:.18em;
+  font-size:13px;
+  opacity:.75;
+}
+
+.widgetDate{
+  font-size:13px;
+  opacity:.65;
+}
+
+/* =========================
+   EVENTS
+========================= */
+
+.calendarEvents{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.event{
+  display:grid;
+  grid-template-columns:12px 70px 1fr;
+  align-items:center;
+  gap:10px;
+}
+
+.eventDot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+
+  background:rgba(0,209,255,.9);
+
+  box-shadow:0 0 10px rgba(0,209,255,.5);
+}
+
+.eventTime{
+  font-weight:700;
+  opacity:.75;
+}
+
+.eventTitle{
+  font-weight:600;
+}
