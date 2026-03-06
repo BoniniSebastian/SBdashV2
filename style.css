@@ -835,13 +835,20 @@ body.sheetOpen .sheet{
   --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
 }
 
-/* ICON RAIL: från center -> vänster (bredvid hjulet) */
 .iconRail{
-  left: var(--leftStackLeft) !important;
-  top: var(--railTop) !important;
-  transform: none !important;
+  position: fixed !important;
 
-  justify-content: flex-start !important;
+  left: calc(var(--wheelLeft) + var(--wheelSize) / 2);
+  transform: translateX(-50%);
+
+  bottom: calc(var(--wheelBottom) - 48px);
+
+  display:flex;
+  gap:4px;
+  justify-content:center;
+  align-items:center;
+
+  z-index:60;
 }
 
 /* CENTER DATE/TIME: lägg under ikonraden, vänsterjusterat */
