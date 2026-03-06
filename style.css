@@ -944,18 +944,13 @@ body.timerRunning .wheelCenter .wcBot{
 .iconRail{
   position: fixed !important;
 
-  /* centrera mot hjulets mitt */
-  left: calc(var(--wheelLeft) + var(--wheelSize) / 2) !important;
+  left: calc(var(--wheelLeft) + var(--wheelSize) / 2 + 8px) !important;
   transform: translateX(-50%) !important;
 
-  /* placera under hjulet */
-  top: calc(100dvh - var(--wheelBottom) + 25px) !important;
+  top: calc(100dvh - var(--wheelBottom) - 8px) !important;
 
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
+  display:flex !important;
+  gap:0px !important;
 
-  gap: 3px !important;
-
-  z-index: 60 !important;
+  z-index:60 !important;
 }
