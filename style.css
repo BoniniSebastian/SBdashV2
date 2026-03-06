@@ -979,7 +979,7 @@ body.timerRunning .wheelCenter .wcBot{
   transform: translateX(-50%) !important;
 
   /* placera under hjulet */
-  top: calc(100dvh - var(--wheelBottom) + 12px) !important;
+  top: calc(100dvh - var(--wheelBottom) + 22px) !important;
 
   display: flex !important;
   justify-content: center !important;
