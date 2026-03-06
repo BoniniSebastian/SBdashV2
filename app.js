@@ -147,6 +147,9 @@ function setCenterNowVisible(on){
   const STEP = 360 / VIEW_DEFS.length;
   let rotationDeg = activeIndex * STEP;
 
+   let timerMode = false;
+let timerPresetIndex = 0;
+
   function renderWheelCenter() {
     const top = $("wcTop");
     const main = $("wcMain");
@@ -159,46 +162,55 @@ function setCenterNowVisible(on){
     bot.textContent = VIEW_DEFS[(activeIndex + 1) % n]?.label || "—";
   }
 
-  function renderIconRail() {
-    if (!iconRail) return;
-    iconRail.innerHTML = "";
-    VIEW_DEFS.forEach((v, idx) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "railIcon" + (idx === activeIndex ? " active" : "");
-      b.setAttribute("aria-label", v.label);
+ function renderTimerWheelCenter() {
+  const top = $("wcTop");
+  const main = $("wcMain");
+  const bot = $("wcBot");
+  if (!top || !main || !bot) return;
 
-      const img = document.createElement("img");
-      img.src = v.icon;
-      img.alt = "";
-      img.draggable = false;
-      b.appendChild(img);
-       // Quick-start 5 min timer badge under TIMER icon
-if (v.id === "timer") {
-  const badge = document.createElement("div");
-  badge.className = "quickTimerBadge";
-  badge.textContent = "5";
-
-  badge.addEventListener("click", (e) => {
-    e.stopPropagation(); // prevent opening timer overlay
-    // start 5 min immediately
-    setTimerMinutesAndStart(5);
-    closeTimerOverlay();
-    closeToolsOverlay();
-    closeDartOverlay();
-  });
-
-  b.appendChild(badge);
+  top.textContent = "TIMER";
+  main.textContent = `${TIMER_PRESETS[timerPresetIndex]}`;
+  bot.textContent = "MIN • TRYCK START";
 }
 
-      b.addEventListener("click", () => {
-        setRotation(idx * STEP);
-        openForView(v.id);
-      });
+function enterTimerMode() {
+  timerMode = true;
+  timerPresetIndex = 0;
+  rotationDeg = 0;
+  if (wheelRing) wheelRing.style.transform = `rotate(0deg)`;
+  renderTimerWheelCenter();
+}
 
-      iconRail.appendChild(b);
+function exitTimerMode() {
+  timerMode = false;
+  setRotation(activeIndex * STEP);
+  renderWheelCenter();
+}
+
+      function renderIconRail() {
+  if (!iconRail) return;
+  iconRail.innerHTML = "";
+
+  VIEW_DEFS.forEach((v, idx) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "railIcon" + (idx === activeIndex ? " active" : "");
+    b.setAttribute("aria-label", v.label);
+
+    const img = document.createElement("img");
+    img.src = v.icon;
+    img.alt = "";
+    img.draggable = false;
+    b.appendChild(img);
+
+    b.addEventListener("click", () => {
+      setRotation(idx * STEP);
+      openForView(v.id);
     });
-  }
+
+    iconRail.appendChild(b);
+  });
+}
 
   function setActiveIndex(idx) {
     activeIndex = ((idx % VIEW_DEFS.length) + VIEW_DEFS.length) % VIEW_DEFS.length;
@@ -219,20 +231,29 @@ if (v.id === "timer") {
     );
   }
 
-  function setRotation(deg) {
-    rotationDeg = deg;
-    if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
+ function setRotation(deg) {
+  rotationDeg = deg;
+  if (wheelRing) wheelRing.style.transform = `rotate(${deg}deg)`;
 
-    // MAIN NAV only when no overlays
-    if (!anyOverlayOpen()) {
-      const idx = sectorFromDeg(deg);
-      if (idx !== activeIndex) setActiveIndex(idx);
+  if (timerMode) {
+    const step = 360 / TIMER_PRESETS.length;
+    const idx = ((Math.round(deg / step) % TIMER_PRESETS.length) + TIMER_PRESETS.length) % TIMER_PRESETS.length;
+    if (idx !== timerPresetIndex) {
+      timerPresetIndex = idx;
+      renderTimerWheelCenter();
+    }
+    return;
+  }
 
-      if (document.body.classList.contains("sheetOpen")) {
-        renderView(VIEW_DEFS[activeIndex].id, { fast: true });
-      }
+  if (!anyOverlayOpen()) {
+    const idx = sectorFromDeg(deg);
+    if (idx !== activeIndex) setActiveIndex(idx);
+
+    if (document.body.classList.contains("sheetOpen")) {
+      renderView(VIEW_DEFS[activeIndex].id, { fast: true });
     }
   }
+}
 
   /* ---------- main wheel input ---------- */
   let dragging = false;
@@ -287,23 +308,42 @@ if (v.id === "timer") {
     if (!dragging) return;
     dragging = false;
 
-    const idx = sectorFromDeg(rotationDeg);
-    setRotation(idx * STEP);
+  if (timerMode) {
+  const step = 360 / TIMER_PRESETS.length;
+  const idx = ((Math.round(rotationDeg / step) % TIMER_PRESETS.length) + TIMER_PRESETS.length) % TIMER_PRESETS.length;
+  setRotation(idx * step);
+} else {
+  const idx = sectorFromDeg(rotationDeg);
+  setRotation(idx * STEP);
+}
 
     // tap opens current view
-    if (!didDrag && !anyOverlayOpen()) {
-      openForView(VIEW_DEFS[activeIndex].id);
-    }
+   if (!didDrag && !anyOverlayOpen()) {
+  if (timerMode) {
+    setTimerMinutesAndStart(TIMER_PRESETS[timerPresetIndex]);
+    exitTimerMode();
+  } else {
+    openForView(VIEW_DEFS[activeIndex].id);
+  }
+}
   }, { passive: true });
 
   wheel?.addEventListener("pointercancel", () => { dragging = false; }, { passive: true });
 
-  wheel?.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const dir = e.deltaY > 0 ? 1 : -1;
-    const idx = (activeIndex + dir + VIEW_DEFS.length) % VIEW_DEFS.length;
-    setRotation(idx * STEP);
-  }, { passive: false });
+ wheel?.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const dir = e.deltaY > 0 ? 1 : -1;
+
+  if (timerMode) {
+    const step = 360 / TIMER_PRESETS.length;
+    const idx = (timerPresetIndex + dir + TIMER_PRESETS.length) % TIMER_PRESETS.length;
+    setRotation(idx * step);
+    return;
+  }
+
+  const idx = (activeIndex + dir + VIEW_DEFS.length) % VIEW_DEFS.length;
+  setRotation(idx * STEP);
+}, { passive: false });
 
   /* ---------- sheet ---------- */
   function openSheet() {
@@ -475,7 +515,7 @@ if (v.id === "timer") {
      TIMER (preset wheel + countdown)
   ====================================================== */
   const TIMER_PRESETS = [1, 5, 10, 15, 20, 30];
-  let timerPresetIndex = 0;
+ 
 
   const TIMER = { total: 300, left: 300, running: false, endAt: 0, intervalId: 0 };
 
@@ -526,14 +566,27 @@ if (v.id === "timer") {
     const left = Math.max(0, Math.ceil((TIMER.endAt - Date.now()) / 1000));
     TIMER.left = left;
     updateTimerBar();
-    if (timerOverlay?.classList.contains("open") && timerBigEl) {
-      const mm = Math.floor(left / 60), ss = left % 60;
-      timerBigEl.textContent = `${pad2(mm)}:${pad2(ss)}`;
-    }
+    const mm = Math.floor(left / 60), ss = left % 60;
+
+if (timerBigEl) {
+  timerBigEl.textContent = `${pad2(mm)}:${pad2(ss)}`;
+}
+
+if (!timerMode) {
+  const top = $("wcTop");
+  const main = $("wcMain");
+  const bot = $("wcBot");
+  if (top && main && bot && TIMER.running) {
+    top.textContent = "TIMER";
+    main.textContent = `${pad2(mm)}:${pad2(ss)}`;
+    bot.textContent = "PÅGÅR";
+  }
+}
     if (left <= 0) {
       stopTimerInternal();
       updateTimerBar();
       alarm();
+       renderWheelCenter();
     }
   }
 
@@ -797,7 +850,7 @@ if (v.id === "timer") {
   function openForView(id) {
   if (id === "tools") return openToolsOverlay();
   if (id === "dart501") return openDartOverlay();   // <-- NY
-  if (id === "timer") return openTimerOverlay();
+ if (id === "timer") return enterTimerMode();
   openSheet();
   renderView(id);
 }
