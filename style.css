@@ -826,15 +826,6 @@ body.sheetOpen .sheet{
 
 
 /* CENTER DATE/TIME: lägg under ikonraden, vänsterjusterat */
-.centerNow{
-  position: fixed !important;
-  left: var(--leftStackLeft) !important;
-  top: calc(var(--railTop) + 78px) !important; /* under ikonerna */
-  transform: none !important;
-
-  width: auto !important;
-  text-align: left !important;
-}
 
 /* DOCK (väder): flytta upp till vänster-stack, inte i botten-center */
 .dock{
