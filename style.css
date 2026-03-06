@@ -953,3 +953,17 @@ body.sheetOpen .sheet{
   text-align: left !important;
   white-space: nowrap;
 }
+.quickTimerBadge{
+  display:none !important;
+}
+body.timerRunning .wheelCenter .wcTop{
+  opacity: .75;
+}
+
+body.timerRunning .wheelCenter .wcMain{
+  text-shadow: 0 0 14px rgba(255,255,255,.18);
+}
+
+body.timerRunning .wheelCenter .wcBot{
+  opacity: .85;
+}
