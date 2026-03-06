@@ -83,7 +83,24 @@
         <div class="sheetHandle" aria-hidden="true"></div>
       </div>
     </div>
+    <!-- CALENDAR OVERLAY -->
+    <div class="overlayWrap" id="calendarOverlay" aria-hidden="true">
+      <div class="overlayCard overlayCard--calendar">
+        <div class="overlayTop">
+          <div class="overlayTitle">KALENDER</div>
+          <button class="overlayClose" id="calendarClose" type="button" aria-label="Stäng kalender">✕</button>
+        </div>
 
+        <div class="calendarFrameWrap">
+          <iframe
+            id="calendarFrame"
+            src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%230b1118&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </div>
+    </div>
     <!-- TIMER OVERLAY -->
     <div class="overlayWrap" id="timerOverlay" aria-hidden="true">
       <div class="overlayCard">
