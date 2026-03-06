@@ -960,3 +960,45 @@ body.timerRunning .wheelCenter .wcBot{
 
   z-index:60 !important;
 }
+.timerDonePopup{
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 200;
+}
+
+.timerDonePopup.show{
+  display: grid;
+}
+
+.timerDoneCard{
+  min-width: 260px;
+  padding: 22px 20px;
+  border-radius: 22px;
+  background: rgba(10,15,20,.88);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  text-align: center;
+}
+
+.timerDoneTitle{
+  font-weight: 950;
+  letter-spacing: .14em;
+  font-size: 14px;
+  color: rgba(255,255,255,.92);
+}
+
+.timerDoneBtn{
+  margin-top: 18px;
+  min-width: 120px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,209,255,.35);
+  background: rgba(0,209,255,.16);
+  color: rgba(255,255,255,.92);
+  font-weight: 900;
+}
