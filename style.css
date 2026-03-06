@@ -887,7 +887,7 @@ body.sheetOpen .sheet{
 }
 :root{
   /* vänsterkolumnens x-position (du har redan wheel-variabler) */
-  --leftStackGap: 64px;
+  --leftStackGap: 52px;
   --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
 
   /* vertikala avstånd */
