@@ -17,6 +17,8 @@ const centerNow = $("centerNow");
   const wheel = $("wheel");
   const wheelRing = document.querySelector(".wheelRing");
   const iconRail = $("iconRail");
+  const timerDonePopup = $("timerDonePopup");
+const timerDoneBtn = $("timerDoneBtn"); 
 
   const sheetWrap = $("sheetWrap");
   const sheet = $("sheet");
@@ -35,6 +37,8 @@ const centerNow = $("centerNow");
 
   const timerWheel = $("timerWheel");
   const timerRing = $("timerRing");
+   const timerDonePopup = $("timerDonePopup");
+const timerDoneBtn = $("timerDoneBtn");
 
   /* ---------- tools overlay (spinner wheel) ---------- */
   const toolsOverlay = $("toolsOverlay");
@@ -552,6 +556,15 @@ function exitTimerMode() {
     }
     beepFallback();
   }
+   function openTimerDonePopup(){
+  timerDonePopup?.classList.add("show");
+  timerDonePopup?.setAttribute("aria-hidden","false");
+}
+
+function closeTimerDonePopup(){
+  timerDonePopup?.classList.remove("show");
+  timerDonePopup?.setAttribute("aria-hidden","true");
+}
 
   function stopTimerInternal() {
     TIMER.running = false;
@@ -568,6 +581,8 @@ function exitTimerMode() {
     updateTimerBar();
     const mm = Math.floor(left / 60), ss = left % 60;
 
+     
+
 if (timerBigEl) {
   timerBigEl.textContent = `${pad2(mm)}:${pad2(ss)}`;
 }
@@ -582,10 +597,12 @@ if (!timerMode) {
     bot.textContent = "PÅGÅR";
   }
 }
-    if (left <= 0) {
-      stopTimerInternal();
-      updateTimerBar();
-      alarm();
+   if (left <= 0) {
+  stopTimerInternal();
+  updateTimerBar();
+  alarm();
+  openTimerDonePopup();
+}
        renderWheelCenter();
     }
   }
@@ -1275,6 +1292,11 @@ async function initWeatherDock(){
 
     initWeatherDock();
 }
+   timerDoneBtn?.addEventListener("click", closeTimerDonePopup);
+
+timerDonePopup?.addEventListener("click", (e) => {
+  if (e.target === timerDonePopup) closeTimerDonePopup();
+});
 
 init();
 })();
