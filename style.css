@@ -906,17 +906,7 @@ body.sheetOpen .sheet{
 /* 2) IKONRADEN under väder */
 
 
-/* 3) DATUM under ikoner */
-.centerNow{
-  position: fixed !important;
-  left: var(--leftStackLeft) !important;
-  top: calc(var(--weatherTop) + var(--weatherToIcons) + var(--iconsToDate)) !important;
-  transform: none !important;
 
-  width: auto !important;
-  text-align: left !important;
-  white-space: nowrap;
-}
 .quickTimerBadge{
   display:none !important;
 }
@@ -1042,7 +1032,7 @@ body.timerRunning .wheelCenter .wcBot{
 
   background: rgba(15,20,28,.35);
 
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
 
   border: 1px solid rgba(255,255,255,.10);
