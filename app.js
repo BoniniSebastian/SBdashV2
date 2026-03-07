@@ -1358,6 +1358,72 @@ function renderCalendarWidget(events = []) {
     listEl.appendChild(row);
   });
 }
+function parseICSDate(raw) {
+  if (!raw) return null;
+
+  if (/^\d{8}$/.test(raw)) {
+    const y = raw.slice(0, 4);
+    const m = raw.slice(4, 6);
+    const d = raw.slice(6, 8);
+    return new Date(`${y}-${m}-${d}T00:00:00`);
+  }
+
+  const cleaned = raw.replace("Z", "");
+  const match = cleaned.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
+  if (!match) return null;
+
+  const [, y, mo, d, h, mi, s] = match;
+  return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
+}
+
+async function loadCalendarWidget() {
+  try {
+    const res = await fetch(
+      "https://api.allorigins.win/raw?url=" + encodeURIComponent(PUBLIC_CALENDAR_ICS),
+      { cache: "no-store" }
+    );
+
+    if (!res.ok) throw new Error("Kunde inte läsa kalenderfeed");
+
+    const text = await res.text();
+    const blocks = text.split("BEGIN:VEVENT");
+    const now = new Date();
+
+    const events = [];
+
+    for (const block of blocks) {
+      const summaryMatch = block.match(/SUMMARY:(.+)/);
+      const startMatch = block.match(/DTSTART(?:;VALUE=DATE)?(?::|;[^:]*:)(.+)/);
+
+      if (!summaryMatch || !startMatch) continue;
+
+      const title = summaryMatch[1].trim();
+      const rawStart = startMatch[1].trim();
+      const startDate = parseICSDate(rawStart);
+
+      if (!startDate || startDate < now) continue;
+
+      const allDay = /^\d{8}$/.test(rawStart);
+
+      events.push({
+        startDate,
+        time: allDay
+          ? "Heldag"
+          : startDate.toLocaleTimeString("sv-SE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+        title,
+      });
+    }
+
+    events.sort((a, b) => a.startDate - b.startDate);
+    renderCalendarWidget(events);
+  } catch (err) {
+    console.warn("Calendar widget error:", err);
+    renderCalendarWidget([]);
+  }
+}
   /* ---------- popup listeners ---------- */
   timerDoneBtn?.addEventListener("click", closeTimerDonePopup);
   timerDonePopup?.addEventListener("click", (e) => {
