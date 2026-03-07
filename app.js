@@ -1376,10 +1376,8 @@ function parseICSDate(raw) {
   return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
 }
 
-  renderCalendarLoading();
-
+async function loadCalendarWidget() {
   try {
-    ...
     const res = await fetch(
       "https://api.allorigins.win/raw?url=" + encodeURIComponent(PUBLIC_CALENDAR_ICS),
       { cache: "no-store" }
