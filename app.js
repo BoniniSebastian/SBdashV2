@@ -1376,7 +1376,6 @@ function parseICSDate(raw) {
   return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
 }
 
-  async function loadCalendarWidget() {
   renderCalendarLoading();
 
   try {
