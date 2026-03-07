@@ -1024,7 +1024,7 @@ body.timerRunning .wheelCenter .wcBot{
 
 .widget{
   width: 460px;
-  height: 220px;
+  height: 210px;
 
   border-radius: 28px;
 
@@ -1051,7 +1051,7 @@ body.timerRunning .wheelCenter .wcBot{
   justify-content:space-between;
   align-items:center;
 
-  margin-bottom:18px;
+  margin-bottom:24px;
 }
 
 .widgetTitle{
