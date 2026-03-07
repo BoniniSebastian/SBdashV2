@@ -1009,8 +1009,8 @@ body.timerRunning .wheelCenter .wcBot{
 .dashboard{
   position: absolute;
 
-  left: calc(var(--wheelLeft) + var(--wheelSize) + 160px);
-  top: 85px;
+  left: calc(var(--wheelLeft) + var(--wheelSize) + 280px);
+  top: 50px;
 
   display: grid;
   grid-template-columns: 460px 340px;
