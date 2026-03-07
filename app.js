@@ -1317,13 +1317,7 @@
     }, 10 * 60 * 1000);
   }
 /* ---------- calendar widget ---------- */
-const CALENDAR_WIDGET_EVENTS = [
-  { time: "09:00", title: "Möte Eventful" },
-  { time: "11:30", title: "Samtal kund" },
-  { time: "13:00", title: "Lunch" },
-  { time: "16:00", title: "Planering" },
-  { time: "19:00", title: "Träning" },
-];
+const PUBLIC_CALENDAR_ICS = "https://calendar.google.com/calendar/ical/ericssonbonini%40gmail.com/public/basic.ics";
 
 function formatCalendarWidgetDate(d = new Date()) {
   const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
@@ -1332,7 +1326,7 @@ function formatCalendarWidgetDate(d = new Date()) {
   return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}`;
 }
 
-function renderCalendarWidget(events = CALENDAR_WIDGET_EVENTS) {
+function renderCalendarWidget(events = []) {
   const dateEl = $("calendarWidgetDate");
   const listEl = $("calendarEvents");
   if (!dateEl || !listEl) return;
@@ -1390,7 +1384,7 @@ function init() {
   setInterval(updateCenterNow, 20000);
 
   initWeatherDock();
-  renderCalendarWidget();
+  loadCalendarWidget();
 }
 
 init();
