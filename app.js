@@ -1316,34 +1316,82 @@
       } catch {}
     }, 10 * 60 * 1000);
   }
+/* ---------- calendar widget ---------- */
+const CALENDAR_WIDGET_EVENTS = [
+  { time: "09:00", title: "Möte Eventful" },
+  { time: "11:30", title: "Samtal kund" },
+  { time: "13:00", title: "Lunch" },
+  { time: "16:00", title: "Planering" },
+  { time: "19:00", title: "Träning" },
+];
 
+function formatCalendarWidgetDate(d = new Date()) {
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const day = d.toLocaleDateString("sv-SE", { day: "numeric" });
+  const month = d.toLocaleDateString("sv-SE", { month: "long" });
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}`;
+}
+
+function renderCalendarWidget(events = CALENDAR_WIDGET_EVENTS) {
+  const dateEl = $("calendarWidgetDate");
+  const listEl = $("calendarEvents");
+  if (!dateEl || !listEl) return;
+
+  dateEl.textContent = formatCalendarWidgetDate(new Date());
+  listEl.innerHTML = "";
+
+  const items = Array.isArray(events) ? events.slice(0, 5) : [];
+
+  if (!items.length) {
+    listEl.innerHTML = `
+      <div class="event">
+        <div class="eventDot"></div>
+        <div class="eventTime">—</div>
+        <div class="eventTitle">Inga kommande händelser</div>
+      </div>
+    `;
+    return;
+  }
+
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "event";
+    row.innerHTML = `
+      <div class="eventDot"></div>
+      <div class="eventTime">${escapeHtml(item.time || "—")}</div>
+      <div class="eventTitle">${escapeHtml(item.title || "Utan titel")}</div>
+    `;
+    listEl.appendChild(row);
+  });
+}
   /* ---------- popup listeners ---------- */
   timerDoneBtn?.addEventListener("click", closeTimerDonePopup);
   timerDonePopup?.addEventListener("click", (e) => {
     if (e.target === timerDonePopup) closeTimerDonePopup();
   });
 
-  /* ---------- init ---------- */
-  function init() {
-    setActiveIndex(activeIndex);
-    renderWheelCenter();
-    setRotation(activeIndex * STEP);
+ /* ---------- init ---------- */
+function init() {
+  setActiveIndex(activeIndex);
+  renderWheelCenter();
+  setRotation(activeIndex * STEP);
 
-    updateTimerBar();
-    ensureTimerBarVisible(false);
+  updateTimerBar();
+  ensureTimerBarVisible(false);
 
-    setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
+  setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
 
-    const img = document.querySelector(".wheelRing");
-    img?.addEventListener("error", () => {
-      console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
-    });
+  const img = document.querySelector(".wheelRing");
+  img?.addEventListener("error", () => {
+    console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
+  });
 
-    updateCenterNow();
-    setInterval(updateCenterNow, 20000);
+  updateCenterNow();
+  setInterval(updateCenterNow, 20000);
 
-    initWeatherDock();
-  }
+  initWeatherDock();
+  renderCalendarWidget();
+}
 
-  init();
+init();
 })();
