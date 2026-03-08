@@ -739,7 +739,7 @@ body.sheetOpen .sheet{
   --leftStackLeft: calc(var(--wheelLeft) + var(--wheelSize) + var(--leftStackGap));
 
   --weatherTop: calc(28px + env(safe-area-inset-top));
-  --tasksLeft: calc(var(--leftStackLeft) + 170px);
+  --tasksLeft: calc(var(--leftStackLeft) + 240px);
   --tasksTop: calc(34px + env(safe-area-inset-top));
 
   --calendarLeft: 990px;
