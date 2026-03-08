@@ -14,6 +14,11 @@
   const wheelRing = document.querySelector(".wheelRing");
   const iconRail = $("iconRail");
 
+  const tasksPanel = $("tasksPanel");
+  const tasksAdd = $("tasksAdd");
+  const tasksDone = $("tasksDone");
+  const tasksList = $("tasksList");
+
   const sheetWrap = $("sheetWrap");
   const sheet = $("sheet");
   const sheetTitle = $("sheetTitle");
@@ -1023,12 +1028,18 @@
         li.className = "row";
         li.innerHTML = `
           <input class="roundCheck" type="checkbox" ${st.done ? "checked" : ""}/>
-          <div class="rowLeft"><div class="rowTitle">${escapeHtml(st.text)}</div></div>
+          <div class="rowLeft">
+            <div class="rowTitle" style="${st.done ? "text-decoration:line-through; opacity:.55;" : ""}">
+              ${escapeHtml(st.text)}
+            </div>
+          </div>
           <div class="rowMeta"></div>
         `;
         li.querySelector("input")?.addEventListener("change", (e) => {
           st.done = !!e.target.checked;
           saveStore();
+          draw();
+          renderTasksPanel();
         });
         listEl.appendChild(li);
       });
@@ -1042,6 +1053,7 @@
       input.value = "";
       saveStore();
       draw();
+      renderTasksPanel();
     };
 
     $("subtaskAdd")?.addEventListener("click", add);
@@ -1050,6 +1062,54 @@
     });
 
     draw();
+  }
+
+  function renderTasksPanel() {
+    if (!tasksList) return;
+
+    tasksList.innerHTML = "";
+
+    const items = Array.isArray(store.lists) ? store.lists.slice(0, 5) : [];
+
+    if (!items.length) {
+      tasksList.innerHTML = `
+        <div class="taskRow">
+          <div class="taskTitle" style="opacity:.55;">Inga tasks ännu</div>
+        </div>
+      `;
+      return;
+    }
+
+    items.forEach((item) => {
+      item.subtasks = Array.isArray(item.subtasks) ? item.subtasks : [];
+
+      const doneCount = item.subtasks.filter((s) => s.done).length;
+      const hasSubtasks = item.subtasks.length > 0;
+
+      const row = document.createElement("div");
+      row.className = "taskRow";
+      row.innerHTML = `
+        <input class="taskCheck" type="checkbox" />
+        <div class="taskTitle">${escapeHtml(item.text)}</div>
+        <div class="taskMeta">${hasSubtasks ? `${doneCount}/${item.subtasks.length}` : ""}</div>
+      `;
+
+      row.querySelector(".taskTitle")?.addEventListener("click", () => {
+        openSheet();
+        renderTaskDetail({ id: item.id, fromDone: false });
+      });
+
+      row.querySelector("input")?.addEventListener("change", (e) => {
+        if (!e.target.checked) return;
+
+        store.lists = store.lists.filter((x) => x.id !== item.id);
+        store.done.unshift({ ...item, doneAt: Date.now() });
+        saveStore();
+        renderTasksPanel();
+      });
+
+      tasksList.appendChild(row);
+    });
   }
 
   function renderLists() {
@@ -1172,6 +1232,8 @@
           });
         }
       }
+
+      renderTasksPanel();
     };
 
     const add = () => {
@@ -1200,6 +1262,25 @@
     sheetTitle.textContent = "—";
     sheetContent.innerHTML = `<div class="miniHint">—</div>`;
   }
+
+  /* ---------- start panel tasks actions ---------- */
+  tasksAdd?.addEventListener("click", () => {
+    store.ui.doneOpen = false;
+    saveStore();
+    openSheet();
+    renderLists();
+
+    requestAnimationFrame(() => {
+      $("listInput")?.focus();
+    });
+  });
+
+  tasksDone?.addEventListener("click", () => {
+    store.ui.doneOpen = true;
+    saveStore();
+    openSheet();
+    renderLists();
+  });
 
   /* ---------- weather dock ---------- */
   const WEATHER_ICONS = {
@@ -1316,142 +1397,146 @@
       } catch {}
     }, 10 * 60 * 1000);
   }
-/* ---------- calendar widget ---------- */
-const PUBLIC_CALENDAR_ICS = "https://calendar.google.com/calendar/ical/ericssonbonini%40gmail.com/public/basic.ics";
 
-function formatCalendarWidgetDate(d = new Date()) {
-  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
-  const day = d.toLocaleDateString("sv-SE", { day: "numeric" });
-  const month = d.toLocaleDateString("sv-SE", { month: "long" });
-  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}`;
-}
+  /* ---------- calendar widget ---------- */
+  const PUBLIC_CALENDAR_ICS = "https://calendar.google.com/calendar/ical/ericssonbonini%40gmail.com/public/basic.ics";
 
-function renderCalendarWidget(events = []) {
-  const dateEl = $("calendarWidgetDate");
-  const listEl = $("calendarEvents");
-  if (!dateEl || !listEl) return;
-
-  dateEl.textContent = formatCalendarWidgetDate(new Date());
-  listEl.innerHTML = "";
-
-  const items = Array.isArray(events) ? events.slice(0, 5) : [];
-
-  if (!items.length) {
-    listEl.innerHTML = `
-      <div class="event">
-        <div class="eventDot"></div>
-        <div class="eventTime">—</div>
-        <div class="eventTitle">Inga kommande händelser</div>
-      </div>
-    `;
-    return;
+  function formatCalendarWidgetDate(d = new Date()) {
+    const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+    const day = d.toLocaleDateString("sv-SE", { day: "numeric" });
+    const month = d.toLocaleDateString("sv-SE", { month: "long" });
+    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}`;
   }
 
-  items.forEach((item) => {
-    const row = document.createElement("div");
-    row.className = "event";
-    row.innerHTML = `
-      <div class="eventDot"></div>
-      <div class="eventTime">${escapeHtml(item.time || "—")}</div>
-      <div class="eventTitle">${escapeHtml(item.title || "Utan titel")}</div>
-    `;
-    listEl.appendChild(row);
-  });
-}
-function parseICSDate(raw) {
-  if (!raw) return null;
+  function renderCalendarWidget(events = []) {
+    const dateEl = $("calendarWidgetDate");
+    const listEl = $("calendarEvents");
+    if (!dateEl || !listEl) return;
 
-  if (/^\d{8}$/.test(raw)) {
-    const y = raw.slice(0, 4);
-    const m = raw.slice(4, 6);
-    const d = raw.slice(6, 8);
-    return new Date(`${y}-${m}-${d}T00:00:00`);
-  }
+    dateEl.textContent = formatCalendarWidgetDate(new Date());
+    listEl.innerHTML = "";
 
-  const cleaned = raw.replace("Z", "");
-  const match = cleaned.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
-  if (!match) return null;
+    const items = Array.isArray(events) ? events.slice(0, 5) : [];
 
-  const [, y, mo, d, h, mi, s] = match;
-  return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
-}
-
-async function loadCalendarWidget() {
-  try {
-    const res = await fetch(
-      "https://api.allorigins.win/raw?url=" + encodeURIComponent(PUBLIC_CALENDAR_ICS),
-      { cache: "no-store" }
-    );
-
-    if (!res.ok) throw new Error("Kunde inte läsa kalenderfeed");
-
-    const text = await res.text();
-    const blocks = text.split("BEGIN:VEVENT");
-    const now = new Date();
-
-    const events = [];
-
-    for (const block of blocks) {
-      const summaryMatch = block.match(/SUMMARY:(.+)/);
-      const startMatch = block.match(/DTSTART(?:;VALUE=DATE)?(?::|;[^:]*:)(.+)/);
-
-      if (!summaryMatch || !startMatch) continue;
-
-      const title = summaryMatch[1].trim();
-      const rawStart = startMatch[1].trim();
-      const startDate = parseICSDate(rawStart);
-
-      if (!startDate || startDate < now) continue;
-
-      const allDay = /^\d{8}$/.test(rawStart);
-
-      events.push({
-        startDate,
-        time: allDay
-          ? "Heldag"
-          : startDate.toLocaleTimeString("sv-SE", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-        title,
-      });
+    if (!items.length) {
+      listEl.innerHTML = `
+        <div class="event">
+          <div class="eventDot"></div>
+          <div class="eventTime">—</div>
+          <div class="eventTitle">Inga kommande händelser</div>
+        </div>
+      `;
+      return;
     }
 
-    events.sort((a, b) => a.startDate - b.startDate);
-    renderCalendarWidget(events);
-  } catch (err) {
-    console.warn("Calendar widget error:", err);
-    renderCalendarWidget([]);
+    items.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "event";
+      row.innerHTML = `
+        <div class="eventDot"></div>
+        <div class="eventTime">${escapeHtml(item.time || "—")}</div>
+        <div class="eventTitle">${escapeHtml(item.title || "Utan titel")}</div>
+      `;
+      listEl.appendChild(row);
+    });
   }
-}
+
+  function parseICSDate(raw) {
+    if (!raw) return null;
+
+    if (/^\d{8}$/.test(raw)) {
+      const y = raw.slice(0, 4);
+      const m = raw.slice(4, 6);
+      const d = raw.slice(6, 8);
+      return new Date(`${y}-${m}-${d}T00:00:00`);
+    }
+
+    const cleaned = raw.replace("Z", "");
+    const match = cleaned.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
+    if (!match) return null;
+
+    const [, y, mo, d, h, mi, s] = match;
+    return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
+  }
+
+  async function loadCalendarWidget() {
+    try {
+      const res = await fetch(
+        "https://api.allorigins.win/raw?url=" + encodeURIComponent(PUBLIC_CALENDAR_ICS),
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) throw new Error("Kunde inte läsa kalenderfeed");
+
+      const text = await res.text();
+      const blocks = text.split("BEGIN:VEVENT");
+      const now = new Date();
+
+      const events = [];
+
+      for (const block of blocks) {
+        const summaryMatch = block.match(/SUMMARY:(.+)/);
+        const startMatch = block.match(/DTSTART(?:;VALUE=DATE)?(?::|;[^:]*:)(.+)/);
+
+        if (!summaryMatch || !startMatch) continue;
+
+        const title = summaryMatch[1].trim();
+        const rawStart = startMatch[1].trim();
+        const startDate = parseICSDate(rawStart);
+
+        if (!startDate || startDate < now) continue;
+
+        const allDay = /^\d{8}$/.test(rawStart);
+
+        events.push({
+          startDate,
+          time: allDay
+            ? "Heldag"
+            : startDate.toLocaleTimeString("sv-SE", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+          title,
+        });
+      }
+
+      events.sort((a, b) => a.startDate - b.startDate);
+      renderCalendarWidget(events);
+    } catch (err) {
+      console.warn("Calendar widget error:", err);
+      renderCalendarWidget([]);
+    }
+  }
+
   /* ---------- popup listeners ---------- */
   timerDoneBtn?.addEventListener("click", closeTimerDonePopup);
   timerDonePopup?.addEventListener("click", (e) => {
     if (e.target === timerDonePopup) closeTimerDonePopup();
   });
 
- /* ---------- init ---------- */
-function init() {
-  setActiveIndex(activeIndex);
-  renderWheelCenter();
-  setRotation(activeIndex * STEP);
+  /* ---------- init ---------- */
+  function init() {
+    setActiveIndex(activeIndex);
+    renderWheelCenter();
+    setRotation(activeIndex * STEP);
 
-  updateTimerBar();
-  ensureTimerBarVisible(false);
+    updateTimerBar();
+    ensureTimerBarVisible(false);
 
-  setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
+    setText(toolsSpinValue, Math.abs(fidgetCount) % 10);
 
-  const img = document.querySelector(".wheelRing");
-  img?.addEventListener("error", () => {
-    console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
-  });
+    const img = document.querySelector(".wheelRing");
+    img?.addEventListener("error", () => {
+      console.warn("wheel-ring.svg kunde inte laddas. Kolla src i index.html:", img.getAttribute("src"));
+    });
 
-  updateCenterNow();
-  setInterval(updateCenterNow, 20000);
+    updateCenterNow();
+    setInterval(updateCenterNow, 20000);
 
-  initWeatherDock();
-  loadCalendarWidget();
-}
+    initWeatherDock();
+    loadCalendarWidget();
+    renderTasksPanel();
+  }
 
-init();
+  init();
 })();
