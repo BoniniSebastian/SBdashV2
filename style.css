@@ -328,7 +328,7 @@ body.timerRunning .timerBarWrap{ opacity: 1; }
 
 .sheet{
   position:absolute;
-  left: 14px;
+  left: 45px;
   right: 14px;
   top: calc(var(--railTop) + 64px);
   bottom: calc(14px + env(safe-area-inset-bottom));
