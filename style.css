@@ -1057,7 +1057,11 @@ body.timerRunning .wheelCenter .wcBot{
     inset 0 1px 0 rgba(255,255,255,.06);
 }
 
-
+.widgetCalendar{
+  height: 210px;
+  margin: 0;
+  align-self: start;
+}
 
 .dashboardFeature{
   grid-column: 1;
