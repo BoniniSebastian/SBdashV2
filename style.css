@@ -1025,7 +1025,7 @@ body.timerRunning .wheelCenter .wcBot{
 ========================= */
 
 .dashboard{
-  position: absolute;
+  position: fixed;
   left: 990px;
   top: 18px;
   display: grid;
