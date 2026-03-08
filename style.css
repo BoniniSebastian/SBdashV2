@@ -740,9 +740,11 @@ body.sheetOpen .sheet{
 
   --weatherTop: calc(28px + env(safe-area-inset-top));
   --tasksLeft: calc(var(--leftStackLeft) + 170px);
-  --tasksTop: calc(24px + env(safe-area-inset-top));
-}
+  --tasksTop: calc(34px + env(safe-area-inset-top));
 
+  --calendarLeft: 990px;
+  --calendarTop: 34px;
+}
 /* =========================
    DOCK (Weather)
 ========================= */
@@ -1026,8 +1028,8 @@ body.timerRunning .wheelCenter .wcBot{
 
 .dashboard{
   position: fixed;
-  left: 990px;
-  top: 18px;
+  left: var(--calendarLeft);
+  top: var(--calendarTop);
   display: grid;
   grid-template-columns: 340px;
   gap: 28px;
