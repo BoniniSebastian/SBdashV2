@@ -1006,9 +1006,11 @@ body.timerRunning .wheelCenter .wcBot{
   position: fixed;
   left: 360px;
   top: 28px;
-  width: 420px;
-  min-height: 320px;
-  max-height: 72vh;
+
+  width: 340px;
+  min-height: 260px;
+  max-height: 62vh;
+
   border-radius: 26px;
   background: rgba(10,15,20,.72);
   border: 1px solid rgba(255,255,255,.10);
