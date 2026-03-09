@@ -1005,7 +1005,7 @@ body.timerRunning .wheelCenter .wcBot{
   inset: auto auto auto auto;
   position: fixed;
   left: 360px;
-  top: 88px;
+  top: 28px;
   width: 420px;
   min-height: 320px;
   max-height: 72vh;
