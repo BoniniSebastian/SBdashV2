@@ -9,234 +9,74 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
-  <title>SB Dash v2</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <title>SB Dash</title>
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
-<div class="timerDonePopup" id="timerDonePopup" aria-hidden="true">
-  <div class="timerDoneCard">
-    <div class="timerDoneTitle">TIDEN ÄR UTE</div>
-    <button class="timerDoneBtn" id="timerDoneBtn" type="button">OK</button>
-  </div>
-</div>
 <body>
   <div class="app">
-    <div class="zenBlob startZen" aria-hidden="true"></div>
 
-    <!-- ICON RAIL (top row) -->
+    <!-- ambient background -->
+    <div class="zenBlob startZen" aria-hidden="true"></div>
     <div class="ambientBlob" aria-hidden="true"></div>
-    <div class="iconRail" id="iconRail" aria-label="Menyikoner"></div>
-    
-<!-- CENTER DATE/TIME (start view) -->
-<div class="centerNow" id="centerNow">
-  <div class="cnLine" id="cnLine">—</div>
-</div>
-    
-    <!-- Right-side timer bar -->
+
+    <!-- top progress bar -->
     <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
       <div class="timerBar" id="timerBar"></div>
     </div>
 
-    <!-- WHEEL (bottom-left, full visible) -->
-    <div class="wheelWrap" id="wheelWrap">
-      <div class="wheel" id="wheel">
+    <!-- top header -->
+    <header class="topBar">
+      <div class="clockBlock">
+        <div class="clockDate" id="clockDate">MÅNDAG | 9 MARS</div>
 
-        <!-- IMPORTANT: this must match your repo path -->
-        <img class="wheelRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+        <div class="clockRow">
+          <div class="clockTime" id="clockTime">22:14</div>
 
-        <div class="wheelCenter" id="wheelCenter" aria-hidden="true">
-          <div class="wcTop" id="wcTop">—</div>
-          <div class="wcMain" id="wcMain">—</div>
-          <div class="wcBot" id="wcBot">—</div>
-        </div>
-
-        <div class="wheelDot" id="wheelDot" aria-hidden="true"></div>
-      </div>
-    </div>
-<!-- WEATHER DOCK -->
-<div class="dock">
-
-  <div class="dockCard dockWeather" id="dockWeather">
-
-    <div class="dwTop">
-      <img class="dwIcon" id="dwIcon" src="assets/ui/weather/na.svg">
-      <div class="dwTemp" id="dwTemp">--°</div>
-    </div>
-
-    <div class="dwMeta">
-      <div class="dwCity" id="dwCity">Värmdö</div>
-      <div class="dwRange" id="dwRange">--° / --°</div>
-    </div>
-
-    <div class="dwForecast" id="dwForecast"></div>
-
-  </div>
-
-</div>
-
-    <div class="tasksPanel" id="tasksPanel">
-
-  <div class="tasksHeader">
-    <div class="tasksTitle">Tasks</div>
-
-    <div class="tasksActions">
-      <button class="tasksAdd" id="tasksAdd">+</button>
-      <button class="tasksDone" id="tasksDone">Slutfört</button>
-    </div>
-  </div>
-
-  <div class="tasksList" id="tasksList">
-  </div>
-
-</div>
-
-<!-- DASHBOARD -->
-<div class="dashboard">
-
-  <div class="widget widgetCalendar" id="calendarWidget">
-    <div class="widgetHeader">
-      <div class="widgetDate" id="calendarWidgetDate">—</div>
-    </div>
-
-    <div class="calendarEvents" id="calendarEvents"></div>
-  </div>
-
-</div>
-
-
-<!-- SECTION SHEET -->
-
-    
-    <!-- SECTION SHEET -->
-    <div class="sheetWrap" id="sheetWrap" aria-hidden="true">
-      <div class="sheet" id="sheet" role="dialog" aria-modal="true">
-        <div class="sheetHeader">
-          <div class="sheetTitle" id="sheetTitle">—</div>
-          <button class="sheetClose" id="sheetCloseBtn" type="button" aria-label="Stäng">✕</button>
-        </div>
-        <div class="sheetContent" id="sheetContent"></div>
-        <div class="sheetHandle" aria-hidden="true"></div>
-      </div>
-    </div>
-    <!-- TASKS OVERLAY -->
-<div class="overlayWrap" id="tasksOverlay" aria-hidden="true">
-  <div class="overlayCard overlayCard--tasks">
-    <div class="overlayTop">
-      <div class="overlayTitle" id="tasksOverlayTitle">TASKS</div>
-      <button class="overlayClose" id="tasksClose" type="button" aria-label="Stäng tasks">✕</button>
-    </div>
-
-    <div class="tasksOverlayBody" id="tasksOverlayBody"></div>
-  </div>
-</div>
-    <!-- CALENDAR OVERLAY -->
-    <div class="overlayWrap" id="calendarOverlay" aria-hidden="true">
-      <div class="overlayCard overlayCard--calendar">
-        <div class="overlayTop">
-          <div class="overlayTitle">KALENDER</div>
-          <button class="overlayClose" id="calendarClose" type="button" aria-label="Stäng kalender">✕</button>
-        </div>
-
-        <div class="calendarFrameWrap">
-          <iframe
-            id="calendarFrame"
-            src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%230b1118&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
-            loading="lazy"
-            referrerpolicy="strict-origin-when-cross-origin"
-          ></iframe>
+          <button class="timerIconBtn" id="timerIconBtn" type="button" aria-label="Öppna timer">
+            <img src="assets/ui/icon-pomodoro.svg" alt="" draggable="false" />
+          </button>
         </div>
       </div>
-    </div>
-    <!-- TIMER OVERLAY -->
-    <div class="overlayWrap" id="timerOverlay" aria-hidden="true">
-      <div class="overlayCard">
-        <div class="overlayTop">
-          <div class="overlayTitle">TIMER</div>
-          <button class="overlayClose" id="timerClose" type="button" aria-label="Stäng timer">✕</button>
-        </div>
 
-        <div class="timerBig" id="timerBig">00:00</div>
-        <div class="timerSub" id="timerSub">Vrid hjulet: 1 / 5 / 10 / 15 / 20 / 30</div>
+      <div class="weatherBlock" id="weatherBlock" aria-label="Väder">
+        <img class="weatherIcon" id="weatherIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+        <div class="weatherTemp" id="weatherTemp">--°</div>
+      </div>
+    </header>
 
-        <!-- TIMER WHEEL (normal) -->
-        <div class="overlayWheelWrap">
-          <div class="overlayWheel overlayWheel--normal" id="timerWheel" aria-label="Timer wheel">
-            <img class="overlayWheelRing" id="timerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+    <!-- future dashboard zone -->
+    <main class="dashboardZone" id="dashboardZone" aria-hidden="false"></main>
+
+    <!-- timer focus layer -->
+    <div class="timerFocus" id="timerFocus" aria-hidden="true">
+      <div class="timerWheelWrap">
+        <div class="timerWheel" id="timerWheel" aria-label="Timerhjul">
+          <img class="timerWheelRing" id="timerWheelRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
+
+          <div class="timerWheelCenter">
+            <div class="timerWheelTop" id="timerWheelTop">TIMER</div>
+            <div class="timerWheelValue" id="timerWheelValue">5</div>
+            <div class="timerWheelBottom" id="timerWheelBottom">MIN</div>
           </div>
         </div>
-
-        <button class="ctaBtn" id="timerStartBtn" type="button">START</button>
-
-        <div class="zenBlob" aria-hidden="true"></div>
       </div>
     </div>
 
-    <!-- TOOLS OVERLAY -->
-    <div class="overlayWrap" id="toolsOverlay" aria-hidden="true">
-      <div class="overlayCard">
-
-        <div class="overlayTop">
-          <div class="overlayTitle">TOOLS</div>
-          <button class="overlayClose" id="toolsClose" type="button" aria-label="Stäng tools">✕</button>
-        </div>
-
-        <div class="toolsTopRow">
-          <button class="toolsTxtBtn" id="guessOdd" type="button">UDDA</button>
-          <button class="toolsTxtBtn" id="guessEven" type="button">JÄMNT</button>
-          <button class="toolsTxtBtn" id="btn501" type="button">501</button>
-        </div>
-
-        <!-- SPINNER WHEEL (FAST) -->
-        <div class="overlayWheelWrap">
-          <div class="neonPointer" aria-hidden="true"></div>
-          <div class="overlayWheel overlayWheel--spinner" id="toolsSpinnerWheel" aria-label="Tools spinner wheel">
-            <img class="overlayWheelRing" id="toolsSpinnerRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
-            <div class="spinValue glitch" id="toolsSpinValue" data-text="0" aria-live="polite">0</div>
-          </div>
-        </div>
-
-        <div class="toolsBottomRow">
-          <button class="toolsTxtBtn ghost" id="fidgetReset" type="button">RESET</button>
-        </div>
-
-        <div class="miniHint" id="fidgetHint">
-          Välj UDDA/JÄMNT → snurra hjulet → släpp. Resultatet visas i mitten.
-        </div>
-
+    <!-- bottom calendar -->
+    <section class="calendarStrip" aria-label="Kalender">
+      <div class="calendarFrameWrap">
+        <iframe
+          id="calendarFrame"
+          src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
       </div>
-    </div>
+    </section>
 
-    <!-- DART 501 OVERLAY (separate) -->
-    <div class="overlayWrap" id="dartOverlay" aria-hidden="true">
-      <div class="overlayCard">
-
-        <div class="overlayTop">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="assets/ui/icon-dart501.png" alt="" style="width:22px;height:22px;opacity:.95;" draggable="false"/>
-            <div class="overlayTitle">501</div>
-          </div>
-          <button class="overlayClose" id="dartClose" type="button" aria-label="Stäng 501">✕</button>
-        </div>
-
-        <div class="overlayWheelWrap">
-          <div class="overlayWheel overlayWheel--normal" id="dartWheel" aria-label="501 wheel">
-            <img class="overlayWheelRing" id="dartRing" src="assets/ui/wheel-ring.svg" alt="" draggable="false" />
-            <div class="spinValue" id="dartValue" data-text="0" aria-live="polite">0</div>
-          </div>
-        </div>
-
-        <div class="dartWrap" id="dartWrap">
-          <div class="dartGrid" id="dartGrid"></div>
-        </div>
-
-        <div class="miniHint">Vrid hjulet för poäng. Släpp → sparar rundan och hoppar till nästa spelare.</div>
-      </div>
-    </div>
-
-    <!-- optional alarm audio -->
     <audio id="alarmAudio" preload="auto"></audio>
-
   </div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>
