@@ -394,15 +394,10 @@ body.timerRunning .timerBarWrap{
   box-shadow:none;
 }
 
-.calendarFrameWrap::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.35);
-  pointer-events:none;
-}
-
 #calendarFrame{
+  position:relative;
+  z-index:1;
+
   width:125%;
   height:125%;
   border:0;
@@ -412,6 +407,14 @@ body.timerRunning .timerBarWrap{
 
   transform:scale(0.80);
   transform-origin:top left;
+}
+
+.calendarShade{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background:rgba(0,0,0,.35);
 }
 
 /* responsive */
