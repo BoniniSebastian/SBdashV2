@@ -317,22 +317,22 @@ button{
 
 body.timerFinished .timerWheel{
   box-shadow:
-    0 0 42px rgba(255,140,40,.34),
-    0 0 88px rgba(255,140,40,.12),
+    0 0 42px rgba(0,209,255,.45),
+    0 0 90px rgba(0,209,255,.20),
     0 18px 60px rgba(0,0,0,.52);
   animation:finishedPulse 1.1s ease-in-out infinite;
 }
 
 body.timerFinished .timerWheelRing{
   filter:
-    drop-shadow(0 0 18px rgba(255,140,40,.50))
-    drop-shadow(0 0 42px rgba(255,110,0,.24));
+    drop-shadow(0 0 22px rgba(0,209,255,.70))
+    drop-shadow(0 0 46px rgba(0,209,255,.30));
 }
 
 body.timerFinished .timerWheelValue{
   text-shadow:
-    0 0 22px rgba(255,140,40,.32),
-    0 0 42px rgba(255,110,0,.18);
+    0 0 24px rgba(0,209,255,.45),
+    0 0 44px rgba(0,209,255,.22);
 }
 
 @keyframes finishedPulse{
@@ -365,7 +365,7 @@ body.timerRunning .timerBarWrap{
   width:100%;
   height:100%;
   background:linear-gradient(90deg, rgba(0,209,255,.96), rgba(255,100,180,.82), rgba(0,255,180,.80));
-  transform-origin:right;
+  transform-origin:left;
   transform:scaleX(1);
   filter:drop-shadow(0 0 10px rgba(0,209,255,.24));
 }
@@ -386,8 +386,7 @@ body.timerRunning .timerBarWrap{
   width:100%;
   height:100%;
   background:#fff;
-  border-top-left-radius:24px;
-  border-top-right-radius:24px;
+  border-radius:0;
   overflow:hidden;
   box-shadow:
     0 -10px 30px rgba(0,0,0,.22),
@@ -395,11 +394,14 @@ body.timerRunning .timerBarWrap{
 }
 
 #calendarFrame{
-  width:100%;
-  height:100%;
+  width:125%;
+  height:125%;
   border:0;
   display:block;
   background:#fff;
+
+  transform:scale(0.80);
+  transform-origin:top left;
 }
 
 /* responsive */
