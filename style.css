@@ -414,7 +414,13 @@ body.timerRunning .timerBarWrap{
   inset:0;
   z-index:2;
   pointer-events:none;
-  background:rgba(0,0,0,.45);
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,.50) 0%,
+    rgba(0,0,0,.38) 35%,
+    rgba(0,0,0,.26) 70%,
+    rgba(0,0,0,.18) 100%
+  );
 }
 
 /* responsive */
