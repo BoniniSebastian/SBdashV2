@@ -25,6 +25,11 @@
   const sheetContent = $("sheetContent");
   const sheetCloseBtn = $("sheetCloseBtn");
 
+  const tasksOverlay = $("tasksOverlay");
+  const tasksClose = $("tasksClose");
+  const tasksOverlayTitle = $("tasksOverlayTitle");
+  const tasksOverlayBody = $("tasksOverlayBody");
+
   const calendarOverlay = $("calendarOverlay");
   const calendarClose = $("calendarClose");
 
@@ -264,7 +269,8 @@
       calendarOverlay?.classList.contains("open") ||
       timerOverlay?.classList.contains("open") ||
       toolsOverlay?.classList.contains("open") ||
-      dartOverlay?.classList.contains("open")
+      dartOverlay?.classList.contains("open") ||
+      tasksOverlay?.classList.contains("open")
     );
   }
 
@@ -638,6 +644,7 @@
 
   function openTimerOverlay() {
     closeSheet();
+    closeTasksOverlay();
     closeCalendarOverlay();
     closeToolsOverlay();
     closeDartOverlay();
@@ -703,6 +710,7 @@
   /* ---------- calendar ---------- */
   function openCalendarOverlay() {
     closeSheet();
+    closeTasksOverlay();
     closeTimerOverlay();
     closeToolsOverlay();
     closeDartOverlay();
@@ -733,6 +741,7 @@
 
   function openToolsOverlay() {
     closeSheet();
+    closeTasksOverlay();
     closeCalendarOverlay();
     closeTimerOverlay();
     closeDartOverlay();
@@ -871,6 +880,7 @@
 
   function openDartOverlay() {
     closeSheet();
+    closeTasksOverlay();
     closeCalendarOverlay();
     closeToolsOverlay();
     closeTimerOverlay();
@@ -913,77 +923,157 @@
     },
   });
 
-  /* ---------- open per view ---------- */
-  function openForView(id) {
-    if (id === "calendar") return openCalendarOverlay();
-    if (id === "tools") return openToolsOverlay();
-    if (id === "dart501") return openDartOverlay();
-    if (id === "timer") return enterTimerMode();
+  /* ---------- tasks overlay ---------- */
+  let taskDraftSubtasks = [];
 
-    openSheet();
-    renderView(id);
+  function closeTasksOverlay() {
+    tasksOverlay?.classList.remove("open");
+    tasksOverlay?.setAttribute("aria-hidden", "true");
+    setCenterNowVisible(true);
   }
 
-  /* ---------- sheet views ---------- */
-  function renderStocks() {
-    sheetTitle.textContent = "Aktier";
-    sheetContent.innerHTML = `
-      <div class="miniHint" style="margin-bottom:10px;">
-        (Tape borttagen tills vidare) TradingView kan vi bygga vidare på sen.
-      </div>
-      <div class="row"><div class="rowLeft"><div class="rowTitle">Placeholder</div></div></div>
-    `;
+  function openTasksOverlay() {
+    closeSheet();
+    closeCalendarOverlay();
+    closeTimerOverlay();
+    closeToolsOverlay();
+    closeDartOverlay();
+    setCenterNowVisible(false);
+
+    tasksOverlay?.classList.add("open");
+    tasksOverlay?.setAttribute("aria-hidden", "false");
   }
 
-  function renderCalendar() {
-    sheetTitle.textContent = "Kalender";
-    const CAL_SRC =
-      "https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%230b1118&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0";
+  tasksClose?.addEventListener("click", closeTasksOverlay);
+  tasksOverlay?.addEventListener("click", (e) => {
+    if (e.target === tasksOverlay) closeTasksOverlay();
+  });
 
-    sheetContent.innerHTML = `
-      <div style="border-radius:24px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:#0b1118;">
-        <iframe src="${CAL_SRC}" style="width:100%; height:78vh; border:0; display:block;" loading="lazy"></iframe>
-      </div>
-    `;
-  }
+  function renderTaskCreateOverlay() {
+    if (!tasksOverlayBody || !tasksOverlayTitle) return;
 
-  async function renderWeather() {
-    sheetTitle.textContent = "Väder";
-    sheetContent.innerHTML = `<div class="miniHint">Laddar väder…</div>`;
+    tasksOverlayTitle.textContent = "TASKS";
+    taskDraftSubtasks = [];
 
-    try {
-      const lat = 59.3293;
-      const lon = 18.0686;
-      const url =
-        `https://api.open-meteo.com/v1/forecast` +
-        `?latitude=${lat}&longitude=${lon}` +
-        `&current=temperature_2m,apparent_temperature,wind_speed_10m` +
-        `&hourly=temperature_2m` +
-        `&daily=temperature_2m_max,temperature_2m_min` +
-        `&timezone=Europe%2FStockholm`;
+    const renderDrafts = () => {
+      const draftsEl = $("subtaskDrafts");
+      if (!draftsEl) return;
 
-      const r = await fetch(url, { cache: "no-store" });
-      const data = await r.json();
+      draftsEl.innerHTML = "";
 
-      const nowT = Math.round(data.current.temperature_2m);
-      const feels = Math.round(data.current.apparent_temperature);
-      const wind = Math.round(data.current.wind_speed_10m);
+      if (!taskDraftSubtasks.length) return;
 
-      sheetContent.innerHTML = `
-        <div class="row" style="margin-bottom:12px;">
-          <div class="rowLeft">
-            <div class="rowTitle">${nowT}° • Känns ${feels}°</div>
-            <div class="miniHint">Vind ${wind} m/s</div>
-          </div>
-          <div class="rowMeta">${new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}</div>
+      taskDraftSubtasks.forEach((text, idx) => {
+        const row = document.createElement("div");
+        row.className = "subtaskDraft";
+        row.innerHTML = `
+          <div class="subtaskDraftText">${escapeHtml(text)}</div>
+          <button class="subtaskDraftRemove" type="button" data-idx="${idx}">✕</button>
+        `;
+        row.querySelector(".subtaskDraftRemove")?.addEventListener("click", () => {
+          taskDraftSubtasks.splice(idx, 1);
+          renderDrafts();
+        });
+        draftsEl.appendChild(row);
+      });
+    };
+
+    tasksOverlayBody.innerHTML = `
+      <div class="tasksForm">
+        <input id="taskTitleInput" class="tasksField" placeholder="Titel på uppgift..." maxlength="160" />
+        <textarea id="taskNotesInput" class="tasksField tasksTextarea" placeholder="Anteckningar (valfritt)"></textarea>
+
+        <div class="subtaskBuilder">
+          <input id="subtaskDraftInput" class="tasksField" placeholder="Lägg till delmål..." maxlength="160" />
+          <button id="subtaskDraftAdd" class="miniBtn" type="button">+</button>
         </div>
-        <div class="miniHint">Nästa steg: full SB Dash-väder med ikoner/nederbörd.</div>
-      `;
-    } catch {
-      sheetContent.innerHTML = `<div class="miniHint">Kunde inte hämta väder.</div>`;
-    }
+
+        <div id="subtaskDrafts" class="subtaskDrafts"></div>
+
+        <div class="tasksOverlayActions">
+          <button id="taskCancelBtn" class="tasksGhostBtn" type="button">Avbryt</button>
+          <button id="taskSaveBtn" class="tasksSaveBtn" type="button">Spara</button>
+        </div>
+      </div>
+    `;
+
+    const addDraft = () => {
+      const input = $("subtaskDraftInput");
+      const value = (input?.value || "").trim();
+      if (!value) return;
+      taskDraftSubtasks.push(value);
+      input.value = "";
+      renderDrafts();
+    };
+
+    $("subtaskDraftAdd")?.addEventListener("click", addDraft);
+    $("subtaskDraftInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addDraft();
+      }
+    });
+
+    $("taskCancelBtn")?.addEventListener("click", closeTasksOverlay);
+
+    $("taskSaveBtn")?.addEventListener("click", () => {
+      const title = ($("taskTitleInput")?.value || "").trim();
+      const notes = ($("taskNotesInput")?.value || "").trim();
+
+      if (!title) return;
+
+      store.lists.unshift({
+        id: uid(),
+        text: title,
+        notes,
+        createdAt: Date.now(),
+        subtasks: taskDraftSubtasks.map((text) => ({
+          id: uid(),
+          text,
+          done: false,
+        })),
+      });
+
+      saveStore();
+      renderTasksPanel();
+      closeTasksOverlay();
+    });
+
+    renderDrafts();
+    requestAnimationFrame(() => $("taskTitleInput")?.focus());
   }
 
+  function renderDoneOverlay() {
+    if (!tasksOverlayBody || !tasksOverlayTitle) return;
+
+    tasksOverlayTitle.textContent = "SLUTFÖRT";
+
+    const items = Array.isArray(store.done) ? store.done : [];
+
+    if (!items.length) {
+      tasksOverlayBody.innerHTML = `<div class="miniHint" style="padding:8px 6px;">Inget slutfört ännu.</div>`;
+      return;
+    }
+
+    tasksOverlayBody.innerHTML = `
+      <div class="tasksDoneList">
+        ${items.map((item) => `
+          <div class="taskDoneRow">
+            <div class="taskDoneTitle">${escapeHtml(item.text)}</div>
+            <div class="taskDoneMeta">
+              ${
+                Array.isArray(item.subtasks) && item.subtasks.length
+                  ? `${item.subtasks.filter((s) => s.done).length}/${item.subtasks.length} deluppgifter`
+                  : "Utan deluppgifter"
+              }
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  /* ---------- task detail / lists ---------- */
   function renderTaskDetail({ id, fromDone }) {
     const item = (fromDone ? store.done : store.lists).find((x) => x.id === id);
     if (!item) return renderLists();
@@ -1000,6 +1090,7 @@
         <div class="rowLeft">
           <div class="rowTitle">${escapeHtml(item.text)}</div>
           <div class="miniHint">Skapad: ${fmt(item.createdAt || Date.now())}</div>
+          ${item.notes ? `<div class="miniHint" style="margin-top:8px;">${escapeHtml(item.notes)}</div>` : ""}
         </div>
       </div>
 
@@ -1221,6 +1312,7 @@
               store.lists.unshift({
                 id: item.id,
                 text: item.text,
+                notes: item.notes || "",
                 createdAt: item.createdAt || Date.now(),
                 subtasks: item.subtasks,
               });
@@ -1239,7 +1331,13 @@
     const add = () => {
       const t = (input?.value || "").trim();
       if (!t) return;
-      store.lists.unshift({ id: uid(), text: t, createdAt: Date.now(), subtasks: [] });
+      store.lists.unshift({
+        id: uid(),
+        text: t,
+        notes: "",
+        createdAt: Date.now(),
+        subtasks: [],
+      });
       input.value = "";
       saveStore();
       renderLists();
@@ -1265,21 +1363,13 @@
 
   /* ---------- start panel tasks actions ---------- */
   tasksAdd?.addEventListener("click", () => {
-    store.ui.doneOpen = false;
-    saveStore();
-    openSheet();
-    renderLists();
-
-    requestAnimationFrame(() => {
-      $("listInput")?.focus();
-    });
+    openTasksOverlay();
+    renderTaskCreateOverlay();
   });
 
   tasksDone?.addEventListener("click", () => {
-    store.ui.doneOpen = true;
-    saveStore();
-    openSheet();
-    renderLists();
+    openTasksOverlay();
+    renderDoneOverlay();
   });
 
   /* ---------- weather dock ---------- */
