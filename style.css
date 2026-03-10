@@ -232,24 +232,29 @@ button{
   -webkit-backdrop-filter:blur(10px);
   box-shadow:none;
   overflow:hidden;
-  appearance:none;
-  -webkit-appearance:none;
-  width:100%;
-  text-align:left;
-  cursor:pointer;
-  padding:16px 18px 14px 18px;
 }
 
 .moduleSlot + .moduleSlot{
   border-top:1px solid rgba(255,255,255,.08);
 }
 
-.moduleSlotContent{
+.moduleSlot--prio,
+.moduleSlot--weather{
+  appearance:none;
+  -webkit-appearance:none;
   width:100%;
-  height:100%;
+  text-align:left;
+  cursor:pointer;
+  border:0;
 }
 
-/* PRIO PREVIEW */
+.moduleSlot--prio{
+  padding:16px 18px 14px 18px;
+}
+
+.moduleSlot--weather{
+  padding:16px 18px 14px 18px;
+}
 
 .prioPreview{
   width:100%;
@@ -285,6 +290,7 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
+  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
   letter-spacing:.01em;
 }
 
@@ -297,6 +303,7 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
+  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
 }
 
 .prioPreviewRow.is-done .prioPreviewDot{
@@ -326,13 +333,13 @@ button{
   color:rgba(255,255,255,.42);
 }
 
-/* WEATHER PREVIEW */
+/* weather preview */
 
 .weatherPreview{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns: minmax(0,1fr) 110px;
+  grid-template-columns: minmax(0,1fr) 88px;
   align-items:center;
   gap:12px;
 }
@@ -341,12 +348,12 @@ button{
   min-width:0;
   display:flex;
   flex-direction:column;
-  justify-content:center;
-  gap:6px;
+  gap:4px;
+  align-self:center;
 }
 
 .weatherPreviewTempBig{
-  font-size:36px;
+  font-size:34px;
   line-height:.95;
   font-weight:950;
   color:rgba(255,255,255,.96);
@@ -374,28 +381,14 @@ button{
 .weatherPreviewVisual{
   display:flex;
   align-items:center;
-  justify-content:flex-end;
+  justify-content:center;
 }
 
 .weatherPreviewIcon{
-  width:82px;
-  height:82px;
+  width:64px;
+  height:64px;
   object-fit:contain;
-  filter:drop-shadow(0 0 18px rgba(255,255,255,.08));
-}
-
-/* PLACEHOLDER PREVIEW */
-
-.placeholderPreview{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:rgba(255,255,255,.24);
-  font-size:14px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
 }
 
 /* shared module overlay */
@@ -445,7 +438,7 @@ button{
   transform:translateY(0);
 }
 
-/* PRIO OVERLAY */
+/* prio overlay */
 
 .prioPanelScroller{
   flex:1;
@@ -671,7 +664,7 @@ button{
   padding:0;
 }
 
-/* WEATHER OVERLAY */
+/* weather overlay */
 
 .weatherPanelScroller{
   flex:1;
@@ -789,33 +782,6 @@ button{
   font-size:13px;
   line-height:1.35;
   color:rgba(255,255,255,.68);
-}
-
-/* PLACEHOLDER OVERLAY */
-
-.placeholderExpandCard{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.placeholderPanel{
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.placeholderPanelName{
-  font-size:32px;
-  font-weight:900;
-  line-height:1;
-  color:rgba(255,255,255,.94);
-}
-
-.placeholderPanelText{
-  font-size:14px;
-  color:rgba(255,255,255,.46);
 }
 
 /* timer focus */
@@ -1085,12 +1051,12 @@ body.timerRunning .timerBarWrap{
   }
 
   .weatherPreview{
-    grid-template-columns: minmax(0,1fr) 96px;
+    grid-template-columns: minmax(0,1fr) 78px;
   }
 
   .weatherPreviewIcon{
-    width:70px;
-    height:70px;
+    width:56px;
+    height:56px;
   }
 
   .weatherHero{
