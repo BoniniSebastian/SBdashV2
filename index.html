@@ -10,21 +10,18 @@
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
   <div class="app">
 
-    <!-- ambient background -->
     <div class="zenBlob startZen" aria-hidden="true"></div>
     <div class="ambientBlob" aria-hidden="true"></div>
 
-    <!-- top progress bar -->
     <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
       <div class="timerBar" id="timerBar"></div>
     </div>
 
-    <!-- top header -->
     <header class="topBar">
       <div class="clockBlock">
         <div class="clockDate" id="clockDate">MÅNDAG | 9 MARS</div>
@@ -44,16 +41,37 @@
       </div>
     </header>
 
-    <!-- separator under clock -->
     <div class="clockSeparator"></div>
 
-    <!-- module area -->
     <main class="moduleArea" aria-label="Modulyta">
-      <div class="moduleSlot" id="moduleSlot1">MODULE SLOT 1</div>
-      <div class="moduleSlot" id="moduleSlot2">MODULE SLOT 2</div>
+      <button class="moduleSlot moduleSlot--prio" id="moduleSlot1" type="button" aria-label="Öppna prio">
+        <div class="prioPreview" id="prioPreview"></div>
+      </button>
+
+      <div class="moduleSlot moduleSlot--empty" id="moduleSlot2" aria-hidden="true"></div>
+
+      <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
+        <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
+          <div class="prioPanelScroller">
+            <div class="prioPanelList" id="prioPanelList"></div>
+          </div>
+
+          <div class="prioAddBar">
+            <div class="prioFakeCheck" aria-hidden="true"></div>
+            <input
+              class="prioAddInput"
+              id="prioAddInput"
+              type="text"
+              maxlength="160"
+              placeholder="Skriv ny prio..."
+              autocomplete="off"
+            />
+            <button class="prioAddBtn" id="prioAddBtn" type="button" aria-label="Lägg till prio">+</button>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <!-- timer focus layer -->
     <div class="timerFocus" id="timerFocus" aria-hidden="true">
       <div class="timerWheelWrap">
         <div class="timerWheel" id="timerWheel" aria-label="Timerhjul">
@@ -68,7 +86,6 @@
       </div>
     </div>
 
-    <!-- bottom calendar -->
     <section class="calendarStrip" aria-label="Kalender">
       <div class="calendarFrameWrap">
         <iframe
@@ -85,6 +102,6 @@
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
