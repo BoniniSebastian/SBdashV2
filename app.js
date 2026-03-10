@@ -1,5 +1,4 @@
 (() => {
-  (() => {
   const $ = (id) => document.getElementById(id);
 
   const prioCloseFab = $("prioCloseFab");
@@ -64,7 +63,7 @@
   }
 
   function uid() {
-    return (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`);
+    return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`;
   }
 
   function escapeHtml(s) {
@@ -394,20 +393,20 @@
     }
 
     const rows = topFive.map((item) => {
-  const notePreview = item.note && item.note.trim()
-    ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
-    : "";
+      const notePreview = item.note && item.note.trim()
+        ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
+        : "";
 
-  return `
-    <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
-      <span class="prioPreviewDot"></span>
-      <div style="min-width:0;">
-        <div class="prioPreviewText">${escapeHtml(item.text)}</div>
-        ${notePreview}
-      </div>
-    </div>
-  `;
-}).join("");
+      return `
+        <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
+          <span class="prioPreviewDot"></span>
+          <div style="min-width:0;">
+            <div class="prioPreviewText">${escapeHtml(item.text)}</div>
+            ${notePreview}
+          </div>
+        </div>
+      `;
+    }).join("");
 
     const more = prios.length > 5
       ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
@@ -427,18 +426,18 @@
   }
 
   function togglePrioDone(id, done) {
-  const next = prios.map((item) =>
-    item.id === id ? { ...item, done } : item
-  );
+    const next = prios.map((item) =>
+      item.id === id ? { ...item, done } : item
+    );
 
-  const active = next.filter((item) => !item.done);
-  const completed = next.filter((item) => item.done);
+    const active = next.filter((item) => !item.done);
+    const completed = next.filter((item) => item.done);
 
-  prios = [...active, ...completed];
+    prios = [...active, ...completed];
 
-  savePrios();
-  renderPrios();
-}
+    savePrios();
+    renderPrios();
+  }
 
   function removePrio(id) {
     prios = prios.filter((item) => item.id !== id);
@@ -532,27 +531,27 @@
   }
 
   function addPrioFromInput() {
-  const text = (prioAddInput?.value || "").trim();
-  if (!text) return;
+    const text = (prioAddInput?.value || "").trim();
+    if (!text) return;
 
-  const item = {
-    id: uid(),
-    text,
-    note: "",
-    done: false,
-  };
+    const item = {
+      id: uid(),
+      text,
+      note: "",
+      done: false,
+    };
 
-  prios = [...prios, item];
-  savePrios();
-  prioAddInput.value = "";
-  prioEditingId = item.id;
-  renderPrios();
+    prios = [...prios, item];
+    savePrios();
+    prioAddInput.value = "";
+    prioEditingId = item.id;
+    renderPrios();
 
-  requestAnimationFrame(() => {
-    const editor = prioPanelList?.querySelector(".prioItem:last-child .prioNoteInput");
-    editor?.focus();
-  });
-}
+    requestAnimationFrame(() => {
+      const editor = prioPanelList?.querySelector(".prioItem:last-child .prioNoteInput");
+      editor?.focus();
+    });
+  }
 
   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
@@ -630,59 +629,56 @@
     });
 
     let swipeStartY = null;
-let swipeActive = false;
+    let swipeActive = false;
 
-prioCard?.addEventListener("pointerdown", (e) => {
-  // Swipe-to-close only on touch/pen, not regular mouse
-  if (e.pointerType === "mouse") {
-    swipeStartY = null;
-    swipeActive = false;
-    return;
-  }
+    prioCard?.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
 
-  // Don't start swipe if user began on an interactive control
-  if (e.target.closest("input, textarea, button, label")) {
-    swipeStartY = null;
-    swipeActive = false;
-    return;
-  }
+      if (e.target.closest("input, textarea, button, label")) {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
 
-  swipeStartY = e.clientY;
-  swipeActive = true;
-  prioCard.setPointerCapture?.(e.pointerId);
-});
+      swipeStartY = e.clientY;
+      swipeActive = true;
+      prioCard.setPointerCapture?.(e.pointerId);
+    });
 
-prioCard?.addEventListener("pointermove", (e) => {
-  if (!swipeActive || swipeStartY == null) return;
+    prioCard?.addEventListener("pointermove", (e) => {
+      if (!swipeActive || swipeStartY == null) return;
 
-  const delta = e.clientY - swipeStartY;
-  if (delta > 0) {
-    prioCard.style.transform = `translateY(${delta}px)`;
-  }
-});
+      const delta = e.clientY - swipeStartY;
+      if (delta > 0) {
+        prioCard.style.transform = `translateY(${delta}px)`;
+      }
+    });
 
-const endSwipe = () => {
-  if (!swipeActive || swipeStartY == null) return;
+    const endSwipe = () => {
+      if (!swipeActive || swipeStartY == null) return;
 
-  const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-  const delta = match ? parseFloat(match[1]) : 0;
+      const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+      const delta = match ? parseFloat(match[1]) : 0;
 
-  prioCard.style.transform = "";
-  swipeStartY = null;
-  swipeActive = false;
+      prioCard.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
 
-  if (delta > 120) {
-    closePrioOverlay();
-  }
-};
+      if (delta > 120) {
+        closePrioOverlay();
+      }
+    };
 
-prioCard?.addEventListener("pointerup", endSwipe);
-prioCard?.addEventListener("pointercancel", () => {
-  prioCard.style.transform = "";
-  swipeStartY = null;
-  swipeActive = false;
-});
-    
+    prioCard?.addEventListener("pointerup", endSwipe);
+    prioCard?.addEventListener("pointercancel", () => {
+      prioCard.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
+    });
   }
 
   function bindUI() {
