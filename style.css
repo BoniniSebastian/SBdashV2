@@ -333,11 +333,13 @@ button{
 
 /* weather preview */
 
+/* weather preview */
+
 .weatherPreview{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns: minmax(0,1fr) 88px;
+  grid-template-columns: minmax(0,1fr) 110px;
   align-items:center;
   gap:12px;
 }
@@ -346,12 +348,12 @@ button{
   min-width:0;
   display:flex;
   flex-direction:column;
-  gap:4px;
-  align-self:center;
+  justify-content:center;
+  gap:6px;
 }
 
 .weatherPreviewTempBig{
-  font-size:34px;
+  font-size:36px;
   line-height:.95;
   font-weight:950;
   color:rgba(255,255,255,.96);
@@ -379,14 +381,14 @@ button{
 .weatherPreviewVisual{
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-end;
 }
 
 .weatherPreviewIcon{
-  width:64px;
-  height:64px;
+  width:82px;
+  height:82px;
   object-fit:contain;
-  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
+  filter:drop-shadow(0 0 18px rgba(255,255,255,.08));
 }
 
 /* shared module overlay */
