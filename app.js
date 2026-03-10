@@ -134,11 +134,11 @@
       open: () => openWeatherOverlay(),
     },
     3: {
-      id: 3,
-      title: "Modul 3",
-      renderPreview: () => renderPlaceholderPreviewMarkup(3),
-      open: () => openGenericOverlay(3),
-    },
+  id: 3,
+  title: "Timer",
+  renderPreview: renderTimerPreviewMarkup,
+  open: () => openTimerFocus({ finished: TIMER.finished }),
+},
     4: {
       id: 4,
       title: "Modul 4",
