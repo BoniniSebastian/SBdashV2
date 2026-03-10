@@ -1,6 +1,7 @@
 (() => {
+  alert("app.js kör");
   const $ = (id) => document.getElementById(id);
-
+  
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
