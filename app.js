@@ -135,9 +135,9 @@
     },
     3: {
   id: 3,
-  title: "Timer",
-  renderPreview: renderTimerPreviewMarkup,
-  open: () => openTimerFocus({ finished: TIMER.finished }),
+  title: "Modul 3",
+  renderPreview: () => renderPlaceholderPreviewMarkup(3),
+  open: () => openGenericOverlay(3),
 },
     4: {
       id: 4,
