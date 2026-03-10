@@ -150,36 +150,30 @@ button{
 }
 
 .timerIconBtn{
-  width:42px;
-  height:42px;
-  margin-top:6px;
+  width:32px;
+  height:32px;
+  margin-top:4px;
   display:grid;
   place-items:center;
   border:0;
-  border-radius:14px;
-  background:rgba(255,255,255,.05);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.06),
-    0 8px 30px rgba(0,0,0,.18);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  transition:transform .16s ease, background .16s ease, box-shadow .16s ease, opacity .16s ease;
+  background:none;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
   cursor:pointer;
-  opacity:.92;
+  opacity:.9;
+  padding:0;
 }
 
 .timerIconBtn img{
   width:20px;
   height:20px;
-  opacity:.96;
+  opacity:.95;
+  transition:filter .2s ease;
 }
 
-.timerIconBtn:hover{
-  background:rgba(255,255,255,.08);
-}
-
-.timerIconBtn:active{
-  transform:scale(.97);
+.timerIconBtn:hover img{
+  filter:drop-shadow(0 0 8px rgba(0,209,255,.5));
 }
 
 .weatherBlock{
