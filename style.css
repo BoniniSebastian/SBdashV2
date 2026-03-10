@@ -294,6 +294,9 @@ button{
 
 .prioPreviewRow.is-done .prioPreviewText{
   opacity:.46;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.28);
 }
 
 .prioPreviewMore{
@@ -431,6 +434,9 @@ button{
 
 .prioItem.is-done .prioItemTextBtn{
   color:rgba(255,255,255,.55);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.35);
 }
 
 .prioItemActions{
