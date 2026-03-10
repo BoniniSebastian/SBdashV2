@@ -44,8 +44,14 @@
       </div>
     </header>
 
-    <!-- future dashboard zone -->
-    <main class="dashboardZone" id="dashboardZone" aria-hidden="false"></main>
+    <!-- separator under clock -->
+    <div class="clockSeparator"></div>
+
+    <!-- module area -->
+    <main class="moduleArea" aria-label="Modulyta">
+      <div class="moduleSlot" id="moduleSlot1">MODULE SLOT 1</div>
+      <div class="moduleSlot" id="moduleSlot2">MODULE SLOT 2</div>
+    </main>
 
     <!-- timer focus layer -->
     <div class="timerFocus" id="timerFocus" aria-hidden="true">
@@ -62,23 +68,19 @@
       </div>
     </div>
 
-   <!-- bottom calendar -->
-<section class="calendarStrip" aria-label="Kalender">
+    <!-- bottom calendar -->
+    <section class="calendarStrip" aria-label="Kalender">
+      <div class="calendarFrameWrap">
+        <iframe
+          id="calendarFrame"
+          src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
 
-  <div class="calendarFrameWrap">
-
-    <iframe
-      id="calendarFrame"
-      src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
-      loading="lazy"
-      referrerpolicy="strict-origin-when-cross-origin"
-    ></iframe>
-
-    <div class="calendarShade"></div>
-
-  </div>
-
-</section>
+        <div class="calendarShade"></div>
+      </div>
+    </section>
 
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
