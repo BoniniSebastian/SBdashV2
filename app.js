@@ -272,12 +272,13 @@
   }
 
   function stopTimerInternal() {
-    TIMER.running = false;
-    if (TIMER.intervalId) clearInterval(TIMER.intervalId);
-    TIMER.intervalId = 0;
-    document.body.classList.remove("timerRunning");
-    timerBarWrap?.setAttribute("aria-hidden", "true");
-  }
+  TIMER.running = false;
+  if (TIMER.intervalId) clearInterval(TIMER.intervalId);
+  TIMER.intervalId = 0;
+  document.body.classList.remove("timerRunning");
+  timerBarWrap?.setAttribute("aria-hidden", "true");
+  renderSlots();
+}
 
   function updateTimerBar() {
     if (!timerBar) return;
@@ -316,18 +317,20 @@
   }
 
   function tickTimer() {
-    if (!TIMER.running) return;
+  if (!TIMER.running) return;
 
-    TIMER.left = Math.max(0, Math.ceil((TIMER.endAt - Date.now()) / 1000));
+  TIMER.left = Math.max(0, Math.ceil((TIMER.endAt - Date.now()) / 1000));
+  updateTimerBar();
+  renderSlots();
+
+  if (TIMER.left <= 0) {
+    stopTimerInternal();
     updateTimerBar();
-
-    if (TIMER.left <= 0) {
-      stopTimerInternal();
-      updateTimerBar();
-      playAlarm();
-      openTimerFocus({ finished: true });
-    }
+    renderSlots();
+    playAlarm();
+    openTimerFocus({ finished: true });
   }
+}
 
   function startTimer(minutes) {
     const min = Number(minutes);
@@ -343,14 +346,14 @@
     TIMER.finished = false;
 
     document.body.classList.add("timerRunning");
-    document.body.classList.remove("timerFinished");
+document.body.classList.remove("timerFinished");
 
-    timerBarWrap?.setAttribute("aria-hidden", "false");
-    updateTimerBar();
-    tickTimer();
+timerBarWrap?.setAttribute("aria-hidden", "false");
+updateTimerBar();
+renderSlots();
+tickTimer();
 
-    TIMER.intervalId = setInterval(tickTimer, 250);
-  }
+TIMER.intervalId = setInterval(tickTimer, 250);
 
   function sectorFromDeg(deg) {
     const raw = Math.round(deg / STEP);
@@ -583,6 +586,33 @@
       </div>
     `;
   }
+  
+  function formatTimerPreviewTime(totalSeconds) {
+  const secs = Math.max(0, Math.floor(totalSeconds || 0));
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+function renderTimerPreviewMarkup() {
+  const centerText = TIMER.running
+    ? formatTimerPreviewTime(TIMER.left)
+    : "TIMER";
+
+  const centerClass = TIMER.running
+    ? "timerPreviewValue"
+    : "timerPreviewLabel";
+
+  return `
+    <div class="timerPreview">
+      <div class="timerPreviewWheel">
+        <div class="timerPreviewCenter">
+          <div class="${centerClass}">${escapeHtml(centerText)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
   function renderPlaceholderPreviewMarkup(n) {
     return `
