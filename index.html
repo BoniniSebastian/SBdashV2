@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <div class="app">
@@ -48,8 +48,22 @@
         <div class="prioPreview" id="prioPreview"></div>
       </button>
 
-      <div class="moduleSlot moduleSlot--empty" id="moduleSlot2" aria-hidden="true"></div>
+      <button class="moduleSlot moduleSlot--weather" id="moduleSlot2" type="button" aria-label="Öppna väder">
+        <div class="weatherPreview" id="weatherPreview">
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig" id="weatherPreviewTempBig">--°</div>
+            <div class="weatherPreviewStatus" id="weatherPreviewStatus">Laddar väder...</div>
+            <div class="weatherPreviewMeta" id="weatherPreviewMeta">—</div>
+            <div class="weatherPreviewMeta" id="weatherPreviewMeta2">—</div>
+          </div>
 
+          <div class="weatherPreviewVisual">
+            <img class="weatherPreviewIcon" id="weatherPreviewIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+          </div>
+        </div>
+      </button>
+
+      <!-- Prio expanded -->
       <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
         <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
           <div class="prioPanelScroller">
@@ -70,6 +84,57 @@
           </div>
 
           <button class="prioCloseFab" id="prioCloseFab" type="button" aria-label="Stäng prio">✕</button>
+        </div>
+      </div>
+
+      <!-- Weather expanded -->
+      <div class="moduleExpandOverlay" id="weatherOverlay" aria-hidden="true">
+        <div class="moduleExpandCard weatherExpandCard" id="weatherCard" role="dialog" aria-modal="false" aria-label="Väder">
+          <div class="weatherPanelScroller">
+            <div class="weatherPanel">
+              <div class="weatherHero">
+                <div class="weatherHeroText">
+                  <div class="weatherHeroTemp" id="weatherHeroTemp">--°</div>
+                  <div class="weatherHeroStatus" id="weatherHeroStatus">—</div>
+                </div>
+
+                <div class="weatherHeroVisual">
+                  <img class="weatherHeroIcon" id="weatherHeroIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+                </div>
+              </div>
+
+              <div class="weatherStats">
+                <div class="weatherStat">
+                  <div class="weatherStatLabel">Känns som</div>
+                  <div class="weatherStatValue" id="weatherFeelsLike">—</div>
+                </div>
+
+                <div class="weatherStat">
+                  <div class="weatherStatLabel">Vind</div>
+                  <div class="weatherStatValue" id="weatherWind">—</div>
+                </div>
+
+                <div class="weatherStat">
+                  <div class="weatherStatLabel">Nederbörd</div>
+                  <div class="weatherStatValue" id="weatherRain">—</div>
+                </div>
+
+                <div class="weatherStat">
+                  <div class="weatherStatLabel">Regnrisk</div>
+                  <div class="weatherStatValue" id="weatherRainChance">—</div>
+                </div>
+              </div>
+
+              <div class="weatherHours" id="weatherHours"></div>
+
+              <div class="weatherFoot">
+                <div class="weatherFootLine" id="weatherTodayLine">Idag: —</div>
+                <div class="weatherFootLine" id="weatherTomorrowLine">Imorgon: —</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
         </div>
       </div>
     </main>
@@ -104,6 +169,6 @@
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
