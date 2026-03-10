@@ -2,6 +2,7 @@
   const $ = (id) => document.getElementById(id);
 
   const prioCloseFab = $("prioCloseFab");
+  const weatherCloseFab = $("weatherCloseFab");
 
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
@@ -17,6 +18,27 @@
 
   const weatherIcon = $("weatherIcon");
   const weatherTemp = $("weatherTemp");
+
+  const weatherPreviewIcon = $("weatherPreviewIcon");
+  const weatherPreviewTempBig = $("weatherPreviewTempBig");
+  const weatherPreviewStatus = $("weatherPreviewStatus");
+  const weatherPreviewMeta = $("weatherPreviewMeta");
+  const weatherPreviewMeta2 = $("weatherPreviewMeta2");
+
+  const moduleSlot2 = $("moduleSlot2");
+  const weatherOverlay = $("weatherOverlay");
+  const weatherCard = $("weatherCard");
+
+  const weatherHeroTemp = $("weatherHeroTemp");
+  const weatherHeroStatus = $("weatherHeroStatus");
+  const weatherHeroIcon = $("weatherHeroIcon");
+  const weatherFeelsLike = $("weatherFeelsLike");
+  const weatherWind = $("weatherWind");
+  const weatherRain = $("weatherRain");
+  const weatherRainChance = $("weatherRainChance");
+  const weatherHours = $("weatherHours");
+  const weatherTodayLine = $("weatherTodayLine");
+  const weatherTomorrowLine = $("weatherTomorrowLine");
 
   const alarmAudio = $("alarmAudio");
 
@@ -41,8 +63,41 @@
     na: "assets/ui/weather/na.svg",
   };
 
+  const WEATHER_TEXT = {
+    0: "Klart",
+    1: "Mest klart",
+    2: "Växlande molnighet",
+    3: "Mulet",
+    45: "Dimma",
+    48: "Rimfrostig dimma",
+    51: "Lätt duggregn",
+    53: "Duggregn",
+    55: "Tätt duggregn",
+    56: "Lätt underkylt duggregn",
+    57: "Underkylt duggregn",
+    61: "Lätt regn",
+    63: "Regn",
+    65: "Kraftigt regn",
+    66: "Lätt underkylt regn",
+    67: "Underkylt regn",
+    71: "Lätt snö",
+    73: "Snö",
+    75: "Kraftig snö",
+    77: "Snökorn",
+    80: "Lätta skurar",
+    81: "Skurar",
+    82: "Kraftiga skurar",
+    85: "Lätta snöbyar",
+    86: "Kraftiga snöbyar",
+    95: "Åska",
+    96: "Åska med hagel",
+    99: "Kraftig åska",
+  };
+
   const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.5 };
   const PRIO_KEY = "sbdash_prio_v1";
+  const WEATHER_CACHE_KEY = "sbdash_weather_cache_v1";
+  const WEATHER_CACHE_MS = 10 * 60 * 1000;
 
   const TIMER = {
     presetIndex: 1,
@@ -57,6 +112,7 @@
   let prios = loadPrios();
   let prioEditingId = null;
   let prioLongPressTriggered = false;
+  let weatherData = null;
 
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -129,6 +185,7 @@
   function openTimerFocus({ finished = false } = {}) {
     if (!timerFocus) return;
     closePrioOverlay();
+    closeWeatherOverlay();
 
     TIMER.finished = finished;
     document.body.classList.toggle("timerFinished", finished);
@@ -284,9 +341,7 @@
       const snapped = TIMER.presetIndex * STEP;
       apply(snapped);
 
-      if (!didMove) {
-        startTimer(PRESETS[TIMER.presetIndex]);
-      }
+      if (!didMove) startTimer(PRESETS[TIMER.presetIndex]);
     }, { passive: true });
 
     timerWheel.addEventListener("pointercancel", () => {
@@ -307,6 +362,10 @@
     });
   }
 
+  function weatherText(code) {
+    return WEATHER_TEXT[code] || "Väder";
+  }
+
   function pickWeatherIcon(code) {
     if (code === 0) return WEATHER_ICONS.clear;
     if (code >= 1 && code <= 3) return WEATHER_ICONS.cloudy;
@@ -315,6 +374,109 @@
     if (code >= 71 && code <= 77) return WEATHER_ICONS.snow;
     if (code >= 95) return WEATHER_ICONS.thunder;
     return WEATHER_ICONS.na;
+  }
+
+  function loadWeatherCache() {
+    try {
+      const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (!parsed || !parsed.ts || !parsed.data) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveWeatherCache(data) {
+    try {
+      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
+        ts: Date.now(),
+        data,
+      }));
+    } catch {}
+  }
+
+  function fmtHour(iso) {
+    const d = new Date(iso);
+    return `${String(d.getHours()).padStart(2, "0")}:00`;
+  }
+
+  function getUpcomingHours(data, count = 4) {
+    const times = data?.hourly?.time || [];
+    const temps = data?.hourly?.temperature_2m || [];
+    const rainChance = data?.hourly?.precipitation_probability || [];
+    const now = new Date();
+
+    let i0 = times.findIndex((ti) => new Date(ti) >= now);
+    if (i0 < 0) i0 = 0;
+
+    const out = [];
+    for (let k = 0; k < count; k++) {
+      const i = i0 + k;
+      if (!times[i]) break;
+      out.push({
+        time: fmtHour(times[i]),
+        temp: Math.round(temps[i]),
+        rainChance: Number.isFinite(rainChance[i]) ? Math.round(rainChance[i]) : 0,
+      });
+    }
+    return out;
+  }
+
+  function renderWeather(data) {
+    weatherData = data;
+    if (!data?.current) return;
+
+    const currentTemp = Math.round(data.current.temperature_2m ?? 0);
+    const currentCode = data.current.weather_code ?? 0;
+    const feels = Math.round(data.current.apparent_temperature ?? currentTemp);
+    const wind = Math.round(data.current.wind_speed_10m ?? 0);
+    const rain = Number.isFinite(data.current.precipitation) ? data.current.precipitation : 0;
+    const icon = pickWeatherIcon(currentCode);
+    const status = weatherText(currentCode);
+
+    const todayMin = Math.round(data.daily?.temperature_2m_min?.[0] ?? currentTemp);
+    const todayMax = Math.round(data.daily?.temperature_2m_max?.[0] ?? currentTemp);
+    const tomorrowMin = Math.round(data.daily?.temperature_2m_min?.[1] ?? todayMin);
+    const tomorrowMax = Math.round(data.daily?.temperature_2m_max?.[1] ?? todayMax);
+    const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode;
+
+    const hours = getUpcomingHours(data, 4);
+    const firstRainChance = hours[0]?.rainChance ?? 0;
+
+    if (weatherTemp) weatherTemp.textContent = `${currentTemp}°`;
+    if (weatherIcon) weatherIcon.src = icon;
+
+    if (weatherPreviewTempBig) weatherPreviewTempBig.textContent = `${currentTemp}°`;
+    if (weatherPreviewStatus) weatherPreviewStatus.textContent = status;
+    if (weatherPreviewMeta) weatherPreviewMeta.textContent = `Känns som ${feels}°`;
+    if (weatherPreviewMeta2) weatherPreviewMeta2.textContent = `Vind ${wind} m/s`;
+    if (weatherPreviewIcon) weatherPreviewIcon.src = icon;
+
+    if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
+    if (weatherHeroStatus) weatherHeroStatus.textContent = status;
+    if (weatherHeroIcon) weatherHeroIcon.src = icon;
+    if (weatherFeelsLike) weatherFeelsLike.textContent = `${feels}°`;
+    if (weatherWind) weatherWind.textContent = `${wind} m/s`;
+    if (weatherRain) weatherRain.textContent = `${rain} mm`;
+    if (weatherRainChance) weatherRainChance.textContent = `${firstRainChance}%`;
+
+    if (weatherHours) {
+      weatherHours.innerHTML = hours.map((h) => `
+        <div class="weatherHour">
+          <div class="weatherHourTime">${escapeHtml(h.time)}</div>
+          <div class="weatherHourTemp">${h.temp}°</div>
+          <div class="weatherHourRain">${h.rainChance}%</div>
+        </div>
+      `).join("");
+    }
+
+    if (weatherTodayLine) {
+      weatherTodayLine.textContent = `Idag: ${todayMin}° – ${todayMax}° · ${status}`;
+    }
+    if (weatherTomorrowLine) {
+      weatherTomorrowLine.textContent = `Imorgon: ${tomorrowMin}° – ${tomorrowMax}° · ${weatherText(tomorrowCode)}`;
+    }
   }
 
   async function getCoords() {
@@ -343,7 +505,9 @@
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${encodeURIComponent(lat)}` +
       `&longitude=${encodeURIComponent(lon)}` +
-      `&current=temperature_2m,weather_code` +
+      `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation` +
+      `&hourly=temperature_2m,precipitation_probability` +
+      `&daily=temperature_2m_max,temperature_2m_min,weather_code` +
       `&timezone=auto`;
 
     const res = await fetch(url, { cache: "no-store" });
@@ -352,14 +516,28 @@
   }
 
   async function initWeather() {
+    const cached = loadWeatherCache();
+    if (cached?.data) {
+      renderWeather(cached.data);
+    }
+
     try {
       const loc = await getCoords();
-      const data = await fetchWeather(loc.lat, loc.lon);
-      const t = Math.round(data.current.temperature_2m);
-      const code = data.current.weather_code;
+      const staleEnough = !cached || (Date.now() - cached.ts > WEATHER_CACHE_MS);
 
-      if (weatherTemp) weatherTemp.textContent = `${t}°`;
-      if (weatherIcon) weatherIcon.src = pickWeatherIcon(code);
+      if (staleEnough) {
+        const fresh = await fetchWeather(loc.lat, loc.lon);
+        saveWeatherCache(fresh);
+        renderWeather(fresh);
+      } else if (cached?.data) {
+        setTimeout(async () => {
+          try {
+            const fresh = await fetchWeather(loc.lat, loc.lon);
+            saveWeatherCache(fresh);
+            renderWeather(fresh);
+          } catch {}
+        }, 300);
+      }
     } catch (e) {
       console.warn("Weather error:", e);
     }
@@ -367,14 +545,11 @@
     setInterval(async () => {
       try {
         const loc = await getCoords();
-        const data = await fetchWeather(loc.lat, loc.lon);
-        const t = Math.round(data.current.temperature_2m);
-        const code = data.current.weather_code;
-
-        if (weatherTemp) weatherTemp.textContent = `${t}°`;
-        if (weatherIcon) weatherIcon.src = pickWeatherIcon(code);
+        const fresh = await fetchWeather(loc.lat, loc.lon);
+        saveWeatherCache(fresh);
+        renderWeather(fresh);
       } catch {}
-    }, 10 * 60 * 1000);
+    }, WEATHER_CACHE_MS);
   }
 
   function renderPrioPreview() {
@@ -556,6 +731,7 @@
   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
     closeTimerFocus();
+    closeWeatherOverlay();
 
     prioOverlay.classList.add("open");
     prioOverlay.setAttribute("aria-hidden", "false");
@@ -572,6 +748,20 @@
     prioOverlay.setAttribute("aria-hidden", "true");
     prioEditingId = null;
     renderPrioPreview();
+  }
+
+  function openWeatherOverlay() {
+    if (!weatherOverlay) return;
+    closeTimerFocus();
+    closePrioOverlay();
+    weatherOverlay.classList.add("open");
+    weatherOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeWeatherOverlay() {
+    if (!weatherOverlay) return;
+    weatherOverlay.classList.remove("open");
+    weatherOverlay.setAttribute("aria-hidden", "true");
   }
 
   function bindPrioUI() {
@@ -681,6 +871,66 @@
     });
   }
 
+  function bindWeatherUI() {
+    moduleSlot2?.addEventListener("click", openWeatherOverlay);
+
+    weatherOverlay?.addEventListener("click", (e) => {
+      if (e.target === weatherOverlay) closeWeatherOverlay();
+    });
+
+    let swipeStartY = null;
+    let swipeActive = false;
+
+    weatherCard?.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
+
+      if (e.target.closest("input, textarea, button, label")) {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
+
+      swipeStartY = e.clientY;
+      swipeActive = true;
+      weatherCard.setPointerCapture?.(e.pointerId);
+    });
+
+    weatherCard?.addEventListener("pointermove", (e) => {
+      if (!swipeActive || swipeStartY == null) return;
+
+      const delta = e.clientY - swipeStartY;
+      if (delta > 0) {
+        weatherCard.style.transform = `translateY(${delta}px)`;
+      }
+    });
+
+    const endSwipe = () => {
+      if (!swipeActive || swipeStartY == null) return;
+
+      const match = weatherCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+      const delta = match ? parseFloat(match[1]) : 0;
+
+      weatherCard.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
+
+      if (delta > 120) {
+        closeWeatherOverlay();
+      }
+    };
+
+    weatherCard?.addEventListener("pointerup", endSwipe);
+    weatherCard?.addEventListener("pointercancel", () => {
+      weatherCard.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
+    });
+  }
+
   function bindUI() {
     timerIconBtn?.addEventListener("click", () => {
       openTimerFocus({ finished: false });
@@ -690,6 +940,10 @@
       if (e.key === "Escape") {
         if (prioOverlay?.classList.contains("open")) {
           closePrioOverlay();
+          return;
+        }
+        if (weatherOverlay?.classList.contains("open")) {
+          closeWeatherOverlay();
           return;
         }
         if (timerFocus?.classList.contains("open") && !TIMER.running) {
@@ -705,7 +959,9 @@
     });
 
     bindPrioUI();
+    bindWeatherUI();
     prioCloseFab?.addEventListener("click", closePrioOverlay);
+    weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
   }
 
   function init() {
