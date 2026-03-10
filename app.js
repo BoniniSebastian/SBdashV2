@@ -1,6 +1,8 @@
 (() => {
-  const prioCloseFab = $("prioCloseFab");
+  (() => {
   const $ = (id) => document.getElementById(id);
+
+  const prioCloseFab = $("prioCloseFab");
 
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
