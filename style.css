@@ -287,6 +287,25 @@ button{
   min-width:0;
 }
 
+.prioPreviewNote{
+  margin-top:2px;
+  font-size:12px;
+  line-height:1.25;
+  color:rgba(255,255,255,.42);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+
+.prioPreviewRow.is-done .prioPreviewNote{
+  opacity:.45;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.20);
+}
+
+
 .prioPreviewRow.is-done .prioPreviewDot{
   opacity:.45;
   box-shadow:none;
