@@ -113,7 +113,7 @@ button{
   right:var(--pagePadX);
   top:var(--pageTop);
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:flex-start;
   z-index:20;
 }
@@ -185,29 +185,6 @@ button{
   filter:drop-shadow(0 0 8px rgba(0,209,255,.5));
 }
 
-.weatherBlock{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-  margin-top:4px;
-}
-
-.weatherIcon{
-  width:26px;
-  height:26px;
-  opacity:.96;
-  filter:drop-shadow(0 0 8px rgba(255,255,255,.05));
-}
-
-.weatherTemp{
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.02em;
-  color:rgba(255,255,255,.94);
-}
-
 /* module area */
 
 .moduleArea{
@@ -269,44 +246,8 @@ button{
   height:100%;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
+  justify-content:flex-start;
   min-width:0;
-}
-
-.modulePeek{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-  opacity:.52;
-}
-
-.modulePeekLabel{
-  font-size:11px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.48);
-}
-
-.modulePeekValue{
-  font-size:11px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.10em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.34);
-}
-
-.moduleHint{
-  margin-top:8px;
-  font-size:11px;
-  line-height:1.2;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.24);
 }
 
 .modulePlaceholder{
@@ -315,7 +256,7 @@ button{
   min-height:0;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
+  justify-content:center;
   gap:10px;
 }
 
@@ -888,15 +829,6 @@ button{
   gap:12px;
 }
 
-.genericEyebrow{
-  font-size:12px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.22em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.42);
-}
-
 .genericTitle{
   font-size:42px;
   line-height:.95;
@@ -1110,10 +1042,10 @@ body.timerRunning .timerBarWrap{
   pointer-events:none;
   background:linear-gradient(
     to bottom,
-    rgba(0,0,0,.25) 100%,
-    rgba(0,0,0,.25) 100%,
-    rgba(0,0,0,.25) 100%,
-    rgba(0,0,0,.25) 100%
+    rgba(0,0,0,.50) 0%,
+    rgba(0,0,0,.38) 35%,
+    rgba(0,0,0,.26) 70%,
+    rgba(0,0,0,.18) 100%
   );
 }
 
@@ -1140,10 +1072,6 @@ body.timerRunning .timerBarWrap{
 
   .clockSeparator{
     top:112px;
-  }
-
-  .weatherTemp{
-    font-size:20px;
   }
 
   .timerIconBtn{
