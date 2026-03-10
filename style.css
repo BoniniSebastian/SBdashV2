@@ -1110,10 +1110,10 @@ body.timerRunning .timerBarWrap{
   pointer-events:none;
   background:linear-gradient(
     to bottom,
-    rgba(0,0,0,.50) 0%,
-    rgba(0,0,0,.38) 35%,
-    rgba(0,0,0,.26) 70%,
-    rgba(0,0,0,.18) 100%
+    rgba(0,0,0,.25) 100%,
+    rgba(0,0,0,.25) 100%,
+    rgba(0,0,0,.25) 100%,
+    rgba(0,0,0,.25) 100%
   );
 }
 
