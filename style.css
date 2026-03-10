@@ -239,6 +239,44 @@ button{
   display:flex;
   flex-direction:column;
   justify-content:flex-start;
+  transition:
+    transform .22s ease,
+    opacity .22s ease,
+    filter .22s ease;
+  will-change: transform, opacity, filter;
+}
+.moduleSlot.is-swiping .moduleSlotContent{
+  filter:brightness(1.05);
+}
+
+.moduleSlot.is-animating-left .moduleSlotContent{
+  animation:slotSwapLeft .24s ease;
+}
+
+.moduleSlot.is-animating-right .moduleSlotContent{
+  animation:slotSwapRight .24s ease;
+}
+
+@keyframes slotSwapLeft{
+  0%{
+    transform:translateX(18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
+
+@keyframes slotSwapRight{
+  0%{
+    transform:translateX(-18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
 }
 
 .moduleSlotTrack{
