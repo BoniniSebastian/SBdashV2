@@ -390,12 +390,21 @@
       return;
     }
 
-    const rows = topFive.map((item) => `
-      <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
-        <span class="prioPreviewDot"></span>
-        <span class="prioPreviewText">${escapeHtml(item.text)}</span>
+    const rows = topFive.map((item) => {
+  const notePreview = item.note && item.note.trim()
+    ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
+    : "";
+
+  return `
+    <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
+      <span class="prioPreviewDot"></span>
+      <div style="min-width:0;">
+        <div class="prioPreviewText">${escapeHtml(item.text)}</div>
+        ${notePreview}
       </div>
-    `).join("");
+    </div>
+  `;
+}).join("");
 
     const more = prios.length > 5
       ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
