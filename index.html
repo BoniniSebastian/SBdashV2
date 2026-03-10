@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <div class="app">
@@ -44,26 +44,18 @@
     <div class="clockSeparator"></div>
 
     <main class="moduleArea" aria-label="Modulyta">
-      <button class="moduleSlot moduleSlot--prio" id="moduleSlot1" type="button" aria-label="Öppna prio">
-        <div class="prioPreview" id="prioPreview"></div>
+
+      <!-- SLOT 1 -->
+      <button class="moduleSlot" id="moduleSlot1" type="button" aria-label="Öppna modul i slot 1">
+        <div class="moduleSlotContent" id="moduleSlotContent1"></div>
       </button>
 
-      <button class="moduleSlot moduleSlot--weather" id="moduleSlot2" type="button" aria-label="Öppna väder">
-        <div class="weatherPreview" id="weatherPreview">
-          <div class="weatherPreviewText">
-            <div class="weatherPreviewTempBig" id="weatherPreviewTempBig">--°</div>
-            <div class="weatherPreviewStatus" id="weatherPreviewStatus">Laddar väder...</div>
-            <div class="weatherPreviewMeta" id="weatherPreviewMeta">—</div>
-            <div class="weatherPreviewMeta" id="weatherPreviewMeta2">—</div>
-          </div>
-
-          <div class="weatherPreviewVisual">
-            <img class="weatherPreviewIcon" id="weatherPreviewIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
-          </div>
-        </div>
+      <!-- SLOT 2 -->
+      <button class="moduleSlot" id="moduleSlot2" type="button" aria-label="Öppna modul i slot 2">
+        <div class="moduleSlotContent" id="moduleSlotContent2"></div>
       </button>
 
-      <!-- Prio expanded -->
+      <!-- PRIO OVERLAY -->
       <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
         <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
           <div class="prioPanelScroller">
@@ -87,7 +79,7 @@
         </div>
       </div>
 
-      <!-- Weather expanded -->
+      <!-- WEATHER OVERLAY -->
       <div class="moduleExpandOverlay" id="weatherOverlay" aria-hidden="true">
         <div class="moduleExpandCard weatherExpandCard" id="weatherCard" role="dialog" aria-modal="false" aria-label="Väder">
           <div class="weatherPanelScroller">
@@ -137,6 +129,19 @@
           <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
         </div>
       </div>
+
+      <!-- PLACEHOLDER OVERLAY -->
+      <div class="moduleExpandOverlay" id="placeholderOverlay" aria-hidden="true">
+        <div class="moduleExpandCard placeholderExpandCard" id="placeholderCard" role="dialog" aria-modal="false" aria-label="Modul">
+          <div class="placeholderPanel">
+            <div class="placeholderPanelName" id="placeholderPanelName">Modul 3</div>
+            <div class="placeholderPanelText">Kommer snart</div>
+          </div>
+
+          <button class="weatherCloseFab" id="placeholderCloseFab" type="button" aria-label="Stäng modul">✕</button>
+        </div>
+      </div>
+
     </main>
 
     <div class="timerFocus" id="timerFocus" aria-hidden="true">
@@ -169,6 +174,6 @@
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
