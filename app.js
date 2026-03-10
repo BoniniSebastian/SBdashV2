@@ -1,9 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const prioCloseFab = $("prioCloseFab");
-  const weatherCloseFab = $("weatherCloseFab");
-
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
@@ -19,16 +16,20 @@
   const weatherIcon = $("weatherIcon");
   const weatherTemp = $("weatherTemp");
 
-  const weatherPreviewIcon = $("weatherPreviewIcon");
-  const weatherPreviewTempBig = $("weatherPreviewTempBig");
-  const weatherPreviewStatus = $("weatherPreviewStatus");
-  const weatherPreviewMeta = $("weatherPreviewMeta");
-  const weatherPreviewMeta2 = $("weatherPreviewMeta2");
-
+  const moduleSlot1 = $("moduleSlot1");
   const moduleSlot2 = $("moduleSlot2");
+  const moduleSlot1Content = $("moduleSlot1Content");
+  const moduleSlot2Content = $("moduleSlot2Content");
+
+  const prioOverlay = $("prioOverlay");
+  const prioCard = $("prioCard");
+  const prioPanelList = $("prioPanelList");
+  const prioAddInput = $("prioAddInput");
+  const prioAddBtn = $("prioAddBtn");
+  const prioCloseFab = $("prioCloseFab");
+
   const weatherOverlay = $("weatherOverlay");
   const weatherCard = $("weatherCard");
-
   const weatherHeroTemp = $("weatherHeroTemp");
   const weatherHeroStatus = $("weatherHeroStatus");
   const weatherHeroIcon = $("weatherHeroIcon");
@@ -39,19 +40,22 @@
   const weatherHours = $("weatherHours");
   const weatherTodayLine = $("weatherTodayLine");
   const weatherTomorrowLine = $("weatherTomorrowLine");
+  const weatherCloseFab = $("weatherCloseFab");
+
+  const genericOverlay = $("genericOverlay");
+  const genericCard = $("genericCard");
+  const genericEyebrow = $("genericEyebrow");
+  const genericTitle = $("genericTitle");
+  const genericBody = $("genericBody");
+  const genericCloseFab = $("genericCloseFab");
 
   const alarmAudio = $("alarmAudio");
 
-  const moduleSlot1 = $("moduleSlot1");
-  const prioPreview = $("prioPreview");
-  const prioOverlay = $("prioOverlay");
-  const prioCard = $("prioCard");
-  const prioPanelList = $("prioPanelList");
-  const prioAddInput = $("prioAddInput");
-  const prioAddBtn = $("prioAddBtn");
-
   const PRESETS = [1, 5, 10, 15, 30];
   const STEP = 360 / PRESETS.length;
+
+  const MODULE_COUNT = 7;
+  const SLOT_DEFAULTS = { slot1: 1, slot2: 2 };
 
   const WEATHER_ICONS = {
     clear: "assets/ui/weather/clear.svg",
@@ -99,6 +103,11 @@
   const WEATHER_CACHE_KEY = "sbdash_weather_cache_v1";
   const WEATHER_CACHE_MS = 10 * 60 * 1000;
 
+  const SLOT_STATE = {
+    slot1: SLOT_DEFAULTS.slot1,
+    slot2: SLOT_DEFAULTS.slot2,
+  };
+
   const TIMER = {
     presetIndex: 1,
     total: 0,
@@ -113,6 +122,59 @@
   let prioEditingId = null;
   let prioLongPressTriggered = false;
   let weatherData = null;
+  let genericOpenModule = 3;
+
+  const MODULES = {
+    1: {
+      id: 1,
+      label: "Modul 1",
+      title: "Prio",
+      renderPreview: renderPrioPreviewMarkup,
+      open: () => openPrioOverlay(),
+    },
+    2: {
+      id: 2,
+      label: "Modul 2",
+      title: "Väder",
+      renderPreview: renderWeatherPreviewMarkup,
+      open: () => openWeatherOverlay(),
+    },
+    3: {
+      id: 3,
+      label: "Modul 3",
+      title: "Modul 3",
+      renderPreview: () => renderPlaceholderPreviewMarkup(3),
+      open: () => openGenericOverlay(3),
+    },
+    4: {
+      id: 4,
+      label: "Modul 4",
+      title: "Modul 4",
+      renderPreview: () => renderPlaceholderPreviewMarkup(4),
+      open: () => openGenericOverlay(4),
+    },
+    5: {
+      id: 5,
+      label: "Modul 5",
+      title: "Modul 5",
+      renderPreview: () => renderPlaceholderPreviewMarkup(5),
+      open: () => openGenericOverlay(5),
+    },
+    6: {
+      id: 6,
+      label: "Modul 6",
+      title: "Modul 6",
+      renderPreview: () => renderPlaceholderPreviewMarkup(6),
+      open: () => openGenericOverlay(6),
+    },
+    7: {
+      id: 7,
+      label: "Modul 7",
+      title: "Modul 7",
+      renderPreview: () => renderPlaceholderPreviewMarkup(7),
+      open: () => openGenericOverlay(7),
+    },
+  };
 
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -129,6 +191,25 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function wrapModuleIndex(n) {
+    return ((n - 1 + MODULE_COUNT * 1000) % MODULE_COUNT) + 1;
+  }
+
+  function getModule(id) {
+    return MODULES[wrapModuleIndex(id)];
+  }
+
+  function shiftSlot(slotKey, direction) {
+    SLOT_STATE[slotKey] = wrapModuleIndex(SLOT_STATE[slotKey] + direction);
+    renderSlots();
+  }
+
+  function openSlotModule(slotKey) {
+    const mod = getModule(SLOT_STATE[slotKey]);
+    if (!mod) return;
+    mod.open();
   }
 
   function defaultPrios() {
@@ -184,8 +265,7 @@
 
   function openTimerFocus({ finished = false } = {}) {
     if (!timerFocus) return;
-    closePrioOverlay();
-    closeWeatherOverlay();
+    closeAllModuleOverlays();
 
     TIMER.finished = finished;
     document.body.classList.toggle("timerFinished", finished);
@@ -423,8 +503,148 @@
     return out;
   }
 
+  function getWeatherPreviewData() {
+    if (!weatherData?.current) {
+      return {
+        currentTemp: "--",
+        status: "Laddar väder...",
+        feels: "—",
+        wind: "—",
+        icon: WEATHER_ICONS.na,
+      };
+    }
+
+    const currentTemp = Math.round(weatherData.current.temperature_2m ?? 0);
+    const currentCode = weatherData.current.weather_code ?? 0;
+    const feels = Math.round(weatherData.current.apparent_temperature ?? currentTemp);
+    const wind = Math.round(weatherData.current.wind_speed_10m ?? 0);
+
+    return {
+      currentTemp,
+      status: weatherText(currentCode),
+      feels,
+      wind,
+      icon: pickWeatherIcon(currentCode),
+    };
+  }
+
+  function renderPrioPreviewMarkup() {
+    const topFive = prios.slice(0, 5);
+
+    if (!topFive.length) {
+      return `
+        <div class="moduleSlotTrack">
+          <div class="modulePeek">
+            <div class="modulePeekLabel">Slot-preview</div>
+            <div class="modulePeekValue">Modul 1</div>
+          </div>
+          <div class="prioPreview">
+            <div class="prioPreviewRow">
+              <span class="prioPreviewDot"></span>
+              <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
+            </div>
+          </div>
+          <div class="moduleHint">Svep eller scrolla för nästa modul</div>
+        </div>
+      `;
+    }
+
+    const rows = topFive.map((item) => {
+      const notePreview = item.note && item.note.trim()
+        ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
+        : "";
+
+      return `
+        <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
+          <span class="prioPreviewDot"></span>
+          <div style="min-width:0;">
+            <div class="prioPreviewText">${escapeHtml(item.text)}</div>
+            ${notePreview}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const more = prios.length > 5
+      ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
+      : "";
+
+    return `
+      <div class="moduleSlotTrack">
+        <div class="modulePeek">
+          <div class="modulePeekLabel">Slot-preview</div>
+          <div class="modulePeekValue">Modul 1</div>
+        </div>
+        <div class="prioPreview">
+          ${rows}
+          ${more}
+        </div>
+        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
+      </div>
+    `;
+  }
+
+  function renderWeatherPreviewMarkup() {
+    const info = getWeatherPreviewData();
+
+    return `
+      <div class="moduleSlotTrack">
+        <div class="modulePeek">
+          <div class="modulePeekLabel">Slot-preview</div>
+          <div class="modulePeekValue">Modul 2</div>
+        </div>
+        <div class="weatherPreview">
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
+            <div class="weatherPreviewStatus">${escapeHtml(info.status)}</div>
+            <div class="weatherPreviewMeta">Känns som ${escapeHtml(info.feels)}°</div>
+            <div class="weatherPreviewMeta">Vind ${escapeHtml(info.wind)} m/s</div>
+          </div>
+
+          <div class="weatherPreviewVisual">
+            <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
+          </div>
+        </div>
+        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
+      </div>
+    `;
+  }
+
+  function renderPlaceholderPreviewMarkup(n) {
+    return `
+      <div class="modulePlaceholder">
+        <div class="modulePeek">
+          <div class="modulePeekLabel">Slot-preview</div>
+          <div class="modulePeekValue">Modul ${n}</div>
+        </div>
+
+        <div class="modulePlaceholderBody">
+          <div class="modulePlaceholderTitle">Modul ${n}</div>
+          <div class="modulePlaceholderText">
+            Tom placeholder just nu. Den här modulen är redo att byggas när du vill.
+          </div>
+        </div>
+
+        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
+      </div>
+    `;
+  }
+
+  function renderSlot(slotKey, el) {
+    if (!el) return;
+    const mod = getModule(SLOT_STATE[slotKey]);
+    el.innerHTML = mod.renderPreview();
+  }
+
+  function renderSlots() {
+    renderSlot("slot1", moduleSlot1Content);
+    renderSlot("slot2", moduleSlot2Content);
+  }
+
   function renderWeather(data) {
     weatherData = data;
+    renderSlots();
+
     if (!data?.current) return;
 
     const currentTemp = Math.round(data.current.temperature_2m ?? 0);
@@ -446,12 +666,6 @@
 
     if (weatherTemp) weatherTemp.textContent = `${currentTemp}°`;
     if (weatherIcon) weatherIcon.src = icon;
-
-    if (weatherPreviewTempBig) weatherPreviewTempBig.textContent = `${currentTemp}°`;
-    if (weatherPreviewStatus) weatherPreviewStatus.textContent = status;
-    if (weatherPreviewMeta) weatherPreviewMeta.textContent = `Känns som ${feels}°`;
-    if (weatherPreviewMeta2) weatherPreviewMeta2.textContent = `Vind ${wind} m/s`;
-    if (weatherPreviewIcon) weatherPreviewIcon.src = icon;
 
     if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
     if (weatherHeroStatus) weatherHeroStatus.textContent = status;
@@ -552,44 +766,6 @@
     }, WEATHER_CACHE_MS);
   }
 
-  function renderPrioPreview() {
-    if (!prioPreview) return;
-
-    const topFive = prios.slice(0, 5);
-
-    if (!topFive.length) {
-      prioPreview.innerHTML = `
-        <div class="prioPreviewRow">
-          <span class="prioPreviewDot"></span>
-          <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
-        </div>
-      `;
-      return;
-    }
-
-    const rows = topFive.map((item) => {
-      const notePreview = item.note && item.note.trim()
-        ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
-        : "";
-
-      return `
-        <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
-          <span class="prioPreviewDot"></span>
-          <div style="min-width:0;">
-            <div class="prioPreviewText">${escapeHtml(item.text)}</div>
-            ${notePreview}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    const more = prios.length > 5
-      ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
-      : "";
-
-    prioPreview.innerHTML = rows + more;
-  }
-
   function movePrio(index, dir) {
     const next = index + dir;
     if (next < 0 || next >= prios.length) return;
@@ -624,7 +800,7 @@
   function updatePrioField(id, patch) {
     prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
     savePrios();
-    renderPrioPreview();
+    renderSlots();
   }
 
   function renderPrioPanel() {
@@ -701,7 +877,7 @@
   }
 
   function renderPrios() {
-    renderPrioPreview();
+    renderSlots();
     renderPrioPanel();
   }
 
@@ -728,10 +904,17 @@
     });
   }
 
+  function closeAllModuleOverlays() {
+    closePrioOverlay();
+    closeWeatherOverlay();
+    closeGenericOverlay();
+  }
+
   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
     closeTimerFocus();
     closeWeatherOverlay();
+    closeGenericOverlay();
 
     prioOverlay.classList.add("open");
     prioOverlay.setAttribute("aria-hidden", "false");
@@ -747,13 +930,14 @@
     prioOverlay.classList.remove("open");
     prioOverlay.setAttribute("aria-hidden", "true");
     prioEditingId = null;
-    renderPrioPreview();
+    renderSlots();
   }
 
   function openWeatherOverlay() {
     if (!weatherOverlay) return;
     closeTimerFocus();
     closePrioOverlay();
+    closeGenericOverlay();
     weatherOverlay.classList.add("open");
     weatherOverlay.setAttribute("aria-hidden", "false");
   }
@@ -764,34 +948,201 @@
     weatherOverlay.setAttribute("aria-hidden", "true");
   }
 
-  function bindPrioUI() {
-    let pressTimer = 0;
+  function openGenericOverlay(moduleId) {
+    closeTimerFocus();
+    closePrioOverlay();
+    closeWeatherOverlay();
+
+    genericOpenModule = wrapModuleIndex(moduleId);
+    if (genericEyebrow) genericEyebrow.textContent = `MODUL ${genericOpenModule}`;
+    if (genericTitle) genericTitle.textContent = `Modul ${genericOpenModule}`;
+    if (genericBody) {
+      genericBody.textContent = "Den här modulen är skapad som placeholder och väntar på innehåll. När vi bygger vidare ersätter vi den här texten med riktig funktionalitet.";
+    }
+
+    genericOverlay?.classList.add("open");
+    genericOverlay?.setAttribute("aria-hidden", "false");
+  }
+
+  function closeGenericOverlay() {
+    if (!genericOverlay) return;
+    genericOverlay.classList.remove("open");
+    genericOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  function addVerticalSwipeToOverlay(cardEl, overlayEl, closeFn) {
+    if (!cardEl || !overlayEl || !closeFn) return;
+
+    let swipeStartY = null;
+    let swipeActive = false;
+
+    cardEl.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
+
+      if (e.target.closest("input, textarea, button, label")) {
+        swipeStartY = null;
+        swipeActive = false;
+        return;
+      }
+
+      swipeStartY = e.clientY;
+      swipeActive = true;
+      cardEl.setPointerCapture?.(e.pointerId);
+    });
+
+    cardEl.addEventListener("pointermove", (e) => {
+      if (!swipeActive || swipeStartY == null) return;
+
+      const delta = e.clientY - swipeStartY;
+      if (delta > 0) {
+        cardEl.style.transform = `translateY(${delta}px)`;
+      }
+    });
+
+    const endSwipe = () => {
+      if (!swipeActive || swipeStartY == null) return;
+
+      const match = cardEl.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+      const delta = match ? parseFloat(match[1]) : 0;
+
+      cardEl.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
+
+      if (delta > 120) closeFn();
+    };
+
+    cardEl.addEventListener("pointerup", endSwipe);
+    cardEl.addEventListener("pointercancel", () => {
+      cardEl.style.transform = "";
+      swipeStartY = null;
+      swipeActive = false;
+    });
+
+    overlayEl.addEventListener("click", (e) => {
+      if (e.target === overlayEl) closeFn();
+    });
+  }
+
+  function bindModuleSlot(slotEl, slotKey) {
+    if (!slotEl) return;
+
     let startX = 0;
     let startY = 0;
+    let dragging = false;
+    let moved = false;
+    let locked = false;
+    let wheelLocked = false;
 
-    moduleSlot1?.addEventListener("click", () => {
-      if (prioLongPressTriggered) {
+    slotEl.addEventListener("click", () => {
+      if (moved) {
+        moved = false;
+        return;
+      }
+
+      if (slotKey === "slot1" && prioLongPressTriggered) {
         prioLongPressTriggered = false;
         return;
       }
-      openPrioOverlay();
+
+      openSlotModule(slotKey);
     });
 
-    moduleSlot1?.addEventListener("pointerdown", (e) => {
+    slotEl.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      moved = false;
+      locked = false;
       startX = e.clientX;
       startY = e.clientY;
-      prioLongPressTriggered = false;
 
-      pressTimer = window.setTimeout(() => {
-        prioLongPressTriggered = true;
-        openPrioOverlay({ focusAdd: true });
-      }, 420);
+      if (slotKey === "slot1") {
+        prioLongPressTriggered = false;
+      }
+
+      slotEl.setPointerCapture?.(e.pointerId);
     });
+
+    slotEl.addEventListener("pointermove", (e) => {
+      if (!dragging || locked) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
+        dragging = false;
+        return;
+      }
+
+      if (Math.abs(dx) < 28) return;
+
+      locked = true;
+      moved = true;
+
+      if (dx < 0) {
+        shiftSlot(slotKey, 1);
+      } else {
+        shiftSlot(slotKey, -1);
+      }
+    }, { passive: true });
+
+    slotEl.addEventListener("pointerup", () => {
+      dragging = false;
+      locked = false;
+
+      requestAnimationFrame(() => {
+        moved = false;
+      });
+    });
+
+    slotEl.addEventListener("pointercancel", () => {
+      dragging = false;
+      locked = false;
+      moved = false;
+    });
+
+    slotEl.addEventListener("wheel", (e) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(delta) < 12) return;
+
+      e.preventDefault();
+      if (wheelLocked) return;
+
+      wheelLocked = true;
+      shiftSlot(slotKey, delta > 0 ? 1 : -1);
+
+      window.setTimeout(() => {
+        wheelLocked = false;
+      }, 220);
+    }, { passive: false });
+  }
+
+  function bindPrioLongPress() {
+    let pressTimer = 0;
+    let startX = 0;
+    let startY = 0;
 
     const cancelLongPress = () => {
       if (pressTimer) clearTimeout(pressTimer);
       pressTimer = 0;
     };
+
+    moduleSlot1?.addEventListener("pointerdown", (e) => {
+      if (SLOT_STATE.slot1 !== 1) return;
+
+      startX = e.clientX;
+      startY = e.clientY;
+      prioLongPressTriggered = false;
+
+      pressTimer = window.setTimeout(() => {
+        if (SLOT_STATE.slot1 !== 1) return;
+        prioLongPressTriggered = true;
+        openPrioOverlay({ focusAdd: true });
+      }, 420);
+    });
 
     moduleSlot1?.addEventListener("pointermove", (e) => {
       if (!pressTimer) return;
@@ -803,132 +1154,6 @@
     moduleSlot1?.addEventListener("pointerup", cancelLongPress);
     moduleSlot1?.addEventListener("pointercancel", cancelLongPress);
     moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
-
-    prioAddBtn?.addEventListener("click", addPrioFromInput);
-    prioAddInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addPrioFromInput();
-      }
-    });
-
-    prioOverlay?.addEventListener("click", (e) => {
-      if (e.target === prioOverlay) {
-        closePrioOverlay();
-      }
-    });
-
-    let swipeStartY = null;
-    let swipeActive = false;
-
-    prioCard?.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      if (e.target.closest("input, textarea, button, label")) {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      swipeStartY = e.clientY;
-      swipeActive = true;
-      prioCard.setPointerCapture?.(e.pointerId);
-    });
-
-    prioCard?.addEventListener("pointermove", (e) => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const delta = e.clientY - swipeStartY;
-      if (delta > 0) {
-        prioCard.style.transform = `translateY(${delta}px)`;
-      }
-    });
-
-    const endSwipe = () => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-      const delta = match ? parseFloat(match[1]) : 0;
-
-      prioCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-
-      if (delta > 120) {
-        closePrioOverlay();
-      }
-    };
-
-    prioCard?.addEventListener("pointerup", endSwipe);
-    prioCard?.addEventListener("pointercancel", () => {
-      prioCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-    });
-  }
-
-  function bindWeatherUI() {
-    moduleSlot2?.addEventListener("click", openWeatherOverlay);
-
-    weatherOverlay?.addEventListener("click", (e) => {
-      if (e.target === weatherOverlay) closeWeatherOverlay();
-    });
-
-    let swipeStartY = null;
-    let swipeActive = false;
-
-    weatherCard?.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      if (e.target.closest("input, textarea, button, label")) {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      swipeStartY = e.clientY;
-      swipeActive = true;
-      weatherCard.setPointerCapture?.(e.pointerId);
-    });
-
-    weatherCard?.addEventListener("pointermove", (e) => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const delta = e.clientY - swipeStartY;
-      if (delta > 0) {
-        weatherCard.style.transform = `translateY(${delta}px)`;
-      }
-    });
-
-    const endSwipe = () => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const match = weatherCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-      const delta = match ? parseFloat(match[1]) : 0;
-
-      weatherCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-
-      if (delta > 120) {
-        closeWeatherOverlay();
-      }
-    };
-
-    weatherCard?.addEventListener("pointerup", endSwipe);
-    weatherCard?.addEventListener("pointercancel", () => {
-      weatherCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-    });
   }
 
   function bindUI() {
@@ -946,6 +1171,10 @@
           closeWeatherOverlay();
           return;
         }
+        if (genericOverlay?.classList.contains("open")) {
+          closeGenericOverlay();
+          return;
+        }
         if (timerFocus?.classList.contains("open") && !TIMER.running) {
           closeTimerFocus();
         }
@@ -958,10 +1187,25 @@
       }
     });
 
-    bindPrioUI();
-    bindWeatherUI();
+    prioAddBtn?.addEventListener("click", addPrioFromInput);
+    prioAddInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addPrioFromInput();
+      }
+    });
+
     prioCloseFab?.addEventListener("click", closePrioOverlay);
     weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
+    genericCloseFab?.addEventListener("click", closeGenericOverlay);
+
+    addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
+    addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
+    addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
+
+    bindModuleSlot(moduleSlot1, "slot1");
+    bindModuleSlot(moduleSlot2, "slot2");
+    bindPrioLongPress();
   }
 
   function init() {
@@ -971,11 +1215,13 @@
     timerBarWrap?.setAttribute("aria-hidden", "true");
     updateTimerBar();
 
+    renderSlots();
+    renderPrioPanel();
+
     setTimerDisplayValue();
     makeWheelEngine();
     bindUI();
     initWeather();
-    renderPrios();
   }
 
   init();
