@@ -415,10 +415,18 @@
   }
 
   function togglePrioDone(id, done) {
-    prios = prios.map((item) => item.id === id ? { ...item, done } : item);
-    savePrios();
-    renderPrios();
-  }
+  const next = prios.map((item) =>
+    item.id === id ? { ...item, done } : item
+  );
+
+  const active = next.filter((item) => !item.done);
+  const completed = next.filter((item) => item.done);
+
+  prios = [...active, ...completed];
+
+  savePrios();
+  renderPrios();
+}
 
   function removePrio(id) {
     prios = prios.filter((item) => item.id !== id);
