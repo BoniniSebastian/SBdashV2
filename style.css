@@ -155,11 +155,11 @@ button{
 
 .clockSeparator{
   position:absolute;
-  left:var(--pagePadX);
-  right:var(--pagePadX);
+  left:0;
+  right:0;
   top:120px;
   height:1px;
-  background:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.10);
   z-index:15;
 }
 
@@ -219,36 +219,39 @@ button{
 
 .moduleArea{
   position:absolute;
-  left:var(--pagePadX);
-  right:var(--pagePadX);
+  left:0;
+  right:0;
   top:var(--moduleTop);
-  bottom:calc(clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax)) + var(--moduleBottomGap));
+  bottom:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
   display:flex;
   flex-direction:column;
-  gap:var(--moduleGap);
+  gap:0;
   z-index:12;
 }
 
 .moduleSlot{
   flex:1;
   min-height:0;
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.06);
-  background:rgba(10,18,26,.22);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.04),
-    0 10px 30px rgba(0,0,0,.12);
+  border-radius:0;
+  border:0;
+  background:rgba(10,18,26,.10);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:none;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:rgba(255,255,255,.28);
+  color:rgba(255,255,255,.20);
   font-weight:700;
   letter-spacing:.08em;
   text-transform:uppercase;
   overflow:hidden;
 }
+
+.moduleSlot + .moduleSlot{
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
 
 /* optional old placeholder */
 .dashboardZone{
