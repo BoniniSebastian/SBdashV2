@@ -18,6 +18,14 @@
 
   const alarmAudio = $("alarmAudio");
 
+  const moduleSlot1 = $("moduleSlot1");
+  const prioPreview = $("prioPreview");
+  const prioOverlay = $("prioOverlay");
+  const prioCard = $("prioCard");
+  const prioPanelList = $("prioPanelList");
+  const prioAddInput = $("prioAddInput");
+  const prioAddBtn = $("prioAddBtn");
+
   const PRESETS = [1, 5, 10, 15, 30];
   const STEP = 360 / PRESETS.length;
 
@@ -32,6 +40,7 @@
   };
 
   const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.5 };
+  const PRIO_KEY = "sbdash_prio_v1";
 
   const TIMER = {
     presetIndex: 1,
@@ -43,8 +52,57 @@
     finished: false,
   };
 
+  let prios = loadPrios();
+  let prioEditingId = null;
+  let prioLongPressTriggered = false;
+
   function pad2(n) {
     return String(n).padStart(2, "0");
+  }
+
+  function uid() {
+    return (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`);
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function defaultPrios() {
+    return [
+      { id: uid(), text: "Köp mjölk", note: "", done: false },
+      { id: uid(), text: "Ring tandläkaren", note: "", done: false },
+      { id: uid(), text: "Maila XX", note: "", done: false },
+    ];
+  }
+
+  function loadPrios() {
+    try {
+      const raw = localStorage.getItem(PRIO_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (!Array.isArray(parsed)) return defaultPrios();
+
+      return parsed
+        .filter((x) => x && typeof x === "object")
+        .map((x) => ({
+          id: x.id || uid(),
+          text: String(x.text || "").trim(),
+          note: String(x.note || ""),
+          done: !!x.done,
+        }))
+        .filter((x) => x.text);
+    } catch {
+      return defaultPrios();
+    }
+  }
+
+  function savePrios() {
+    localStorage.setItem(PRIO_KEY, JSON.stringify(prios));
   }
 
   function updateClock() {
@@ -54,11 +112,11 @@
     const day = now.toLocaleDateString("sv-SE", { day: "numeric" });
     const month = now.toLocaleDateString("sv-SE", { month: "long" }).toUpperCase();
 
-   const h = pad2(now.getHours());
-  const m = pad2(now.getMinutes());
+    const h = pad2(now.getHours());
+    const m = pad2(now.getMinutes());
 
-  if (clockDate) clockDate.textContent = `${weekday} | ${day} ${month}`;
-  if (clockTime) clockTime.textContent = `${h}:${m}`;
+    if (clockDate) clockDate.textContent = `${weekday} | ${day} ${month}`;
+    if (clockTime) clockTime.textContent = `${h}:${m}`;
   }
 
   function setTimerDisplayValue() {
@@ -68,6 +126,8 @@
 
   function openTimerFocus({ finished = false } = {}) {
     if (!timerFocus) return;
+    closePrioOverlay();
+
     TIMER.finished = finished;
     document.body.classList.toggle("timerFinished", finished);
     timerFocus.classList.add("open");
@@ -241,9 +301,7 @@
     }, { passive: false });
 
     timerFocus.addEventListener("click", (e) => {
-      if (e.target === timerFocus && !TIMER.finished) {
-        closeTimerFocus();
-      }
+      if (e.target === timerFocus && !TIMER.finished) closeTimerFocus();
     });
   }
 
@@ -317,14 +375,283 @@
     }, 10 * 60 * 1000);
   }
 
+  function renderPrioPreview() {
+    if (!prioPreview) return;
+
+    const topFive = prios.slice(0, 5);
+
+    if (!topFive.length) {
+      prioPreview.innerHTML = `
+        <div class="prioPreviewRow">
+          <span class="prioPreviewDot"></span>
+          <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
+        </div>
+      `;
+      return;
+    }
+
+    const rows = topFive.map((item) => `
+      <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
+        <span class="prioPreviewDot"></span>
+        <span class="prioPreviewText">${escapeHtml(item.text)}</span>
+      </div>
+    `).join("");
+
+    const more = prios.length > 5
+      ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
+      : "";
+
+    prioPreview.innerHTML = rows + more;
+  }
+
+  function movePrio(index, dir) {
+    const next = index + dir;
+    if (next < 0 || next >= prios.length) return;
+    const copy = [...prios];
+    [copy[index], copy[next]] = [copy[next], copy[index]];
+    prios = copy;
+    savePrios();
+    renderPrios();
+  }
+
+  function togglePrioDone(id, done) {
+    prios = prios.map((item) => item.id === id ? { ...item, done } : item);
+    savePrios();
+    renderPrios();
+  }
+
+  function removePrio(id) {
+    prios = prios.filter((item) => item.id !== id);
+    if (prioEditingId === id) prioEditingId = null;
+    savePrios();
+    renderPrios();
+  }
+
+  function updatePrioField(id, patch) {
+    prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
+    savePrios();
+    renderPrioPreview();
+  }
+
+  function renderPrioPanel() {
+    if (!prioPanelList) return;
+
+    prioPanelList.innerHTML = "";
+
+    prios.forEach((item, index) => {
+      const isEditing = prioEditingId === item.id;
+
+      const row = document.createElement("div");
+      row.className = `prioItem ${item.done ? "is-done" : ""}`;
+
+      row.innerHTML = `
+        <div class="prioItemMain">
+          <input class="prioCheck" type="checkbox" ${item.done ? "checked" : ""} aria-label="Klar" />
+          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
+          <div class="prioItemActions">
+            <button class="prioMiniBtn prioMoveUp" type="button" aria-label="Flytta upp" ${index === 0 ? "disabled" : ""}>↑</button>
+            <button class="prioMiniBtn prioMoveDown" type="button" aria-label="Flytta ner" ${index === prios.length - 1 ? "disabled" : ""}>↓</button>
+          </div>
+        </div>
+      `;
+
+      const check = row.querySelector(".prioCheck");
+      const textBtn = row.querySelector(".prioItemTextBtn");
+      const upBtn = row.querySelector(".prioMoveUp");
+      const downBtn = row.querySelector(".prioMoveDown");
+
+      check?.addEventListener("change", (e) => {
+        togglePrioDone(item.id, !!e.target.checked);
+      });
+
+      textBtn?.addEventListener("click", () => {
+        prioEditingId = prioEditingId === item.id ? null : item.id;
+        renderPrioPanel();
+      });
+
+      upBtn?.addEventListener("click", () => movePrio(index, -1));
+      downBtn?.addEventListener("click", () => movePrio(index, 1));
+
+      if (isEditing) {
+        const editor = document.createElement("div");
+        editor.className = "prioEditor";
+        editor.innerHTML = `
+          <input class="prioTextInput" type="text" maxlength="160" value="${escapeHtml(item.text)}" />
+          <textarea class="prioNoteInput" maxlength="600" placeholder="Anteckning...">${escapeHtml(item.note || "")}</textarea>
+          <div class="prioEditorActions">
+            <button class="prioDeleteBtn" type="button">Ta bort</button>
+          </div>
+        `;
+
+        const textInput = editor.querySelector(".prioTextInput");
+        const noteInput = editor.querySelector(".prioNoteInput");
+        const deleteBtn = editor.querySelector(".prioDeleteBtn");
+
+        textInput?.addEventListener("input", (e) => {
+          updatePrioField(item.id, { text: e.target.value });
+        });
+
+        noteInput?.addEventListener("input", (e) => {
+          updatePrioField(item.id, { note: e.target.value });
+        });
+
+        deleteBtn?.addEventListener("click", () => {
+          removePrio(item.id);
+        });
+
+        row.appendChild(editor);
+      }
+
+      prioPanelList.appendChild(row);
+    });
+  }
+
+  function renderPrios() {
+    renderPrioPreview();
+    renderPrioPanel();
+  }
+
+  function addPrioFromInput() {
+    const text = (prioAddInput?.value || "").trim();
+    if (!text) return;
+
+    const item = {
+      id: uid(),
+      text,
+      note: "",
+      done: false,
+    };
+
+    prios = [...prios, item];
+    savePrios();
+    prioAddInput.value = "";
+    prioEditingId = item.id;
+    renderPrios();
+  }
+
+  function openPrioOverlay({ focusAdd = false } = {}) {
+    if (!prioOverlay) return;
+    closeTimerFocus();
+
+    prioOverlay.classList.add("open");
+    prioOverlay.setAttribute("aria-hidden", "false");
+    renderPrios();
+
+    if (focusAdd) {
+      requestAnimationFrame(() => prioAddInput?.focus());
+    }
+  }
+
+  function closePrioOverlay() {
+    if (!prioOverlay) return;
+    prioOverlay.classList.remove("open");
+    prioOverlay.setAttribute("aria-hidden", "true");
+    prioEditingId = null;
+    renderPrioPreview();
+  }
+
+  function bindPrioUI() {
+    let pressTimer = 0;
+    let startX = 0;
+    let startY = 0;
+
+    moduleSlot1?.addEventListener("click", () => {
+      if (prioLongPressTriggered) {
+        prioLongPressTriggered = false;
+        return;
+      }
+      openPrioOverlay();
+    });
+
+    moduleSlot1?.addEventListener("pointerdown", (e) => {
+      startX = e.clientX;
+      startY = e.clientY;
+      prioLongPressTriggered = false;
+
+      pressTimer = window.setTimeout(() => {
+        prioLongPressTriggered = true;
+        openPrioOverlay({ focusAdd: true });
+      }, 420);
+    });
+
+    const cancelLongPress = () => {
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = 0;
+    };
+
+    moduleSlot1?.addEventListener("pointermove", (e) => {
+      if (!pressTimer) return;
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
+        cancelLongPress();
+      }
+    });
+
+    moduleSlot1?.addEventListener("pointerup", cancelLongPress);
+    moduleSlot1?.addEventListener("pointercancel", cancelLongPress);
+    moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
+
+    prioAddBtn?.addEventListener("click", addPrioFromInput);
+    prioAddInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addPrioFromInput();
+      }
+    });
+
+    prioOverlay?.addEventListener("click", (e) => {
+      if (e.target === prioOverlay) {
+        closePrioOverlay();
+      }
+    });
+
+    let swipeStartY = null;
+
+    prioCard?.addEventListener("pointerdown", (e) => {
+      swipeStartY = e.clientY;
+      prioCard.setPointerCapture?.(e.pointerId);
+    });
+
+    prioCard?.addEventListener("pointermove", (e) => {
+      if (swipeStartY == null) return;
+      const delta = e.clientY - swipeStartY;
+      if (delta > 0) {
+        prioCard.style.transform = `translateY(${delta}px)`;
+      }
+    });
+
+    const endSwipe = () => {
+      if (swipeStartY == null) return;
+      const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+      const delta = match ? parseFloat(match[1]) : 0;
+      prioCard.style.transform = "";
+      swipeStartY = null;
+
+      if (delta > 120) {
+        closePrioOverlay();
+      }
+    };
+
+    prioCard?.addEventListener("pointerup", endSwipe);
+    prioCard?.addEventListener("pointercancel", () => {
+      prioCard.style.transform = "";
+      swipeStartY = null;
+    });
+  }
+
   function bindUI() {
     timerIconBtn?.addEventListener("click", () => {
       openTimerFocus({ finished: false });
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && timerFocus?.classList.contains("open") && !TIMER.running) {
-        closeTimerFocus();
+      if (e.key === "Escape") {
+        if (prioOverlay?.classList.contains("open")) {
+          closePrioOverlay();
+          return;
+        }
+        if (timerFocus?.classList.contains("open") && !TIMER.running) {
+          closeTimerFocus();
+        }
       }
     });
 
@@ -333,6 +660,8 @@
         document.body.classList.remove("timerFinished");
       }
     });
+
+    bindPrioUI();
   }
 
   function init() {
@@ -346,6 +675,7 @@
     makeWheelEngine();
     bindUI();
     initWeather();
+    renderPrios();
   }
 
   init();
