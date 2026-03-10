@@ -1016,56 +1016,69 @@
     });
 
     slotEl.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      moved = false;
-      locked = false;
-      startX = e.clientX;
-      startY = e.clientY;
+  dragging = true;
+  moved = false;
+  locked = false;
+  startX = e.clientX;
+  startY = e.clientY;
 
-      if (slotKey === "slot1") {
-        prioLongPressTriggered = false;
-      }
+  slotEl.classList.add("is-swiping");
 
-      slotEl.setPointerCapture?.(e.pointerId);
-    });
+  if (slotKey === "slot1") {
+    prioLongPressTriggered = false;
+  }
+
+  slotEl.setPointerCapture?.(e.pointerId);
+});
 
     slotEl.addEventListener("pointermove", (e) => {
-      if (!dragging || locked) return;
+  if (!dragging || locked) return;
 
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
 
-      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
-        dragging = false;
-        return;
-      }
+  if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
+    dragging = false;
+    slotEl.classList.remove("is-swiping");
+    return;
+  }
 
-      if (Math.abs(dx) < 28) return;
+  if (Math.abs(dx) < 28) return;
 
-      locked = true;
-      moved = true;
+  locked = true;
+  moved = true;
 
-      if (dx < 0) {
-        shiftSlot(slotKey, 1);
-      } else {
-        shiftSlot(slotKey, -1);
-      }
-    }, { passive: true });
+  if (dx < 0) {
+    shiftSlot(slotKey, 1);
+    slotEl.classList.remove("is-animating-right");
+    slotEl.classList.add("is-animating-left");
+  } else {
+    shiftSlot(slotKey, -1);
+    slotEl.classList.remove("is-animating-left");
+    slotEl.classList.add("is-animating-right");
+  }
+
+  window.setTimeout(() => {
+    slotEl.classList.remove("is-animating-left", "is-animating-right");
+  }, 260);
+}, { passive: true });
 
     slotEl.addEventListener("pointerup", () => {
-      dragging = false;
-      locked = false;
+  dragging = false;
+  locked = false;
+  slotEl.classList.remove("is-swiping");
 
-      requestAnimationFrame(() => {
-        moved = false;
-      });
-    });
+  requestAnimationFrame(() => {
+    moved = false;
+  });
+});
 
     slotEl.addEventListener("pointercancel", () => {
-      dragging = false;
-      locked = false;
-      moved = false;
-    });
+  dragging = false;
+  locked = false;
+  moved = false;
+  slotEl.classList.remove("is-swiping", "is-animating-left", "is-animating-right");
+});
 
     slotEl.addEventListener("wheel", (e) => {
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
