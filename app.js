@@ -613,37 +613,59 @@
     });
 
     let swipeStartY = null;
+let swipeActive = false;
 
-    prioCard?.addEventListener("pointerdown", (e) => {
-      swipeStartY = e.clientY;
-      prioCard.setPointerCapture?.(e.pointerId);
-    });
+prioCard?.addEventListener("pointerdown", (e) => {
+  // Swipe-to-close only on touch/pen, not regular mouse
+  if (e.pointerType === "mouse") {
+    swipeStartY = null;
+    swipeActive = false;
+    return;
+  }
 
-    prioCard?.addEventListener("pointermove", (e) => {
-      if (swipeStartY == null) return;
-      const delta = e.clientY - swipeStartY;
-      if (delta > 0) {
-        prioCard.style.transform = `translateY(${delta}px)`;
-      }
-    });
+  // Don't start swipe if user began on an interactive control
+  if (e.target.closest("input, textarea, button, label")) {
+    swipeStartY = null;
+    swipeActive = false;
+    return;
+  }
 
-    const endSwipe = () => {
-      if (swipeStartY == null) return;
-      const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-      const delta = match ? parseFloat(match[1]) : 0;
-      prioCard.style.transform = "";
-      swipeStartY = null;
+  swipeStartY = e.clientY;
+  swipeActive = true;
+  prioCard.setPointerCapture?.(e.pointerId);
+});
 
-      if (delta > 120) {
-        closePrioOverlay();
-      }
-    };
+prioCard?.addEventListener("pointermove", (e) => {
+  if (!swipeActive || swipeStartY == null) return;
 
-    prioCard?.addEventListener("pointerup", endSwipe);
-    prioCard?.addEventListener("pointercancel", () => {
-      prioCard.style.transform = "";
-      swipeStartY = null;
-    });
+  const delta = e.clientY - swipeStartY;
+  if (delta > 0) {
+    prioCard.style.transform = `translateY(${delta}px)`;
+  }
+});
+
+const endSwipe = () => {
+  if (!swipeActive || swipeStartY == null) return;
+
+  const match = prioCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
+  const delta = match ? parseFloat(match[1]) : 0;
+
+  prioCard.style.transform = "";
+  swipeStartY = null;
+  swipeActive = false;
+
+  if (delta > 120) {
+    closePrioOverlay();
+  }
+};
+
+prioCard?.addEventListener("pointerup", endSwipe);
+prioCard?.addEventListener("pointercancel", () => {
+  prioCard.style.transform = "";
+  swipeStartY = null;
+  swipeActive = false;
+});
+    
   }
 
   function bindUI() {
