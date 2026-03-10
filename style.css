@@ -290,7 +290,6 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
   letter-spacing:.01em;
 }
 
@@ -303,7 +302,6 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
 }
 
 .prioPreviewRow.is-done .prioPreviewDot{
