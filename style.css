@@ -9,15 +9,19 @@
   --pagePadX: 22px;
   --pageTop: calc(var(--safeTop) + 24px);
 
-  --calendarHeight: 23vh;
-  --calendarMin: 180px;
-  --calendarMax: 250px;
+  --calendarHeight: 16vh;
+  --calendarMin: 140px;
+  --calendarMax: 180px;
 
   --wheelSize: 210px;
 
   --cyan: rgba(0,209,255,1);
   --pink: rgba(255,100,180,1);
   --orange: rgba(255,140,40,1);
+
+  --moduleGap: 16px;
+  --moduleTop: 140px;
+  --moduleBottomGap: 16px;
 }
 
 *{ box-sizing:border-box; }
@@ -149,6 +153,16 @@ button{
   text-shadow:0 0 24px rgba(255,255,255,.04);
 }
 
+.clockSeparator{
+  position:absolute;
+  left:var(--pagePadX);
+  right:var(--pagePadX);
+  top:120px;
+  height:1px;
+  background:rgba(255,255,255,.12);
+  z-index:15;
+}
+
 .timerIconBtn{
   width:32px;
   height:32px;
@@ -199,8 +213,44 @@ button{
   color:rgba(255,255,255,.94);
 }
 
-/* dashboard zone placeholder */
+/* =========================
+   MODULE AREA
+========================= */
 
+.moduleArea{
+  position:absolute;
+  left:var(--pagePadX);
+  right:var(--pagePadX);
+  top:var(--moduleTop);
+  bottom:calc(clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax)) + var(--moduleBottomGap));
+  display:flex;
+  flex-direction:column;
+  gap:var(--moduleGap);
+  z-index:12;
+}
+
+.moduleSlot{
+  flex:1;
+  min-height:0;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(10,18,26,.22);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 10px 30px rgba(0,0,0,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:rgba(255,255,255,.28);
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  overflow:hidden;
+}
+
+/* optional old placeholder */
 .dashboardZone{
   position:absolute;
   left:0;
@@ -391,14 +441,12 @@ body.timerRunning .timerBarWrap{
 #calendarFrame{
   position:relative;
   z-index:1;
-
   width:125%;
   height:125%;
   border:0;
   display:block;
   background:#fff;
   border-radius:0;
-
   transform:scale(0.80);
   transform-origin:top left;
 }
@@ -423,9 +471,12 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 22vh;
-    --calendarMin: 170px;
-    --calendarMax: 220px;
+    --calendarHeight: 16vh;
+    --calendarMin: 132px;
+    --calendarMax: 170px;
+    --moduleTop: 132px;
+    --moduleGap: 14px;
+    --moduleBottomGap: 14px;
   }
 
   .clockDate{
@@ -434,6 +485,10 @@ body.timerRunning .timerBarWrap{
 
   .clockTime{
     font-size:46px;
+  }
+
+  .clockSeparator{
+    top:112px;
   }
 
   .weatherTemp{
@@ -454,15 +509,22 @@ body.timerRunning .timerBarWrap{
   .timerWheelValue{
     font-size:56px;
   }
+
+  .moduleSlot{
+    border-radius:20px;
+  }
 }
 
 @media (min-width: 900px){
   :root{
     --pagePadX: 28px;
     --wheelSize: 240px;
-    --calendarHeight: 24vh;
-    --calendarMin: 190px;
-    --calendarMax: 260px;
+    --calendarHeight: 15vh;
+    --calendarMin: 150px;
+    --calendarMax: 190px;
+    --moduleTop: 156px;
+    --moduleGap: 18px;
+    --moduleBottomGap: 18px;
   }
 
   .clockDate{
@@ -471,5 +533,9 @@ body.timerRunning .timerBarWrap{
 
   .clockTime{
     font-size:66px;
+  }
+
+  .clockSeparator{
+    top:136px;
   }
 }
