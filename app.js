@@ -1,4 +1,5 @@
 (() => {
+  const prioCloseFab = $("prioCloseFab");
   const $ = (id) => document.getElementById(id);
 
   const clockDate = $("clockDate");
@@ -529,22 +530,27 @@
   }
 
   function addPrioFromInput() {
-    const text = (prioAddInput?.value || "").trim();
-    if (!text) return;
+  const text = (prioAddInput?.value || "").trim();
+  if (!text) return;
 
-    const item = {
-      id: uid(),
-      text,
-      note: "",
-      done: false,
-    };
+  const item = {
+    id: uid(),
+    text,
+    note: "",
+    done: false,
+  };
 
-    prios = [...prios, item];
-    savePrios();
-    prioAddInput.value = "";
-    prioEditingId = item.id;
-    renderPrios();
-  }
+  prios = [...prios, item];
+  savePrios();
+  prioAddInput.value = "";
+  prioEditingId = item.id;
+  renderPrios();
+
+  requestAnimationFrame(() => {
+    const editor = prioPanelList?.querySelector(".prioItem:last-child .prioNoteInput");
+    editor?.focus();
+  });
+}
 
   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
@@ -701,6 +707,7 @@ prioCard?.addEventListener("pointercancel", () => {
     });
 
     bindPrioUI();
+    prioCloseFab?.addEventListener("click", closePrioOverlay);
   }
 
   function init() {
