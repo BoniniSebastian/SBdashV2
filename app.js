@@ -13,9 +13,6 @@
   const timerBarWrap = $("timerBarWrap");
   const timerBar = $("timerBar");
 
-  const weatherIcon = $("weatherIcon");
-  const weatherTemp = $("weatherTemp");
-
   const moduleSlot1 = $("moduleSlot1");
   const moduleSlot2 = $("moduleSlot2");
   const moduleSlot1Content = $("moduleSlot1Content");
@@ -44,7 +41,6 @@
 
   const genericOverlay = $("genericOverlay");
   const genericCard = $("genericCard");
-  const genericEyebrow = $("genericEyebrow");
   const genericTitle = $("genericTitle");
   const genericBody = $("genericBody");
   const genericCloseFab = $("genericCloseFab");
@@ -127,49 +123,42 @@
   const MODULES = {
     1: {
       id: 1,
-      label: "Modul 1",
       title: "Prio",
       renderPreview: renderPrioPreviewMarkup,
       open: () => openPrioOverlay(),
     },
     2: {
       id: 2,
-      label: "Modul 2",
       title: "Väder",
       renderPreview: renderWeatherPreviewMarkup,
       open: () => openWeatherOverlay(),
     },
     3: {
       id: 3,
-      label: "Modul 3",
       title: "Modul 3",
       renderPreview: () => renderPlaceholderPreviewMarkup(3),
       open: () => openGenericOverlay(3),
     },
     4: {
       id: 4,
-      label: "Modul 4",
       title: "Modul 4",
       renderPreview: () => renderPlaceholderPreviewMarkup(4),
       open: () => openGenericOverlay(4),
     },
     5: {
       id: 5,
-      label: "Modul 5",
       title: "Modul 5",
       renderPreview: () => renderPlaceholderPreviewMarkup(5),
       open: () => openGenericOverlay(5),
     },
     6: {
       id: 6,
-      label: "Modul 6",
       title: "Modul 6",
       renderPreview: () => renderPlaceholderPreviewMarkup(6),
       open: () => openGenericOverlay(6),
     },
     7: {
       id: 7,
-      label: "Modul 7",
       title: "Modul 7",
       renderPreview: () => renderPlaceholderPreviewMarkup(7),
       open: () => openGenericOverlay(7),
@@ -534,17 +523,12 @@
     if (!topFive.length) {
       return `
         <div class="moduleSlotTrack">
-          <div class="modulePeek">
-            <div class="modulePeekLabel">Slot-preview</div>
-            <div class="modulePeekValue">Modul 1</div>
-          </div>
           <div class="prioPreview">
             <div class="prioPreviewRow">
               <span class="prioPreviewDot"></span>
               <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
             </div>
           </div>
-          <div class="moduleHint">Svep eller scrolla för nästa modul</div>
         </div>
       `;
     }
@@ -571,15 +555,10 @@
 
     return `
       <div class="moduleSlotTrack">
-        <div class="modulePeek">
-          <div class="modulePeekLabel">Slot-preview</div>
-          <div class="modulePeekValue">Modul 1</div>
-        </div>
         <div class="prioPreview">
           ${rows}
           ${more}
         </div>
-        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
       </div>
     `;
   }
@@ -589,10 +568,6 @@
 
     return `
       <div class="moduleSlotTrack">
-        <div class="modulePeek">
-          <div class="modulePeekLabel">Slot-preview</div>
-          <div class="modulePeekValue">Modul 2</div>
-        </div>
         <div class="weatherPreview">
           <div class="weatherPreviewText">
             <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
@@ -605,7 +580,6 @@
             <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
           </div>
         </div>
-        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
       </div>
     `;
   }
@@ -613,19 +587,12 @@
   function renderPlaceholderPreviewMarkup(n) {
     return `
       <div class="modulePlaceholder">
-        <div class="modulePeek">
-          <div class="modulePeekLabel">Slot-preview</div>
-          <div class="modulePeekValue">Modul ${n}</div>
-        </div>
-
         <div class="modulePlaceholderBody">
           <div class="modulePlaceholderTitle">Modul ${n}</div>
           <div class="modulePlaceholderText">
             Tom placeholder just nu. Den här modulen är redo att byggas när du vill.
           </div>
         </div>
-
-        <div class="moduleHint">Svep eller scrolla för nästa modul</div>
       </div>
     `;
   }
@@ -663,9 +630,6 @@
 
     const hours = getUpcomingHours(data, 4);
     const firstRainChance = hours[0]?.rainChance ?? 0;
-
-    if (weatherTemp) weatherTemp.textContent = `${currentTemp}°`;
-    if (weatherIcon) weatherIcon.src = icon;
 
     if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
     if (weatherHeroStatus) weatherHeroStatus.textContent = status;
@@ -954,7 +918,6 @@
     closeWeatherOverlay();
 
     genericOpenModule = wrapModuleIndex(moduleId);
-    if (genericEyebrow) genericEyebrow.textContent = `MODUL ${genericOpenModule}`;
     if (genericTitle) genericTitle.textContent = `Modul ${genericOpenModule}`;
     if (genericBody) {
       genericBody.textContent = "Den här modulen är skapad som placeholder och väntar på innehåll. När vi bygger vidare ersätter vi den här texten med riktig funktionalitet.";
