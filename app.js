@@ -3,7 +3,6 @@
 
   const prioCloseFab = $("prioCloseFab");
   const weatherCloseFab = $("weatherCloseFab");
-  const placeholderCloseFab = $("placeholderCloseFab");
 
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
@@ -20,27 +19,16 @@
   const weatherIcon = $("weatherIcon");
   const weatherTemp = $("weatherTemp");
 
+  const weatherPreviewIcon = $("weatherPreviewIcon");
   const weatherPreviewTempBig = $("weatherPreviewTempBig");
   const weatherPreviewStatus = $("weatherPreviewStatus");
   const weatherPreviewMeta = $("weatherPreviewMeta");
   const weatherPreviewMeta2 = $("weatherPreviewMeta2");
-  const weatherPreviewIcon = $("weatherPreviewIcon");
 
-  const moduleSlot1 = $("moduleSlot1");
   const moduleSlot2 = $("moduleSlot2");
-  const moduleSlotContent1 = $("moduleSlotContent1");
-  const moduleSlotContent2 = $("moduleSlotContent2");
-
-  const alarmAudio = $("alarmAudio");
-
-  const prioOverlay = $("prioOverlay");
-  const prioCard = $("prioCard");
-  const prioPanelList = $("prioPanelList");
-  const prioAddInput = $("prioAddInput");
-  const prioAddBtn = $("prioAddBtn");
-
   const weatherOverlay = $("weatherOverlay");
   const weatherCard = $("weatherCard");
+
   const weatherHeroTemp = $("weatherHeroTemp");
   const weatherHeroStatus = $("weatherHeroStatus");
   const weatherHeroIcon = $("weatherHeroIcon");
@@ -52,9 +40,15 @@
   const weatherTodayLine = $("weatherTodayLine");
   const weatherTomorrowLine = $("weatherTomorrowLine");
 
-  const placeholderOverlay = $("placeholderOverlay");
-  const placeholderCard = $("placeholderCard");
-  const placeholderPanelName = $("placeholderPanelName");
+  const alarmAudio = $("alarmAudio");
+
+  const moduleSlot1 = $("moduleSlot1");
+  const prioPreview = $("prioPreview");
+  const prioOverlay = $("prioOverlay");
+  const prioCard = $("prioCard");
+  const prioPanelList = $("prioPanelList");
+  const prioAddInput = $("prioAddInput");
+  const prioAddBtn = $("prioAddBtn");
 
   const PRESETS = [1, 5, 10, 15, 30];
   const STEP = 360 / PRESETS.length;
@@ -101,12 +95,8 @@
   };
 
   const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.5 };
-
   const PRIO_KEY = "sbdash_prio_v1";
-  const WEATHER_CACHE_KEY = "sbdash_weather_cache_v2";
-  const SLOT1_KEY = "sbdash_slot1_index_v1";
-  const SLOT2_KEY = "sbdash_slot2_index_v1";
-
+  const WEATHER_CACHE_KEY = "sbdash_weather_cache_v1";
   const WEATHER_CACHE_MS = 10 * 60 * 1000;
 
   const TIMER = {
@@ -124,19 +114,6 @@
   let prioLongPressTriggered = false;
   let weatherData = null;
 
-  let slot1Index = loadSlotIndex(SLOT1_KEY, 0); // modul 1
-  let slot2Index = loadSlotIndex(SLOT2_KEY, 1); // modul 2
-
-  const MODULES = [
-    { id: "prio", label: "Modul 1" },
-    { id: "weather", label: "Modul 2" },
-    { id: "placeholder3", label: "Modul 3" },
-    { id: "placeholder4", label: "Modul 4" },
-    { id: "placeholder5", label: "Modul 5" },
-    { id: "placeholder6", label: "Modul 6" },
-    { id: "placeholder7", label: "Modul 7" },
-  ];
-
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
@@ -152,25 +129,6 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-  }
-
-  function loadSlotIndex(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      const n = Number(raw);
-      if (Number.isInteger(n) && n >= 0) return n % MODULES.length;
-      return fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  function saveSlotIndex(key, value) {
-    localStorage.setItem(key, String(value));
-  }
-
-  function moduleAt(index) {
-    return MODULES[((index % MODULES.length) + MODULES.length) % MODULES.length];
   }
 
   function defaultPrios() {
@@ -226,7 +184,8 @@
 
   function openTimerFocus({ finished = false } = {}) {
     if (!timerFocus) return;
-    closeAllModuleOverlays();
+    closePrioOverlay();
+    closeWeatherOverlay();
 
     TIMER.finished = finished;
     document.body.classList.toggle("timerFinished", finished);
@@ -464,7 +423,7 @@
     return out;
   }
 
-  function renderWeatherEverywhere(data) {
+  function renderWeather(data) {
     weatherData = data;
     if (!data?.current) return;
 
@@ -480,7 +439,7 @@
     const todayMax = Math.round(data.daily?.temperature_2m_max?.[0] ?? currentTemp);
     const tomorrowMin = Math.round(data.daily?.temperature_2m_min?.[1] ?? todayMin);
     const tomorrowMax = Math.round(data.daily?.temperature_2m_max?.[1] ?? todayMax);
-    const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode);
+    const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode;
 
     const hours = getUpcomingHours(data, 4);
     const firstRainChance = hours[0]?.rainChance ?? 0;
@@ -559,8 +518,7 @@
   async function initWeather() {
     const cached = loadWeatherCache();
     if (cached?.data) {
-      renderWeatherEverywhere(cached.data);
-      renderSlots();
+      renderWeather(cached.data);
     }
 
     try {
@@ -570,15 +528,13 @@
       if (staleEnough) {
         const fresh = await fetchWeather(loc.lat, loc.lon);
         saveWeatherCache(fresh);
-        renderWeatherEverywhere(fresh);
-        renderSlots();
+        renderWeather(fresh);
       } else if (cached?.data) {
         setTimeout(async () => {
           try {
             const fresh = await fetchWeather(loc.lat, loc.lon);
             saveWeatherCache(fresh);
-            renderWeatherEverywhere(fresh);
-            renderSlots();
+            renderWeather(fresh);
           } catch {}
         }, 300);
       }
@@ -591,22 +547,24 @@
         const loc = await getCoords();
         const fresh = await fetchWeather(loc.lat, loc.lon);
         saveWeatherCache(fresh);
-        renderWeatherEverywhere(fresh);
-        renderSlots();
+        renderWeather(fresh);
       } catch {}
     }, WEATHER_CACHE_MS);
   }
 
-  function renderPrioPreviewHTML() {
+  function renderPrioPreview() {
+    if (!prioPreview) return;
+
     const topFive = prios.slice(0, 5);
 
     if (!topFive.length) {
-      return `
+      prioPreview.innerHTML = `
         <div class="prioPreviewRow">
           <span class="prioPreviewDot"></span>
           <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
         </div>
       `;
+      return;
     }
 
     const rows = topFive.map((item) => {
@@ -629,54 +587,7 @@
       ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
       : "";
 
-    return rows + more;
-  }
-
-  function renderWeatherPreviewHTML() {
-    const temp = weatherPreviewTempBig?.textContent || "--°";
-    const status = weatherPreviewStatus?.textContent || "Laddar väder...";
-    const meta1 = weatherPreviewMeta?.textContent || "—";
-    const meta2 = weatherPreviewMeta2?.textContent || "—";
-    const icon = weatherPreviewIcon?.getAttribute("src") || "assets/ui/weather/na.svg";
-
-    return `
-      <div class="weatherPreview">
-        <div class="weatherPreviewText">
-          <div class="weatherPreviewTempBig">${escapeHtml(temp)}</div>
-          <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
-          <div class="weatherPreviewMeta">${escapeHtml(meta1)}</div>
-          <div class="weatherPreviewMeta">${escapeHtml(meta2)}</div>
-        </div>
-        <div class="weatherPreviewVisual">
-          <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false" />
-        </div>
-      </div>
-    `;
-  }
-
-  function renderPlaceholderHTML(label) {
-    return `<div class="placeholderPreview">${escapeHtml(label)}</div>`;
-  }
-
-  function renderSlot(slotEl, moduleDef) {
-    if (!slotEl) return;
-
-    if (moduleDef.id === "prio") {
-      slotEl.innerHTML = `<div class="moduleSlotContent">${renderPrioPreviewHTML()}</div>`;
-      return;
-    }
-
-    if (moduleDef.id === "weather") {
-      slotEl.innerHTML = `<div class="moduleSlotContent">${renderWeatherPreviewHTML()}</div>`;
-      return;
-    }
-
-    slotEl.innerHTML = `<div class="moduleSlotContent">${renderPlaceholderHTML(moduleDef.label)}</div>`;
-  }
-
-  function renderSlots() {
-    renderSlot(moduleSlot1, moduleAt(slot1Index));
-    renderSlot(moduleSlot2, moduleAt(slot2Index));
+    prioPreview.innerHTML = rows + more;
   }
 
   function movePrio(index, dir) {
@@ -713,7 +624,7 @@
   function updatePrioField(id, patch) {
     prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
     savePrios();
-    renderSlots();
+    renderPrioPreview();
   }
 
   function renderPrioPanel() {
@@ -790,8 +701,8 @@
   }
 
   function renderPrios() {
+    renderPrioPreview();
     renderPrioPanel();
-    renderSlots();
   }
 
   function addPrioFromInput() {
@@ -817,17 +728,10 @@
     });
   }
 
-  function closeAllModuleOverlays() {
-    closePrioOverlay();
-    closeWeatherOverlay();
-    closePlaceholderOverlay();
-  }
-
   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
     closeTimerFocus();
     closeWeatherOverlay();
-    closePlaceholderOverlay();
 
     prioOverlay.classList.add("open");
     prioOverlay.setAttribute("aria-hidden", "false");
@@ -843,14 +747,13 @@
     prioOverlay.classList.remove("open");
     prioOverlay.setAttribute("aria-hidden", "true");
     prioEditingId = null;
-    renderSlots();
+    renderPrioPreview();
   }
 
   function openWeatherOverlay() {
     if (!weatherOverlay) return;
     closeTimerFocus();
     closePrioOverlay();
-    closePlaceholderOverlay();
     weatherOverlay.classList.add("open");
     weatherOverlay.setAttribute("aria-hidden", "false");
   }
@@ -861,105 +764,20 @@
     weatherOverlay.setAttribute("aria-hidden", "true");
   }
 
-  function openPlaceholderOverlay(label) {
-    if (!placeholderOverlay) return;
-    closeTimerFocus();
-    closePrioOverlay();
-    closeWeatherOverlay();
-    if (placeholderPanelName) placeholderPanelName.textContent = label;
-    placeholderOverlay.classList.add("open");
-    placeholderOverlay.setAttribute("aria-hidden", "false");
-  }
-
-  function closePlaceholderOverlay() {
-    if (!placeholderOverlay) return;
-    placeholderOverlay.classList.remove("open");
-    placeholderOverlay.setAttribute("aria-hidden", "true");
-  }
-
-  function openModuleByIndex(index, slotName) {
-    const mod = moduleAt(index);
-    if (mod.id === "prio") {
-      openPrioOverlay();
-      return;
-    }
-    if (mod.id === "weather") {
-      openWeatherOverlay();
-      return;
-    }
-    openPlaceholderOverlay(mod.label);
-  }
-
-  function shiftSlot(slotNo, dir) {
-    if (slotNo === 1) {
-      slot1Index = (slot1Index + dir + MODULES.length) % MODULES.length;
-      saveSlotIndex(SLOT1_KEY, slot1Index);
-    } else {
-      slot2Index = (slot2Index + dir + MODULES.length) % MODULES.length;
-      saveSlotIndex(SLOT2_KEY, slot2Index);
-    }
-    renderSlots();
-  }
-
-  function bindSlotBand(slotEl, slotNo) {
-    if (!slotEl) return;
-
-    let startX = 0;
-    let startY = 0;
-    let tracking = false;
-    let moved = false;
-
-    slotEl.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") return;
-      startX = e.clientX;
-      startY = e.clientY;
-      tracking = true;
-      moved = false;
-    });
-
-    slotEl.addEventListener("pointermove", (e) => {
-      if (!tracking) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy)) {
-        moved = true;
-        tracking = false;
-        if (dx < 0) shiftSlot(slotNo, +1);   // swipe left => next
-        else shiftSlot(slotNo, -1);          // swipe right => prev
-      }
-    });
-
-    const endTracking = () => {
-      tracking = false;
-    };
-
-    slotEl.addEventListener("pointerup", endTracking);
-    slotEl.addEventListener("pointercancel", endTracking);
-    slotEl.addEventListener("pointerleave", endTracking);
-
-    slotEl.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const dir = e.deltaY > 0 ? +1 : -1;
-      shiftSlot(slotNo, dir);
-    }, { passive: false });
-
-    slotEl.addEventListener("click", () => {
-      if (moved) {
-        moved = false;
-        return;
-      }
-      openModuleByIndex(slotNo === 1 ? slot1Index : slot2Index, `slot${slotNo}`);
-    });
-  }
-
   function bindPrioUI() {
     let pressTimer = 0;
     let startX = 0;
     let startY = 0;
 
-    moduleSlot2?.addEventListener("pointerdown", (e) => {
-      if (moduleAt(slot2Index).id !== "prio") return;
+    moduleSlot1?.addEventListener("click", () => {
+      if (prioLongPressTriggered) {
+        prioLongPressTriggered = false;
+        return;
+      }
+      openPrioOverlay();
+    });
 
+    moduleSlot1?.addEventListener("pointerdown", (e) => {
       startX = e.clientX;
       startY = e.clientY;
       prioLongPressTriggered = false;
@@ -975,16 +793,16 @@
       pressTimer = 0;
     };
 
-    moduleSlot2?.addEventListener("pointermove", (e) => {
+    moduleSlot1?.addEventListener("pointermove", (e) => {
       if (!pressTimer) return;
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
         cancelLongPress();
       }
     });
 
-    moduleSlot2?.addEventListener("pointerup", cancelLongPress);
-    moduleSlot2?.addEventListener("pointercancel", cancelLongPress);
-    moduleSlot2?.addEventListener("pointerleave", cancelLongPress);
+    moduleSlot1?.addEventListener("pointerup", cancelLongPress);
+    moduleSlot1?.addEventListener("pointercancel", cancelLongPress);
+    moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
 
     prioAddBtn?.addEventListener("click", addPrioFromInput);
     prioAddInput?.addEventListener("keydown", (e) => {
@@ -1054,6 +872,8 @@
   }
 
   function bindWeatherUI() {
+    moduleSlot2?.addEventListener("click", openWeatherOverlay);
+
     weatherOverlay?.addEventListener("click", (e) => {
       if (e.target === weatherOverlay) closeWeatherOverlay();
     });
@@ -1111,64 +931,6 @@
     });
   }
 
-  function bindPlaceholderUI() {
-    placeholderOverlay?.addEventListener("click", (e) => {
-      if (e.target === placeholderOverlay) closePlaceholderOverlay();
-    });
-
-    let swipeStartY = null;
-    let swipeActive = false;
-
-    placeholderCard?.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      if (e.target.closest("input, textarea, button, label")) {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      swipeStartY = e.clientY;
-      swipeActive = true;
-      placeholderCard.setPointerCapture?.(e.pointerId);
-    });
-
-    placeholderCard?.addEventListener("pointermove", (e) => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const delta = e.clientY - swipeStartY;
-      if (delta > 0) {
-        placeholderCard.style.transform = `translateY(${delta}px)`;
-      }
-    });
-
-    const endSwipe = () => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const match = placeholderCard.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-      const delta = match ? parseFloat(match[1]) : 0;
-
-      placeholderCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-
-      if (delta > 120) {
-        closePlaceholderOverlay();
-      }
-    };
-
-    placeholderCard?.addEventListener("pointerup", endSwipe);
-    placeholderCard?.addEventListener("pointercancel", () => {
-      placeholderCard.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-    });
-  }
-
   function bindUI() {
     timerIconBtn?.addEventListener("click", () => {
       openTimerFocus({ finished: false });
@@ -1184,10 +946,6 @@
           closeWeatherOverlay();
           return;
         }
-        if (placeholderOverlay?.classList.contains("open")) {
-          closePlaceholderOverlay();
-          return;
-        }
         if (timerFocus?.classList.contains("open") && !TIMER.running) {
           closeTimerFocus();
         }
@@ -1200,16 +958,10 @@
       }
     });
 
-    bindSlotBand(moduleSlot1, 1);
-    bindSlotBand(moduleSlot2, 2);
-
     bindPrioUI();
     bindWeatherUI();
-    bindPlaceholderUI();
-
     prioCloseFab?.addEventListener("click", closePrioOverlay);
     weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
-    placeholderCloseFab?.addEventListener("click", closePlaceholderOverlay);
   }
 
   function init() {
@@ -1224,7 +976,6 @@
     bindUI();
     initWeather();
     renderPrios();
-    renderSlots();
   }
 
   init();
