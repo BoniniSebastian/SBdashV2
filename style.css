@@ -9,7 +9,7 @@
   --pagePadX: 22px;
   --pageTop: calc(var(--safeTop) + 16px);
   --appH: 100dvh;
-  --calendarHeight: 16vh;
+  --calendarHeight: clamp(132px, 16vh, 170px);
   --calendarMin: 140px;
   --calendarMax: 180px;
 
@@ -18,7 +18,7 @@
   --cyan: rgba(0,209,255,1);
   --pink: rgba(255,100,180,1);
 
-  --moduleTop: 140px;
+  --moduleTop: 132px;
   --prioText: 14px;
   --prioLine: 1.4;
 }
@@ -158,7 +158,7 @@ button{
   position:absolute;
   left:0;
   right:0;
-  top:120px;
+  top:112px;
   height:1px;
   background:rgba(255,255,255,.10);
   z-index:15;
@@ -1211,7 +1211,7 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 150px;
+    --calendarHeight: clamp(132px, 16vh, 170px);
     --calendarMin: 132px;
     --calendarMax: 170px;
     --moduleTop: 132px;
