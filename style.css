@@ -7,7 +7,8 @@
   --safeBottom: env(safe-area-inset-bottom);
 
   --pagePadX: 22px;
-  --pageTop: calc(var(--safeTop) + 24px);
+  --pageTop: calc(var(--safeTop) + 16px);
+  --appH: 100dvh;
 
   --calendarHeight: 16vh;
   --calendarMin: 140px;
@@ -18,7 +19,7 @@
   --cyan: rgba(0,209,255,1);
   --pink: rgba(255,100,180,1);
 
-  --moduleTop: 140px;
+  --moduleTop: 132px;
   --prioText: 14px;
   --prioLine: 1.4;
 }
@@ -1207,7 +1208,7 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 150px;
+    --calendarHeight: 16vh;
     --calendarMin: 132px;
     --calendarMax: 170px;
     --moduleTop: 132px;
