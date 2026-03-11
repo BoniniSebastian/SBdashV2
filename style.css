@@ -7,17 +7,21 @@
   --safeBottom: env(safe-area-inset-bottom);
 
   --pagePadX: 22px;
-  --pageTop: calc(var(--safeTop) + 24px);
+  --pageTop: calc(var(--safeTop) + 16px);
+  --appH: 100dvh;
 
-  --calendarHeight: 23vh;
-  --calendarMin: 180px;
-  --calendarMax: 250px;
+  --calendarHeight: 16vh;
+  --calendarMin: 140px;
+  --calendarMax: 180px;
 
   --wheelSize: 210px;
 
   --cyan: rgba(0,209,255,1);
   --pink: rgba(255,100,180,1);
-  --orange: rgba(255,140,40,1);
+
+  --moduleTop: 132px;
+  --prioText: 14px;
+  --prioLine: 1.4;
 }
 
 *{ box-sizing:border-box; }
@@ -52,8 +56,6 @@ button{
   inset:0;
   overflow:hidden;
 }
-
-/* ambient */
 
 .zenBlob,
 .ambientBlob{
@@ -112,7 +114,7 @@ button{
   right:var(--pagePadX);
   top:var(--pageTop);
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:flex-start;
   z-index:20;
 }
@@ -149,71 +151,850 @@ button{
   text-shadow:0 0 24px rgba(255,255,255,.04);
 }
 
+.clockSeparator{
+  position:absolute;
+  left:0;
+  right:0;
+  top:116px;
+  height:1px;
+  background:rgba(255,255,255,.10);
+  z-index:15;
+}
+
 .timerIconBtn{
-  width:42px;
-  height:42px;
-  margin-top:6px;
+  width:32px;
+  height:32px;
+  margin-top:4px;
   display:grid;
   place-items:center;
   border:0;
-  border-radius:14px;
-  background:rgba(255,255,255,.05);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.06),
-    0 8px 30px rgba(0,0,0,.18);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  transition:transform .16s ease, background .16s ease, box-shadow .16s ease, opacity .16s ease;
+  background:none;
+  box-shadow:none;
   cursor:pointer;
-  opacity:.92;
+  opacity:.9;
+  padding:0;
 }
 
 .timerIconBtn img{
   width:20px;
   height:20px;
-  opacity:.96;
+  opacity:.95;
+  transition:filter .2s ease;
 }
 
-.timerIconBtn:hover{
-  background:rgba(255,255,255,.08);
+.timerIconBtn:hover img{
+  filter:drop-shadow(0 0 8px rgba(0,209,255,.5));
 }
 
-.timerIconBtn:active{
-  transform:scale(.97);
-}
+/* module area */
 
-.weatherBlock{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-  margin-top:4px;
-}
-
-.weatherIcon{
-  width:26px;
-  height:26px;
-  opacity:.96;
-  filter:drop-shadow(0 0 8px rgba(255,255,255,.05));
-}
-
-.weatherTemp{
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.02em;
-  color:rgba(255,255,255,.94);
-}
-
-/* dashboard zone placeholder */
-
-.dashboardZone{
+.moduleArea{
   position:absolute;
   left:0;
   right:0;
-  top:0;
+  top:var(--moduleTop);
   bottom:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  z-index:12;
+}
+
+.moduleSlot{
+  flex:1;
+  min-height:0;
+  border-radius:0;
+  border:0;
+  background:rgba(10,18,26,.10);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:none;
+  overflow:hidden;
+  position:relative;
+}
+
+.moduleSlot + .moduleSlot{
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.moduleSlot--dynamic{
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  text-align:left;
+  cursor:pointer;
+  border:0;
+  padding:16px 18px 14px 18px;
+  touch-action:pan-y;
+  transition:background .18s ease, transform .18s ease;
+}
+
+.moduleSlot--dynamic:active{
+  background:rgba(255,255,255,.025);
+}
+
+.moduleSlotContent{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  transition:
+    transform .22s ease,
+    opacity .22s ease,
+    filter .22s ease;
+  will-change: transform, opacity, filter;
+}
+
+.moduleSlot.is-swiping .moduleSlotContent{
+  filter:brightness(1.05);
+}
+
+.moduleSlot.is-animating-left .moduleSlotContent{
+  animation:slotSwapLeft .24s ease;
+}
+
+.moduleSlot.is-animating-right .moduleSlotContent{
+  animation:slotSwapRight .24s ease;
+}
+
+@keyframes slotSwapLeft{
+  0%{
+    transform:translateX(18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
+
+@keyframes slotSwapRight{
+  0%{
+    transform:translateX(-18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
+
+.moduleSlotTrack{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  min-width:0;
+}
+
+.modulePlaceholder{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.modulePlaceholderBody{
+  width:100%;
+  max-width:520px;
+  padding:18px 18px 16px 18px;
+  border-radius:22px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 14px 40px rgba(0,0,0,.18);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+
+.modulePlaceholderBody::before{
+  content:"";
+  display:block;
+  width:44px;
+  height:4px;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.82));
+  box-shadow:0 0 14px rgba(0,209,255,.20);
+  margin-bottom:2px;
+}
+
+.modulePlaceholderTitle{
+  font-size:30px;
+  line-height:.96;
+  font-weight:950;
+  letter-spacing:.01em;
+  color:rgba(255,255,255,.96);
+  text-shadow:0 0 18px rgba(255,255,255,.03);
+}
+
+.modulePlaceholderText{
+  max-width:34ch;
+  font-size:14px;
+  line-height:1.45;
+  color:rgba(255,255,255,.58);
+}
+
+/* timer preview */
+
+.timerPreview{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.timerPreviewWheel{
+  width:188px;
+  height:188px;
+  border-radius:999px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,.88) 0%, rgba(0,0,0,.82) 58%, rgba(0,0,0,.72) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.05),
+    0 0 26px rgba(0,209,255,.12),
+    0 0 44px rgba(255,100,180,.08);
+  overflow:hidden;
+}
+
+.timerPreviewWheel::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  padding:2px;
+  background:linear-gradient(135deg, rgba(0,209,255,.95), rgba(120,120,255,.72), rgba(255,100,180,.95));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.95;
+}
+
+.timerPreviewWheel::after{
+  content:"";
+  position:absolute;
+  inset:-18px;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 25% 45%, rgba(0,209,255,.20), transparent 34%),
+    radial-gradient(circle at 76% 52%, rgba(255,100,180,.18), transparent 32%);
+  filter:blur(18px);
+  z-index:0;
+}
+
+.timerPreviewCenter{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 18px;
+}
+
+.timerPreviewLabel{
+  font-size:18px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.92);
+  text-shadow:
+    0 0 14px rgba(255,255,255,.08),
+    0 0 24px rgba(0,209,255,.08);
+}
+
+.timerPreviewValue{
+  font-size:40px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.02em;
+  color:rgba(255,255,255,.98);
+  text-shadow:
+    0 0 18px rgba(255,255,255,.10),
+    0 0 28px rgba(0,209,255,.12);
+}
+
+/* prio preview */
+
+.prioPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:8px;
+}
+
+.prioPreviewRow{
+  display:grid;
+  grid-template-columns: 10px 1fr;
+  align-items:start;
+  gap:8px;
+  min-width:0;
+}
+
+.prioPreviewDot{
+  width:4px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(0,209,255,.95);
+  box-shadow:0 0 10px rgba(0,209,255,.55);
+  margin-top:8px;
+}
+
+.prioPreviewText{
+  font-size:var(--prioText);
+  line-height:var(--prioLine);
+  color:rgba(255,255,255,.84);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing:.01em;
+}
+
+.prioPreviewNote{
+  margin-top:2px;
+  font-size:12px;
+  line-height:1.25;
+  color:rgba(255,255,255,.42);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.prioPreviewRow.is-done .prioPreviewDot{
+  opacity:.45;
+  box-shadow:none;
+}
+
+.prioPreviewRow.is-done .prioPreviewText{
+  opacity:.46;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.28);
+}
+
+.prioPreviewRow.is-done .prioPreviewNote{
+  opacity:.45;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.20);
+}
+
+.prioPreviewMore{
+  padding-left:18px;
+  margin-top:2px;
+  font-size:13px;
+  line-height:1.3;
+  color:rgba(255,255,255,.42);
+}
+
+/* weather preview */
+
+.weatherPreview{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 88px;
+  align-items:center;
+  gap:12px;
+}
+
+.weatherPreviewText{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  align-self:center;
+}
+
+.weatherPreviewTempBig{
+  font-size:34px;
+  line-height:.95;
+  font-weight:950;
+  color:rgba(255,255,255,.96);
+  letter-spacing:.01em;
+}
+
+.weatherPreviewStatus{
+  font-size:14px;
+  line-height:1.25;
+  color:rgba(255,255,255,.82);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherPreviewMeta{
+  font-size:13px;
+  line-height:1.25;
+  color:rgba(255,255,255,.52);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherPreviewVisual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.weatherPreviewIcon{
+  width:64px;
+  height:64px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
+}
+
+/* shared module overlay */
+
+.moduleExpandOverlay{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .20s ease;
+}
+
+.moduleExpandOverlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.moduleExpandOverlay::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.16);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+.moduleExpandCard{
+  position:absolute;
+  inset:8px 12px;
+  border-radius:24px;
+  background:rgba(10,15,20,.52);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:
+    0 18px 60px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transform:translateY(8px);
+  transition:transform .20s ease;
+}
+
+.moduleExpandOverlay.open .moduleExpandCard{
+  transform:translateY(0);
+}
+
+/* prio overlay */
+
+.prioPanelScroller{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:18px 16px 10px 16px;
+}
+
+.prioPanelList{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.prioItem{
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.04);
+  overflow:hidden;
+}
+
+.prioItem.is-done{
+  opacity:.62;
+}
+
+.prioItemMain{
+  display:grid;
+  grid-template-columns: 18px minmax(0,1fr) auto;
+  align-items:start;
+  gap:10px;
+  padding:11px 10px 11px 10px;
+}
+
+.prioCheck{
+  width:13px;
+  height:13px;
+  margin:2px 0 0 0;
+  appearance:none;
+  -webkit-appearance:none;
+  border:1.5px solid rgba(255,255,255,.45);
+  border-radius:0;
+  background:transparent;
+  outline:none;
+  cursor:pointer;
+  position:relative;
+  flex:0 0 auto;
+}
+
+.prioCheck:checked{
+  border-color:rgba(0,209,255,.95);
+  background:rgba(0,209,255,.18);
+  box-shadow:0 0 10px rgba(0,209,255,.24);
+}
+
+.prioCheck:checked::after{
+  content:"";
+  position:absolute;
+  left:3px;
+  top:1px;
+  width:3px;
+  height:6px;
+  border-right:1.5px solid rgba(0,209,255,.98);
+  border-bottom:1.5px solid rgba(0,209,255,.98);
+  transform:rotate(45deg);
+}
+
+.prioItemTextBtn{
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  text-align:left;
+  cursor:pointer;
+  color:rgba(255,255,255,.88);
+  font-size:var(--prioText);
+  line-height:var(--prioLine);
+  min-width:0;
+}
+
+.prioItem.is-done .prioItemTextBtn{
+  color:rgba(255,255,255,.55);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.35);
+}
+
+.prioItemActions{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.prioMiniBtn{
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border:0;
+  background:none;
+  color:rgba(255,255,255,.42);
+  cursor:pointer;
+  padding:0;
+  font-size:13px;
+  line-height:1;
+}
+
+.prioMiniBtn:disabled{
+  opacity:.2;
+  cursor:default;
+}
+
+.prioEditor{
+  padding:0 10px 12px 38px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.prioTextInput,
+.prioNoteInput,
+.prioAddInput{
+  width:100%;
+  border:0;
+  outline:none;
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.92);
+  border-radius:10px;
+  font-size:16px;
+  line-height:1.4;
+}
+
+.prioTextInput{
+  min-height:36px;
+  padding:8px 10px;
+}
+
+.prioNoteInput{
+  min-height:70px;
+  resize:vertical;
+  padding:9px 10px;
+}
+
+.prioEditorActions{
+  display:flex;
+  justify-content:flex-end;
+}
+
+.prioDeleteBtn{
+  border:0;
+  background:none;
+  color:rgba(255,255,255,.48);
+  font-size:13px;
+  cursor:pointer;
+  padding:4px 0;
+}
+
+.prioAddBar{
+  border-top:1px solid rgba(255,255,255,.06);
+  display:grid;
+  grid-template-columns: 18px 1fr 28px;
+  gap:10px;
+  align-items:center;
+  padding:12px 52px calc(12px + env(safe-area-inset-bottom)) 16px;
+  background:rgba(255,255,255,.02);
+}
+
+.prioCloseFab,
+.weatherCloseFab,
+.genericCloseFab{
+  position:absolute;
+  right:12px;
+  bottom:calc(12px + env(safe-area-inset-bottom));
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(15,20,28,.48);
+  color:rgba(255,255,255,.82);
+  display:grid;
+  place-items:center;
+  padding:0;
+  cursor:pointer;
   z-index:5;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 8px 20px rgba(0,0,0,.18);
+  font-size:13px;
+  line-height:1;
+}
+
+.prioCloseFab:active,
+.weatherCloseFab:active,
+.genericCloseFab:active{
+  transform:scale(.97);
+}
+
+.prioFakeCheck{
+  width:13px;
+  height:13px;
+  border:1.5px solid rgba(255,255,255,.18);
+  border-radius:0;
+  margin-left:0;
+}
+
+.prioAddInput{
+  min-height:36px;
+  padding:8px 10px;
+}
+
+.prioAddInput::placeholder{
+  color:rgba(255,255,255,.38);
+}
+
+.prioAddBtn{
+  width:28px;
+  height:28px;
+  border:0;
+  background:none;
+  color:rgba(0,209,255,.92);
+  font-size:22px;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+}
+
+/* weather overlay */
+
+.weatherPanelScroller{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:18px 16px 52px 16px;
+}
+
+.weatherPanel{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.weatherHero{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 92px;
+  align-items:center;
+  gap:10px;
+}
+
+.weatherHeroTemp{
+  font-size:52px;
+  line-height:.92;
+  font-weight:950;
+  color:rgba(255,255,255,.96);
+  letter-spacing:.01em;
+}
+
+.weatherHeroStatus{
+  margin-top:6px;
+  font-size:14px;
+  color:rgba(255,255,255,.76);
+}
+
+.weatherHeroVisual{
+  display:flex;
+  justify-content:flex-end;
+}
+
+.weatherHeroIcon{
+  width:74px;
+  height:74px;
+  object-fit:contain;
+}
+
+.weatherStats{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+.weatherStat{
+  padding:12px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.weatherStatLabel{
+  font-size:12px;
+  color:rgba(255,255,255,.52);
+  line-height:1.2;
+}
+
+.weatherStatValue{
+  margin-top:6px;
+  font-size:22px;
+  line-height:1;
+  font-weight:900;
+  color:rgba(255,255,255,.92);
+}
+
+.weatherHours{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
+}
+
+.weatherHour{
+  padding:10px 8px;
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.05);
+  text-align:center;
+}
+
+.weatherHourTime{
+  font-size:12px;
+  color:rgba(255,255,255,.54);
+}
+
+.weatherHourTemp{
+  margin-top:6px;
+  font-size:18px;
+  font-weight:900;
+  color:rgba(255,255,255,.92);
+  line-height:1;
+}
+
+.weatherHourRain{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,255,255,.46);
+}
+
+.weatherFoot{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-bottom:2px;
+}
+
+.weatherFootLine{
+  font-size:13px;
+  line-height:1.35;
+  color:rgba(255,255,255,.68);
+}
+
+/* generic modules overlay */
+
+.genericScroller{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:22px 18px 58px 18px;
+}
+
+.genericPanel{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:12px;
+}
+
+.genericTitle{
+  font-size:42px;
+  line-height:.95;
+  font-weight:950;
+  letter-spacing:.01em;
+  color:rgba(255,255,255,.96);
+}
+
+.genericBody{
+  max-width:32ch;
+  font-size:15px;
+  line-height:1.5;
+  color:rgba(255,255,255,.66);
 }
 
 /* timer focus */
@@ -340,7 +1121,7 @@ body.timerFinished .timerWheelValue{
   50%{ transform:scale(1.03); }
 }
 
-/* progress bar top */
+/* progress bar */
 
 .timerBarWrap{
   position:absolute;
@@ -380,28 +1161,45 @@ body.timerRunning .timerBarWrap{
   height:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
   z-index:10;
   padding:0;
+  border-radius:0;
+  overflow:hidden;
 }
 
 .calendarFrameWrap{
+  position:relative;
   width:100%;
   height:100%;
   background:#fff;
   border-radius:0;
   overflow:hidden;
-  box-shadow:
-    0 -10px 30px rgba(0,0,0,.22),
-    inset 0 1px 0 rgba(255,255,255,.8);
+  box-shadow:none;
 }
 
 #calendarFrame{
+  position:relative;
+  z-index:1;
   width:125%;
   height:125%;
   border:0;
   display:block;
   background:#fff;
-
+  border-radius:0;
   transform:scale(0.80);
   transform-origin:top left;
+}
+
+.calendarShade{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,.50) 0%,
+    rgba(0,0,0,.38) 35%,
+    rgba(0,0,0,.26) 70%,
+    rgba(0,0,0,.18) 100%
+  );
 }
 
 /* responsive */
@@ -410,9 +1208,11 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 22vh;
-    --calendarMin: 170px;
-    --calendarMax: 220px;
+    --calendarHeight: 16vh;
+    --calendarMin: 132px;
+    --calendarMax: 170px;
+    --moduleTop: 132px;
+    --prioText: 14px;
   }
 
   .clockDate{
@@ -423,8 +1223,8 @@ body.timerRunning .timerBarWrap{
     font-size:46px;
   }
 
-  .weatherTemp{
-    font-size:20px;
+  .clockSeparator{
+    top:112px;
   }
 
   .timerIconBtn{
@@ -441,15 +1241,80 @@ body.timerRunning .timerBarWrap{
   .timerWheelValue{
     font-size:56px;
   }
+
+  .moduleExpandCard{
+    inset:6px 10px;
+    border-radius:20px;
+  }
+
+  .prioPanelScroller{
+    padding:16px 12px 8px 12px;
+  }
+
+  .weatherPanelScroller{
+    padding:16px 12px 52px 12px;
+  }
+
+  .genericScroller{
+    padding:18px 14px 56px 14px;
+  }
+
+  .prioAddBar{
+    padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
+  }
+
+  .weatherPreview{
+    grid-template-columns: minmax(0,1fr) 78px;
+  }
+
+  .weatherPreviewIcon{
+    width:56px;
+    height:56px;
+  }
+
+  .weatherHero{
+    grid-template-columns: minmax(0,1fr) 80px;
+  }
+
+  .weatherHeroTemp{
+    font-size:46px;
+  }
+
+  .weatherHeroIcon{
+    width:66px;
+    height:66px;
+  }
+
+  .modulePlaceholderTitle{
+    font-size:24px;
+  }
+
+  .genericTitle{
+    font-size:36px;
+  }
+
+  .timerPreviewWheel{
+    width:172px;
+    height:172px;
+  }
+
+  .timerPreviewLabel{
+    font-size:16px;
+  }
+
+  .timerPreviewValue{
+    font-size:34px;
+  }
 }
 
 @media (min-width: 900px){
   :root{
     --pagePadX: 28px;
     --wheelSize: 240px;
-    --calendarHeight: 24vh;
-    --calendarMin: 190px;
-    --calendarMax: 260px;
+    --calendarHeight: 15vh;
+    --calendarMin: 150px;
+    --calendarMax: 190px;
+    --moduleTop: 156px;
   }
 
   .clockDate{
@@ -458,5 +1323,9 @@ body.timerRunning .timerBarWrap{
 
   .clockTime{
     font-size:66px;
+  }
+
+  .clockSeparator{
+    top:136px;
   }
 }
