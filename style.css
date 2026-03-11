@@ -9,7 +9,8 @@
   --pagePadX: 22px;
   --pageTop: calc(var(--safeTop) + 24px);
 
-  --calendarHeight: 16vh;
+  --appH: 100dvh;
+  --calendarHeight: clamp(140px, 16dvh, 180px);
   --calendarMin: 140px;
   --calendarMax: 180px;
 
@@ -34,6 +35,10 @@ html,body{
 }
 
 body{
+  min-height: var(--appH);
+}
+
+body{
   overflow:hidden;
   color:var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -53,6 +58,7 @@ button{
 .app{
   position:fixed;
   inset:0;
+  height: var(--appH);
   overflow:hidden;
 }
 
