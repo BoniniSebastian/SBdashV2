@@ -10,6 +10,7 @@ function setAppHeightVar() {
 
   const timerIconBtn = $("timerIconBtn");
   const timerFocus = $("timerFocus");
+  const timerCloseFab = $("timerCloseFab");
   const timerWheel = $("timerWheel");
   const timerWheelRing = $("timerWheelRing");
   const timerWheelValue = $("timerWheelValue");
@@ -1168,58 +1169,48 @@ function setAppHeightVar() {
   }
 
   function bindUI() {
-    timerIconBtn?.addEventListener("click", () => {
-      openTimerFocus({ finished: false });
-    });
+  timerIconBtn?.addEventListener("click", () => {
+    openTimerFocus({ finished: false });
+  });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        if (prioOverlay?.classList.contains("open")) {
-          closePrioOverlay();
-          return;
-        }
-        if (weatherOverlay?.classList.contains("open")) {
-          closeWeatherOverlay();
-          return;
-        }
-        if (genericOverlay?.classList.contains("open")) {
-          closeGenericOverlay();
-          return;
-        }
-        if (timerFocus?.classList.contains("open") && !TIMER.running) {
-          closeTimerFocus();
-        }
-      }
-    });
+  timerCloseFab?.addEventListener("click", () => {
+    closeTimerFocus();
+  });
 
-    timerWheel?.addEventListener("click", () => {
-      if (TIMER.finished) {
-        document.body.classList.remove("timerFinished");
-      }
-    });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && timerFocus?.classList.contains("open") && !TIMER.running) {
+      closeTimerFocus();
+    }
+  });
 
-    prioAddBtn?.addEventListener("click", addPrioFromInput);
-    prioAddInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addPrioFromInput();
-      }
-    });
+  timerWheel?.addEventListener("click", () => {
+    if (TIMER.finished) {
+      document.body.classList.remove("timerFinished");
+    }
+  });
 
-    prioCloseFab?.addEventListener("click", closePrioOverlay);
-    weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
-    genericCloseFab?.addEventListener("click", closeGenericOverlay);
+  prioAddBtn?.addEventListener("click", addPrioFromInput);
+  prioAddInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addPrioFromInput();
+    }
+  });
 
-    addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
-    addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
-    addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
+  prioCloseFab?.addEventListener("click", closePrioOverlay);
+  weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
+  genericCloseFab?.addEventListener("click", closeGenericOverlay);
 
-    bindModuleSlot(moduleSlot1, "slot1");
-    bindModuleSlot(moduleSlot2, "slot2");
-    bindPrioLongPress();
-  }
+  addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
+  addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
+  addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
 
-  function init() {
+  bindModuleSlot(moduleSlot1, "slot1");
+  bindModuleSlot(moduleSlot2, "slot2");
+  bindPrioLongPress();
+}
+
+function init() {
   updateClock();
   setInterval(updateClock, 1000);
 
