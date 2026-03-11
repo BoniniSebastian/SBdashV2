@@ -238,22 +238,17 @@ button{
   border-top:1px solid rgba(255,255,255,.08);
 }
 
-.moduleSlot--prio,
-.moduleSlot--weather{
+.moduleSlot--prio{
   appearance:none;
   -webkit-appearance:none;
   width:100%;
   text-align:left;
+  padding:16px 18px 14px 18px;
   cursor:pointer;
-  border:0;
 }
 
-.moduleSlot--prio{
-  padding:16px 18px 14px 18px;
-}
-
-.moduleSlot--weather{
-  padding:16px 18px 14px 18px;
+.moduleSlot--empty{
+  background:rgba(10,18,26,.06);
 }
 
 .prioPreview{
@@ -290,20 +285,6 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  letter-spacing:.01em;
-}
-
-.prioPreviewNote{
-  margin-top:2px;
-  font-size:8px;
-  line-height:1.25;
-  color:rgba(255,255,255,.42);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  min-width:0;
-  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
 }
 
 .prioPreviewRow.is-done .prioPreviewDot{
@@ -318,13 +299,6 @@ button{
   text-decoration-color: rgba(255,255,255,.28);
 }
 
-.prioPreviewRow.is-done .prioPreviewNote{
-  opacity:.45;
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgba(255,255,255,.20);
-}
-
 .prioPreviewMore{
   padding-left:18px;
   margin-top:2px;
@@ -333,65 +307,7 @@ button{
   color:rgba(255,255,255,.42);
 }
 
-/* weather preview */
-
-.weatherPreview{
-  width:100%;
-  height:100%;
-  display:grid;
-  grid-template-columns: minmax(0,1fr) 88px;
-  align-items:center;
-  gap:12px;
-}
-
-.weatherPreviewText{
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  align-self:center;
-}
-
-.weatherPreviewTempBig{
-  font-size:34px;
-  line-height:.95;
-  font-weight:950;
-  color:rgba(255,255,255,.96);
-  letter-spacing:.01em;
-}
-
-.weatherPreviewStatus{
-  font-size:14px;
-  line-height:1.25;
-  color:rgba(255,255,255,.82);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.weatherPreviewMeta{
-  font-size:13px;
-  line-height:1.25;
-  color:rgba(255,255,255,.52);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.weatherPreviewVisual{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.weatherPreviewIcon{
-  width:64px;
-  height:64px;
-  object-fit:contain;
-  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
-}
-
-/* shared module overlay */
+/* prio overlay */
 
 .moduleExpandOverlay{
   position:absolute;
@@ -437,8 +353,6 @@ button{
 .moduleExpandOverlay.open .moduleExpandCard{
   transform:translateY(0);
 }
-
-/* prio overlay */
 
 .prioPanelScroller{
   flex:1;
@@ -601,38 +515,8 @@ button{
   grid-template-columns: 18px 1fr 28px;
   gap:10px;
   align-items:center;
-  padding:12px 52px calc(12px + env(safe-area-inset-bottom)) 16px;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
   background:rgba(255,255,255,.02);
-}
-
-.prioCloseFab,
-.weatherCloseFab{
-  position:absolute;
-  right:12px;
-  bottom:calc(12px + env(safe-area-inset-bottom));
-  width:30px;
-  height:30px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(15,20,28,.48);
-  color:rgba(255,255,255,.82);
-  display:grid;
-  place-items:center;
-  padding:0;
-  cursor:pointer;
-  z-index:5;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.05),
-    0 8px 20px rgba(0,0,0,.18);
-  font-size:13px;
-  line-height:1;
-}
-
-.prioCloseFab:active,
-.weatherCloseFab:active{
-  transform:scale(.97);
 }
 
 .prioFakeCheck{
@@ -662,126 +546,6 @@ button{
   line-height:1;
   cursor:pointer;
   padding:0;
-}
-
-/* weather overlay */
-
-.weatherPanelScroller{
-  flex:1;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  padding:18px 16px 52px 16px;
-}
-
-.weatherPanel{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.weatherHero{
-  display:grid;
-  grid-template-columns: minmax(0,1fr) 92px;
-  align-items:center;
-  gap:10px;
-}
-
-.weatherHeroTemp{
-  font-size:52px;
-  line-height:.92;
-  font-weight:950;
-  color:rgba(255,255,255,.96);
-  letter-spacing:.01em;
-}
-
-.weatherHeroStatus{
-  margin-top:6px;
-  font-size:14px;
-  color:rgba(255,255,255,.76);
-}
-
-.weatherHeroVisual{
-  display:flex;
-  justify-content:flex-end;
-}
-
-.weatherHeroIcon{
-  width:74px;
-  height:74px;
-  object-fit:contain;
-}
-
-.weatherStats{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:10px;
-}
-
-.weatherStat{
-  padding:12px 12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-}
-
-.weatherStatLabel{
-  font-size:12px;
-  color:rgba(255,255,255,.52);
-  line-height:1.2;
-}
-
-.weatherStatValue{
-  margin-top:6px;
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  color:rgba(255,255,255,.92);
-}
-
-.weatherHours{
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:10px;
-}
-
-.weatherHour{
-  padding:10px 8px;
-  border-radius:12px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-  text-align:center;
-}
-
-.weatherHourTime{
-  font-size:12px;
-  color:rgba(255,255,255,.54);
-}
-
-.weatherHourTemp{
-  margin-top:6px;
-  font-size:18px;
-  font-weight:900;
-  color:rgba(255,255,255,.92);
-  line-height:1;
-}
-
-.weatherHourRain{
-  margin-top:4px;
-  font-size:12px;
-  color:rgba(255,255,255,.46);
-}
-
-.weatherFoot{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  padding-bottom:2px;
-}
-
-.weatherFootLine{
-  font-size:13px;
-  line-height:1.35;
-  color:rgba(255,255,255,.68);
 }
 
 /* timer focus */
@@ -1042,34 +806,8 @@ body.timerRunning .timerBarWrap{
     padding:16px 12px 8px 12px;
   }
 
-  .weatherPanelScroller{
-    padding:16px 12px 52px 12px;
-  }
-
   .prioAddBar{
-    padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
-  }
-
-  .weatherPreview{
-    grid-template-columns: minmax(0,1fr) 78px;
-  }
-
-  .weatherPreviewIcon{
-    width:56px;
-    height:56px;
-  }
-
-  .weatherHero{
-    grid-template-columns: minmax(0,1fr) 80px;
-  }
-
-  .weatherHeroTemp{
-    font-size:46px;
-  }
-
-  .weatherHeroIcon{
-    width:66px;
-    height:66px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 }
 
