@@ -1220,12 +1220,6 @@ function setAppHeightVar() {
   }
 
   function init() {
-  setAppHeightVar();
-
-  window.addEventListener("resize", setAppHeightVar, { passive: true });
-  window.addEventListener("orientationchange", setAppHeightVar, { passive: true });
-  window.addEventListener("pageshow", setAppHeightVar, { passive: true });
-
   updateClock();
   setInterval(updateClock, 1000);
 
@@ -1241,5 +1235,5 @@ function setAppHeightVar() {
   initWeather();
 }
 
-  init();
+init();
 })();
