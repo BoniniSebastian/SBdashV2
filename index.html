@@ -9,11 +9,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
-  <link rel="apple-touch-icon" href="assets/icon.png">
-  <link rel="icon" type="image/png" href="assets/icon.png">
-
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <div class="app">
@@ -37,27 +34,33 @@
           </button>
         </div>
       </div>
+
+      <div class="weatherBlock" id="weatherBlock" aria-label="Väder">
+        <img class="weatherIcon" id="weatherIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+        <div class="weatherTemp" id="weatherTemp">--°</div>
+      </div>
     </header>
 
     <div class="clockSeparator"></div>
 
     <main class="moduleArea" aria-label="Modulyta">
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot1"
-        type="button"
-        aria-label="Öppna modul i slot 1"
-      >
-        <div class="moduleSlotContent" id="moduleSlot1Content"></div>
+      <button class="moduleSlot moduleSlot--prio" id="moduleSlot1" type="button" aria-label="Öppna prio">
+        <div class="prioPreview" id="prioPreview"></div>
       </button>
 
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot2"
-        type="button"
-        aria-label="Öppna modul i slot 2"
-      >
-        <div class="moduleSlotContent" id="moduleSlot2Content"></div>
+      <button class="moduleSlot moduleSlot--weather" id="moduleSlot2" type="button" aria-label="Öppna väder">
+        <div class="weatherPreview" id="weatherPreview">
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig" id="weatherPreviewTempBig">--°</div>
+            <div class="weatherPreviewStatus" id="weatherPreviewStatus">Laddar väder...</div>
+            <div class="weatherPreviewMeta" id="weatherPreviewMeta">—</div>
+            <div class="weatherPreviewMeta" id="weatherPreviewMeta2">—</div>
+          </div>
+
+          <div class="weatherPreviewVisual">
+            <img class="weatherPreviewIcon" id="weatherPreviewIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+          </div>
+        </div>
       </button>
 
       <!-- Prio expanded -->
@@ -134,22 +137,6 @@
           <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
         </div>
       </div>
-
-      <!-- Generic modules 4-7 expanded -->
-      <div class="moduleExpandOverlay" id="genericOverlay" aria-hidden="true">
-        <div class="moduleExpandCard genericCard" id="genericCard" role="dialog" aria-modal="false" aria-label="Modul">
-          <div class="genericScroller">
-            <div class="genericPanel">
-              <div class="genericTitle" id="genericTitle">Modul 4</div>
-              <div class="genericBody" id="genericBody">
-                Den här modulen är skapad som placeholder och väntar på innehåll.
-              </div>
-            </div>
-          </div>
-
-          <button class="genericCloseFab" id="genericCloseFab" type="button" aria-label="Stäng modul">✕</button>
-        </div>
-      </div>
     </main>
 
     <div class="timerFocus" id="timerFocus" aria-hidden="true">
@@ -182,6 +169,6 @@
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
