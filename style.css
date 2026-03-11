@@ -1023,11 +1023,39 @@ button{
   -webkit-backdrop-filter:blur(3px);
 }
 
+/* NYTT BLOCK */
+.timerFocusCard{
+  position:relative;
+  z-index:2;
+  width:min(92vw, 520px);
+  min-height:420px;
+  border-radius:28px;
+
+  background:rgba(10,15,20,.52);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  box-shadow:
+    0 18px 60px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.05);
+
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:24px;
+}
+
+/* TIMER WHEEL */
+
 .timerWheelWrap{
   position:relative;
   z-index:2;
-  width:min(var(--wheelSize), calc(100vw - 72px));
-  height:min(var(--wheelSize), calc(100vw - 72px));
+  width:min(calc(var(--wheelSize) * 1.9), calc(100vw - 36px));
+  height:min(calc(var(--wheelSize) * 1.9), calc(100vw - 36px));
   display:grid;
   place-items:center;
 }
@@ -1224,6 +1252,14 @@ body.timerRunning .timerBarWrap{
 
   .clockSeparator{
     top:112px;
+  }
+
+  /* TIMER CARD MOBILE */
+
+  .timerFocusCard{
+    width:min(94vw, 520px);
+    min-height:380px;
+    padding:18px;
   }
 
   .timerIconBtn{
