@@ -290,7 +290,7 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: "Segoe Print", "Bradley Hand", "Marker Felt", "Noteworthy", cursive;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   letter-spacing:.01em;
 }
 
