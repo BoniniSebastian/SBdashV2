@@ -193,7 +193,7 @@ button{
   left:0;
   right:0;
   top:var(--moduleTop);
-  bottom:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
+  bottom: var(--calendarHeight);
   display:flex;
   flex-direction:column;
   gap:0;
