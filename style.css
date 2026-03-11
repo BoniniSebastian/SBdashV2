@@ -1061,8 +1061,8 @@ button{
   border-radius:999px;
   background:radial-gradient(circle at 50% 50%, rgba(0,0,0,.58), rgba(0,0,0,.30));
   box-shadow:
-    0 0 34px rgba(0,209,255,.16),
-    0 18px 60px rgba(0,0,0,.42);
+    0 0 40px rgba(0,209,255,.18),
+    inset 0 0 30px rgba(0,0,0,.6);
   touch-action:none;
   overflow:visible;
   transition:
