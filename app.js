@@ -1,6 +1,11 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  function setAppHeightVar() {
+    const h = window.innerHeight;
+    document.documentElement.style.setProperty("--appH", `${h}px`);
+  }
+
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
@@ -1216,8 +1221,14 @@
   }
 
   function init() {
-    updateClock();
-    setInterval(updateClock, 1000);
+  setAppHeightVar();
+
+  window.addEventListener("resize", setAppHeightVar, { passive: true });
+  window.addEventListener("orientationchange", setAppHeightVar, { passive: true });
+  window.addEventListener("pageshow", setAppHeightVar, { passive: true });
+
+  updateClock();
+  setInterval(updateClock, 1000);
 
     timerBarWrap?.setAttribute("aria-hidden", "true");
     updateTimerBar();
