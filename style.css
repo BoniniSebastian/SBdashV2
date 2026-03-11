@@ -1000,7 +1000,7 @@ button{
 
 .timerFocus{
   position:absolute;
-  inset: 20px 14px 24px 14px;
+  inset: 16px 14px 22px 14px;
   z-index:40;
   display:grid;
   place-items:center;
