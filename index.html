@@ -9,22 +9,22 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SB Dash">
 
-  <link rel="apple-touch-icon" href="assets/icon.png">
-  <link rel="icon" type="image/png" href="assets/icon.png">
-
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
   <div class="app">
 
+    <!-- ambient background -->
     <div class="zenBlob startZen" aria-hidden="true"></div>
     <div class="ambientBlob" aria-hidden="true"></div>
 
+    <!-- top progress bar -->
     <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
       <div class="timerBar" id="timerBar"></div>
     </div>
 
+    <!-- top header -->
     <header class="topBar">
       <div class="clockBlock">
         <div class="clockDate" id="clockDate">MÅNDAG | 9 MARS</div>
@@ -37,121 +37,17 @@
           </button>
         </div>
       </div>
+
+      <div class="weatherBlock" id="weatherBlock" aria-label="Väder">
+        <img class="weatherIcon" id="weatherIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
+        <div class="weatherTemp" id="weatherTemp">--°</div>
+      </div>
     </header>
 
-    <div class="clockSeparator"></div>
+    <!-- future dashboard zone -->
+    <main class="dashboardZone" id="dashboardZone" aria-hidden="false"></main>
 
-    <main class="moduleArea" aria-label="Modulyta">
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot1"
-        type="button"
-        aria-label="Öppna modul i slot 1"
-      >
-        <div class="moduleSlotContent" id="moduleSlot1Content"></div>
-      </button>
-
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot2"
-        type="button"
-        aria-label="Öppna modul i slot 2"
-      >
-        <div class="moduleSlotContent" id="moduleSlot2Content"></div>
-      </button>
-
-      <!-- Prio expanded -->
-      <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
-        <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
-          <div class="prioPanelScroller">
-            <div class="prioPanelList" id="prioPanelList"></div>
-          </div>
-
-          <div class="prioAddBar">
-            <div class="prioFakeCheck" aria-hidden="true"></div>
-            <input
-              class="prioAddInput"
-              id="prioAddInput"
-              type="text"
-              maxlength="160"
-              placeholder="Skriv ny prio..."
-              autocomplete="off"
-            />
-            <button class="prioAddBtn" id="prioAddBtn" type="button" aria-label="Lägg till prio">+</button>
-          </div>
-
-          <button class="prioCloseFab" id="prioCloseFab" type="button" aria-label="Stäng prio">✕</button>
-        </div>
-      </div>
-
-      <!-- Weather expanded -->
-      <div class="moduleExpandOverlay" id="weatherOverlay" aria-hidden="true">
-        <div class="moduleExpandCard weatherExpandCard" id="weatherCard" role="dialog" aria-modal="false" aria-label="Väder">
-          <div class="weatherPanelScroller">
-            <div class="weatherPanel">
-              <div class="weatherHero">
-                <div class="weatherHeroText">
-                  <div class="weatherHeroTemp" id="weatherHeroTemp">--°</div>
-                  <div class="weatherHeroStatus" id="weatherHeroStatus">—</div>
-                </div>
-
-                <div class="weatherHeroVisual">
-                  <img class="weatherHeroIcon" id="weatherHeroIcon" src="assets/ui/weather/na.svg" alt="" draggable="false" />
-                </div>
-              </div>
-
-              <div class="weatherStats">
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Känns som</div>
-                  <div class="weatherStatValue" id="weatherFeelsLike">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Vind</div>
-                  <div class="weatherStatValue" id="weatherWind">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Nederbörd</div>
-                  <div class="weatherStatValue" id="weatherRain">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Regnrisk</div>
-                  <div class="weatherStatValue" id="weatherRainChance">—</div>
-                </div>
-              </div>
-
-              <div class="weatherHours" id="weatherHours"></div>
-
-              <div class="weatherFoot">
-                <div class="weatherFootLine" id="weatherTodayLine">Idag: —</div>
-                <div class="weatherFootLine" id="weatherTomorrowLine">Imorgon: —</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
-        </div>
-      </div>
-
-      <!-- Generic modules 4-7 expanded -->
-      <div class="moduleExpandOverlay" id="genericOverlay" aria-hidden="true">
-        <div class="moduleExpandCard genericCard" id="genericCard" role="dialog" aria-modal="false" aria-label="Modul">
-          <div class="genericScroller">
-            <div class="genericPanel">
-              <div class="genericTitle" id="genericTitle">Modul 4</div>
-              <div class="genericBody" id="genericBody">
-                Den här modulen är skapad som placeholder och väntar på innehåll.
-              </div>
-            </div>
-          </div>
-
-          <button class="genericCloseFab" id="genericCloseFab" type="button" aria-label="Stäng modul">✕</button>
-        </div>
-      </div>
-    </main>
-
+    <!-- timer focus layer -->
     <div class="timerFocus" id="timerFocus" aria-hidden="true">
       <div class="timerWheelWrap">
         <div class="timerWheel" id="timerWheel" aria-label="Timerhjul">
@@ -166,6 +62,7 @@
       </div>
     </div>
 
+    <!-- bottom calendar -->
     <section class="calendarStrip" aria-label="Kalender">
       <div class="calendarFrameWrap">
         <iframe
@@ -174,14 +71,12 @@
           loading="lazy"
           referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
-
-        <div class="calendarShade"></div>
       </div>
     </section>
 
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>
