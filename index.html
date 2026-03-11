@@ -54,12 +54,11 @@
     const day = now.toLocaleDateString("sv-SE", { day: "numeric" });
     const month = now.toLocaleDateString("sv-SE", { month: "long" }).toUpperCase();
 
-    const h = pad2(now.getHours());
-    const m = pad2(now.getMinutes());
-    const colon = now.getSeconds() % 2 === 0 ? ":" : " ";
+   const h = pad2(now.getHours());
+  const m = pad2(now.getMinutes());
 
-    if (clockDate) clockDate.textContent = `${weekday} | ${day} ${month}`;
-    if (clockTime) clockTime.textContent = `${h}${colon}${m}`;
+  if (clockDate) clockDate.textContent = `${weekday} | ${day} ${month}`;
+  if (clockTime) clockTime.textContent = `${h}:${m}`;
   }
 
   function setTimerDisplayValue() {
