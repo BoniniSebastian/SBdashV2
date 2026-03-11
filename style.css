@@ -1212,7 +1212,7 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: clamp(132px, 16vh, 170px);
+    --calendarHeight: 16vh;
     --calendarMin: 132px;
     --calendarMax: 170px;
     --moduleTop: 132px;
@@ -1230,6 +1230,7 @@ body.timerRunning .timerBarWrap{
   .clockSeparator{
     top:112px;
   }
+}
 
   .timerIconBtn{
     width:38px;
