@@ -9,7 +9,7 @@
   --pagePadX: 22px;
   --pageTop: calc(var(--safeTop) + 16px);
   --appH: 100dvh;
-  --calendarHeight: clamp(140px, 16dvh, 180px);
+  --calendarHeight: 16vh;
   --calendarMin: 140px;
   --calendarMax: 180px;
 
