@@ -1248,13 +1248,11 @@ body.timerRunning .timerBarWrap{
     top:112px;
   }
 
-  /* TIMER CARD MOBILE */
-
-  .timerFocusCard{
-    width:min(94vw, 520px);
-    min-height:380px;
-    padding:18px;
-  }
+  .timerFocus .overlayCard{
+  width:min(94vw, 520px);
+  min-height:380px;
+  padding:18px;
+}
 
   .timerIconBtn{
     width:38px;
