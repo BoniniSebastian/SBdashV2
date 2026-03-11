@@ -1000,13 +1000,15 @@ button{
 
 .timerFocus{
   position:absolute;
-  inset:0;
+  inset: 20px 14px 24px 14px;
   z-index:40;
   display:grid;
   place-items:center;
   opacity:0;
   pointer-events:none;
   transition:opacity .22s ease;
+  border-radius:32px;
+  overflow:hidden;
 }
 
 .timerFocus.open{
@@ -1021,6 +1023,7 @@ button{
   background:rgba(0,0,0,.18);
   backdrop-filter:blur(3px);
   -webkit-backdrop-filter:blur(3px);
+  border-radius:inherit;
 }
 
 .timerFocus .overlayCard{
