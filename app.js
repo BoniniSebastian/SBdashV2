@@ -1,6 +1,10 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-
+  
+function setAppHeightVar() {
+  const h = window.innerHeight;
+  document.documentElement.style.setProperty("--appH", `${h}px`);
+}
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
@@ -1216,20 +1220,26 @@
   }
 
   function init() {
-    updateClock();
-    setInterval(updateClock, 1000);
+  setAppHeightVar();
 
-    timerBarWrap?.setAttribute("aria-hidden", "true");
-    updateTimerBar();
+  window.addEventListener("resize", setAppHeightVar, { passive: true });
+  window.addEventListener("orientationchange", setAppHeightVar, { passive: true });
+  window.addEventListener("pageshow", setAppHeightVar, { passive: true });
 
-    renderSlots();
-    renderPrioPanel();
+  updateClock();
+  setInterval(updateClock, 1000);
 
-    setTimerDisplayValue();
-    makeWheelEngine();
-    bindUI();
-    initWeather();
-  }
+  timerBarWrap?.setAttribute("aria-hidden", "true");
+  updateTimerBar();
+
+  renderSlots();
+  renderPrioPanel();
+
+  setTimerDisplayValue();
+  makeWheelEngine();
+  bindUI();
+  initWeather();
+}
 
   init();
 })();
