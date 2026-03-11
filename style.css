@@ -1023,7 +1023,7 @@ button{
   -webkit-backdrop-filter:blur(3px);
 }
 
-.timerFocusCard{
+.timerFocus .overlayCard{
   position:absolute;
   inset:8px 12px;
   border-radius:24px;
