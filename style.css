@@ -193,7 +193,7 @@ button{
   left:0;
   right:0;
   top:var(--moduleTop);
-  bottom:var(--calendarHeight);
+  bottom:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
   display:flex;
   flex-direction:column;
   gap:0;
@@ -1157,7 +1157,7 @@ body.timerRunning .timerBarWrap{
   position:absolute;
   left:0;
   right:0;
-  bottom:env(safe-area-inset-bottom);
+  bottom:0;
   height:clamp(var(--calendarMin), var(--calendarHeight), var(--calendarMax));
   z-index:10;
   padding:0;
