@@ -1215,7 +1215,7 @@ body.timerRunning .timerBarWrap{
     --calendarHeight: 16vh;
     --calendarMin: 132px;
     --calendarMax: 170px;
-    --moduleTop: 132px;
+    --moduleTop: 136px;
     --prioText: 14px;
   }
 
