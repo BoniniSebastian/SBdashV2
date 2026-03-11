@@ -113,7 +113,7 @@ button{
   right:var(--pagePadX);
   top:var(--pageTop);
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:flex-start;
   z-index:20;
 }
@@ -185,29 +185,6 @@ button{
   filter:drop-shadow(0 0 8px rgba(0,209,255,.5));
 }
 
-.weatherBlock{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-  margin-top:4px;
-}
-
-.weatherIcon{
-  width:26px;
-  height:26px;
-  opacity:.96;
-  filter:drop-shadow(0 0 8px rgba(255,255,255,.05));
-}
-
-.weatherTemp{
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-  letter-spacing:.02em;
-  color:rgba(255,255,255,.94);
-}
-
 /* module area */
 
 .moduleArea{
@@ -232,24 +209,230 @@ button{
   -webkit-backdrop-filter:blur(10px);
   box-shadow:none;
   overflow:hidden;
+  position:relative;
 }
 
 .moduleSlot + .moduleSlot{
   border-top:1px solid rgba(255,255,255,.08);
 }
 
-.moduleSlot--prio{
+.moduleSlot--dynamic{
   appearance:none;
   -webkit-appearance:none;
   width:100%;
   text-align:left;
-  padding:16px 18px 14px 18px;
   cursor:pointer;
+  border:0;
+  padding:16px 18px 14px 18px;
+  touch-action:pan-y;
+  transition:background .18s ease, transform .18s ease;
 }
 
-.moduleSlot--empty{
-  background:rgba(10,18,26,.06);
+.moduleSlot--dynamic:active{
+  background:rgba(255,255,255,.025);
 }
+
+.moduleSlotContent{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  transition:
+    transform .22s ease,
+    opacity .22s ease,
+    filter .22s ease;
+  will-change: transform, opacity, filter;
+}
+
+.moduleSlot.is-swiping .moduleSlotContent{
+  filter:brightness(1.05);
+}
+
+.moduleSlot.is-animating-left .moduleSlotContent{
+  animation:slotSwapLeft .24s ease;
+}
+
+.moduleSlot.is-animating-right .moduleSlotContent{
+  animation:slotSwapRight .24s ease;
+}
+
+@keyframes slotSwapLeft{
+  0%{
+    transform:translateX(18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
+
+@keyframes slotSwapRight{
+  0%{
+    transform:translateX(-18px);
+    opacity:.72;
+  }
+  100%{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
+
+.moduleSlotTrack{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  min-width:0;
+}
+
+.modulePlaceholder{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.modulePlaceholderBody{
+  width:100%;
+  max-width:520px;
+  padding:18px 18px 16px 18px;
+  border-radius:22px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 14px 40px rgba(0,0,0,.18);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+
+.modulePlaceholderBody::before{
+  content:"";
+  display:block;
+  width:44px;
+  height:4px;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(0,209,255,.95), rgba(255,100,180,.82));
+  box-shadow:0 0 14px rgba(0,209,255,.20);
+  margin-bottom:2px;
+}
+
+.modulePlaceholderTitle{
+  font-size:30px;
+  line-height:.96;
+  font-weight:950;
+  letter-spacing:.01em;
+  color:rgba(255,255,255,.96);
+  text-shadow:0 0 18px rgba(255,255,255,.03);
+}
+
+.modulePlaceholderText{
+  max-width:34ch;
+  font-size:14px;
+  line-height:1.45;
+  color:rgba(255,255,255,.58);
+}
+
+/* timer preview */
+
+.timerPreview{
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.timerPreviewWheel{
+  width:188px;
+  height:188px;
+  border-radius:999px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,.88) 0%, rgba(0,0,0,.82) 58%, rgba(0,0,0,.72) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.05),
+    0 0 26px rgba(0,209,255,.12),
+    0 0 44px rgba(255,100,180,.08);
+  overflow:hidden;
+}
+
+.timerPreviewWheel::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  padding:2px;
+  background:linear-gradient(135deg, rgba(0,209,255,.95), rgba(120,120,255,.72), rgba(255,100,180,.95));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.95;
+}
+
+.timerPreviewWheel::after{
+  content:"";
+  position:absolute;
+  inset:-18px;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 25% 45%, rgba(0,209,255,.20), transparent 34%),
+    radial-gradient(circle at 76% 52%, rgba(255,100,180,.18), transparent 32%);
+  filter:blur(18px);
+  z-index:0;
+}
+
+.timerPreviewCenter{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 18px;
+}
+
+.timerPreviewLabel{
+  font-size:18px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.92);
+  text-shadow:
+    0 0 14px rgba(255,255,255,.08),
+    0 0 24px rgba(0,209,255,.08);
+}
+
+.timerPreviewValue{
+  font-size:40px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.02em;
+  color:rgba(255,255,255,.98);
+  text-shadow:
+    0 0 18px rgba(255,255,255,.10),
+    0 0 28px rgba(0,209,255,.12);
+}
+
+/* prio preview */
 
 .prioPreview{
   width:100%;
@@ -285,6 +468,20 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing:.01em;
+}
+
+.prioPreviewNote{
+  margin-top:2px;
+  font-size:12px;
+  line-height:1.25;
+  color:rgba(255,255,255,.42);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .prioPreviewRow.is-done .prioPreviewDot{
@@ -299,6 +496,13 @@ button{
   text-decoration-color: rgba(255,255,255,.28);
 }
 
+.prioPreviewRow.is-done .prioPreviewNote{
+  opacity:.45;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255,255,255,.20);
+}
+
 .prioPreviewMore{
   padding-left:18px;
   margin-top:2px;
@@ -307,7 +511,65 @@ button{
   color:rgba(255,255,255,.42);
 }
 
-/* prio overlay */
+/* weather preview */
+
+.weatherPreview{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 88px;
+  align-items:center;
+  gap:12px;
+}
+
+.weatherPreviewText{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  align-self:center;
+}
+
+.weatherPreviewTempBig{
+  font-size:34px;
+  line-height:.95;
+  font-weight:950;
+  color:rgba(255,255,255,.96);
+  letter-spacing:.01em;
+}
+
+.weatherPreviewStatus{
+  font-size:14px;
+  line-height:1.25;
+  color:rgba(255,255,255,.82);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherPreviewMeta{
+  font-size:13px;
+  line-height:1.25;
+  color:rgba(255,255,255,.52);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherPreviewVisual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.weatherPreviewIcon{
+  width:64px;
+  height:64px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
+}
+
+/* shared module overlay */
 
 .moduleExpandOverlay{
   position:absolute;
@@ -353,6 +615,8 @@ button{
 .moduleExpandOverlay.open .moduleExpandCard{
   transform:translateY(0);
 }
+
+/* prio overlay */
 
 .prioPanelScroller{
   flex:1;
@@ -515,8 +779,40 @@ button{
   grid-template-columns: 18px 1fr 28px;
   gap:10px;
   align-items:center;
-  padding:12px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
+  padding:12px 52px calc(12px + env(safe-area-inset-bottom)) 16px;
   background:rgba(255,255,255,.02);
+}
+
+.prioCloseFab,
+.weatherCloseFab,
+.genericCloseFab{
+  position:absolute;
+  right:12px;
+  bottom:calc(12px + env(safe-area-inset-bottom));
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(15,20,28,.48);
+  color:rgba(255,255,255,.82);
+  display:grid;
+  place-items:center;
+  padding:0;
+  cursor:pointer;
+  z-index:5;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 8px 20px rgba(0,0,0,.18);
+  font-size:13px;
+  line-height:1;
+}
+
+.prioCloseFab:active,
+.weatherCloseFab:active,
+.genericCloseFab:active{
+  transform:scale(.97);
 }
 
 .prioFakeCheck{
@@ -546,6 +842,158 @@ button{
   line-height:1;
   cursor:pointer;
   padding:0;
+}
+
+/* weather overlay */
+
+.weatherPanelScroller{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:18px 16px 52px 16px;
+}
+
+.weatherPanel{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.weatherHero{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 92px;
+  align-items:center;
+  gap:10px;
+}
+
+.weatherHeroTemp{
+  font-size:52px;
+  line-height:.92;
+  font-weight:950;
+  color:rgba(255,255,255,.96);
+  letter-spacing:.01em;
+}
+
+.weatherHeroStatus{
+  margin-top:6px;
+  font-size:14px;
+  color:rgba(255,255,255,.76);
+}
+
+.weatherHeroVisual{
+  display:flex;
+  justify-content:flex-end;
+}
+
+.weatherHeroIcon{
+  width:74px;
+  height:74px;
+  object-fit:contain;
+}
+
+.weatherStats{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+.weatherStat{
+  padding:12px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.weatherStatLabel{
+  font-size:12px;
+  color:rgba(255,255,255,.52);
+  line-height:1.2;
+}
+
+.weatherStatValue{
+  margin-top:6px;
+  font-size:22px;
+  line-height:1;
+  font-weight:900;
+  color:rgba(255,255,255,.92);
+}
+
+.weatherHours{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
+}
+
+.weatherHour{
+  padding:10px 8px;
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.05);
+  text-align:center;
+}
+
+.weatherHourTime{
+  font-size:12px;
+  color:rgba(255,255,255,.54);
+}
+
+.weatherHourTemp{
+  margin-top:6px;
+  font-size:18px;
+  font-weight:900;
+  color:rgba(255,255,255,.92);
+  line-height:1;
+}
+
+.weatherHourRain{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,255,255,.46);
+}
+
+.weatherFoot{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-bottom:2px;
+}
+
+.weatherFootLine{
+  font-size:13px;
+  line-height:1.35;
+  color:rgba(255,255,255,.68);
+}
+
+/* generic modules overlay */
+
+.genericScroller{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:22px 18px 58px 18px;
+}
+
+.genericPanel{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:12px;
+}
+
+.genericTitle{
+  font-size:42px;
+  line-height:.95;
+  font-weight:950;
+  letter-spacing:.01em;
+  color:rgba(255,255,255,.96);
+}
+
+.genericBody{
+  max-width:32ch;
+  font-size:15px;
+  line-height:1.5;
+  color:rgba(255,255,255,.66);
 }
 
 /* timer focus */
@@ -759,7 +1207,7 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 16vh;
+    --calendarHeight: 150px;
     --calendarMin: 132px;
     --calendarMax: 170px;
     --moduleTop: 132px;
@@ -776,10 +1224,6 @@ body.timerRunning .timerBarWrap{
 
   .clockSeparator{
     top:112px;
-  }
-
-  .weatherTemp{
-    font-size:20px;
   }
 
   .timerIconBtn{
@@ -806,8 +1250,59 @@ body.timerRunning .timerBarWrap{
     padding:16px 12px 8px 12px;
   }
 
+  .weatherPanelScroller{
+    padding:16px 12px 52px 12px;
+  }
+
+  .genericScroller{
+    padding:18px 14px 56px 14px;
+  }
+
   .prioAddBar{
-    padding:10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+    padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
+  }
+
+  .weatherPreview{
+    grid-template-columns: minmax(0,1fr) 78px;
+  }
+
+  .weatherPreviewIcon{
+    width:56px;
+    height:56px;
+  }
+
+  .weatherHero{
+    grid-template-columns: minmax(0,1fr) 80px;
+  }
+
+  .weatherHeroTemp{
+    font-size:46px;
+  }
+
+  .weatherHeroIcon{
+    width:66px;
+    height:66px;
+  }
+
+  .modulePlaceholderTitle{
+    font-size:24px;
+  }
+
+  .genericTitle{
+    font-size:36px;
+  }
+
+  .timerPreviewWheel{
+    width:172px;
+    height:172px;
+  }
+
+  .timerPreviewLabel{
+    font-size:16px;
+  }
+
+  .timerPreviewValue{
+    font-size:34px;
   }
 }
 
