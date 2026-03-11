@@ -1207,7 +1207,7 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX: 18px;
     --wheelSize: 192px;
-    --calendarHeight: 16vh;
+    --calendarHeight: 150px;
     --calendarMin: 132px;
     --calendarMax: 170px;
     --moduleTop: 132px;
