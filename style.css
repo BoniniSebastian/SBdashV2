@@ -155,7 +155,7 @@ button{
   position:absolute;
   left:0;
   right:0;
-  top:116px;
+  top:var(--moduleTop);
   height:1px;
   background:rgba(255,255,255,.10);
   z-index:15;
