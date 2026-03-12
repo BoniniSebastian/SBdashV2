@@ -551,9 +551,9 @@ button{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns: minmax(0,1fr) 88px;
+  grid-template-columns: minmax(0,1fr) 96px;
   align-items:center;
-  gap:12px;
+  gap:6px;
 }
 
 .weatherPreviewText{
@@ -593,15 +593,15 @@ button{
 .weatherPreviewVisual{
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-start;
+  transform:translateX(-14px);
 }
 
 .weatherPreviewIcon{
-  width:84px;
-  height:84px;
+  width:78px;
+  height:78px;
   object-fit:contain;
   filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
-}
 
 /* shared module overlay */
 
