@@ -538,21 +538,28 @@
     };
   }
 
-  function renderPrioPreviewMarkup() {
-    const topFive = prios.slice(0, 5);
+  function renderWeatherPreviewMarkup() {
+  const info = getWeatherPreviewData();
+  const rainChanceNow =
+    weatherData?.hourly?.precipitation_probability?.find((v) => Number.isFinite(v)) ?? 0;
 
-    if (!topFive.length) {
-      return `
-        <div class="moduleSlotTrack">
-          <div class="prioPreview">
-            <div class="prioPreviewRow">
-              <span class="prioPreviewDot"></span>
-              <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
-            </div>
-          </div>
+  return `
+    <div class="moduleSlotTrack">
+      <div class="weatherPreview">
+        <div class="weatherPreviewText">
+          <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
+          <div class="weatherPreviewStatus">${escapeHtml(info.status)}</div>
+          <div class="weatherPreviewMeta">Känns som ${escapeHtml(info.feels)}° · Vind ${escapeHtml(info.wind)} m/s</div>
+          <div class="weatherPreviewMeta">Regnrisk ${escapeHtml(Math.round(rainChanceNow))}%</div>
         </div>
-      `;
-    }
+
+        <div class="weatherPreviewVisual">
+          <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
+        </div>
+      </div>
+    </div>
+  `;
+}
 
     const rows = topFive.map((item) => {
       const notePreview = item.note && item.note.trim()
