@@ -551,9 +551,9 @@ button{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 96px;
+  grid-template-columns:minmax(0,1fr) 88px;
   align-items:center;
-  gap:6px;
+  gap:2px;
 }
 
 .weatherPreviewText{
@@ -562,7 +562,7 @@ button{
   flex-direction:column;
   gap:4px;
   align-self:center;
-  transform:translateX(8px);
+  transform:translateX(14px);
 }
 
 .weatherPreviewTempBig{
@@ -595,12 +595,12 @@ button{
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  transform:translateX(-10px);
+  transform:translateX(-22px);
 }
 
 .weatherPreviewIcon{
-  width:78px;
-  height:78px;
+  width:72px;
+  height:72px;
   object-fit:contain;
   filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
 }
@@ -1366,21 +1366,21 @@ body.timerRunning .timerBarWrap{
   /* weather preview */
 
   .weatherPreview{
-    grid-template-columns:minmax(0,1fr) 84px;
-  }
+  grid-template-columns:minmax(0,1fr) 76px;
+}
 
-  .weatherPreviewText{
-    transform:translateX(6px);
-  }
-
-  .weatherPreviewIcon{
-    width:64px;
-    height:64px;
-  }
+.weatherPreviewText{
+  transform:translateX(10px);
+}
 
   .weatherPreviewVisual{
-    transform:translateX(-8px);
-  }
+  transform:translateX(-16px);
+}
+
+.weatherPreviewIcon{
+  width:58px;
+  height:58px;
+}
 
   /* weather hero */
 
