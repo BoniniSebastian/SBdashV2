@@ -1025,7 +1025,7 @@ button{
 
 .timerFocusCard{
   position:absolute;
-  inset:22px 14px 92px 14px;
+  inset:22px 14px 96px 14px;
   border-radius:24px;
   background:rgba(10,15,20,.52);
   border:1px solid rgba(255,255,255,.08);
@@ -1034,8 +1034,10 @@ button{
     inset 0 1px 0 rgba(255,255,255,.05);
   backdrop-filter:blur(22px);
   -webkit-backdrop-filter:blur(22px);
-  display:grid;
-  place-items:center;
+ display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:120px;
   overflow:hidden;
   transform:translateY(8px);
   transition:transform .20s ease;
