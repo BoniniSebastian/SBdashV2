@@ -1441,23 +1441,23 @@ body.timerRunning .timerBarWrap{
     padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 
-  .weatherPreview{
-    grid-template-columns:minmax(0,1fr) 82px;
-    gap:2px;
-  }
+ .weatherPreview{
+  grid-template-columns:minmax(0,1fr) 82px;
+  gap:2px;
+}
 
-  .weatherPreviewText{
-    transform:translateX(8px);
-  }
+.weatherPreviewText{
+  transform:translateX(8px);
+}
 
-  .weatherPreviewVisual{
-    transform:translateX(-12px);
-  }
+.weatherPreviewVisual{
+  transform:translateX(-12px);
+}
 
-  .weatherPreviewIcon{
-    width:64px;
-    height:64px;
-  }
+.weatherPreviewIcon{
+  width:64px;
+  height:64px;
+}
 
   .weatherHero{
     grid-template-columns:minmax(0,1fr) 80px;
