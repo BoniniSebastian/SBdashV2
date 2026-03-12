@@ -58,7 +58,7 @@
 
   const MODULE_COUNT = 7;
   const SLOT_DEFAULTS = { slot1: 1, slot2: 2 };
-  const SLOT_SWIPE_THRESHOLD = 56;
+  const SLOT_SWIPE_THRESHOLD = 72;
   const SLOT_WHEEL_LOCK_MS = 220;
   const SLOT_ANIM_MS = 340;
 
@@ -1113,21 +1113,23 @@ function renderPrioPanel() {
   }
 
   function setSlotSwipeVisual(slotEl, dx) {
-    const clamped = Math.max(-110, Math.min(110, dx));
-    const abs = Math.abs(clamped);
-    const scale = 1 - Math.min(abs / 900, 0.035);
-    const opacity = 1 - Math.min(abs / 500, 0.10);
-    const blur = Math.min(abs / 36, 2);
+  const resisted = dx * 0.72;
+  const clamped = Math.max(-84, Math.min(84, resisted));
+  const abs = Math.abs(clamped);
 
-    slotEl.classList.add("is-swiping");
-    slotEl.classList.toggle("swipe-left", clamped < 0);
-    slotEl.classList.toggle("swipe-right", clamped > 0);
+  const scale = 1 - Math.min(abs / 1400, 0.028);
+  const opacity = 1 - Math.min(abs / 900, 0.08);
+  const blur = Math.min(abs / 70, 1.4);
 
-    slotEl.style.setProperty("--swipeX", `${clamped}px`);
-    slotEl.style.setProperty("--swipeScale", scale.toFixed(3));
-    slotEl.style.setProperty("--swipeOpacity", opacity.toFixed(3));
-    slotEl.style.setProperty("--swipeFilter", `brightness(1.05) blur(${blur.toFixed(2)}px)`);
-  }
+  slotEl.classList.add("is-swiping");
+  slotEl.classList.toggle("swipe-left", clamped < 0);
+  slotEl.classList.toggle("swipe-right", clamped > 0);
+
+  slotEl.style.setProperty("--swipeX", `${clamped}px`);
+  slotEl.style.setProperty("--swipeScale", scale.toFixed(3));
+  slotEl.style.setProperty("--swipeOpacity", opacity.toFixed(3));
+  slotEl.style.setProperty("--swipeFilter", `brightness(1.03) blur(${blur.toFixed(2)}px)`);
+}
 
   function clearSlotSwipeVisual(slotEl) {
     slotEl.classList.remove("is-swiping", "swipe-left", "swipe-right");
