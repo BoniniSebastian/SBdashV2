@@ -18,7 +18,7 @@
   --cyan:rgba(0,209,255,1);
   --pink:rgba(255,100,180,1);
 
-  --moduleTop:132px;
+  --moduleTop:148px;
   --prioText:14px;
   --prioLine:1.4;
 }
@@ -1499,7 +1499,7 @@ body.timerRunning .timerBarWrap{
     --calendarHeight:16vh;
     --calendarMin:132px;
     --calendarMax:170px;
-    --moduleTop:132px;
+    --moduleTop:148px;
     --prioText:14px;
   }
 
