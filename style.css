@@ -353,6 +353,14 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
+  gap:18px;
+}
+
+.timerPreviewMain{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
 }
 
 .timerPreviewWheel{
@@ -403,33 +411,59 @@ button{
   position:relative;
   z-index:1;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   text-align:center;
   padding:0 18px;
 }
 
-.timerPreviewLabel{
-  font-size:18px;
+.timerPreviewTop,
+.timerPreviewBottom{
+  font-size:11px;
   line-height:1;
   font-weight:900;
-  letter-spacing:.22em;
+  letter-spacing:.18em;
   text-transform:uppercase;
-  color:rgba(255,255,255,.92);
-  text-shadow:
-    0 0 14px rgba(255,255,255,.08),
-    0 0 24px rgba(0,209,255,.08);
+  color:rgba(255,255,255,.50);
 }
 
 .timerPreviewValue{
+  margin:10px 0 8px 0;
   font-size:40px;
-  line-height:1;
+  line-height:.92;
   font-weight:950;
   letter-spacing:.02em;
   color:rgba(255,255,255,.98);
   text-shadow:
     0 0 18px rgba(255,255,255,.10),
     0 0 28px rgba(0,209,255,.12);
+}
+
+.timerPreviewReset{
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  color:rgba(255,255,255,.46);
+  font-size:13px;
+  line-height:1.2;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+
+.timerPreviewReset:hover{
+  color:rgba(255,255,255,.74);
+}
+
+.timerPreviewReset:active{
+  transform:scale(.97);
+}
+
+.timerPreviewReset[hidden]{
+  display:none;
 }
 
 /* prio preview */
@@ -1352,18 +1386,27 @@ body.timerRunning .timerBarWrap{
     font-size:36px;
   }
 
-  .timerPreviewWheel{
-    width:172px;
-    height:172px;
-  }
+ .timerPreviewWheel{
+  width:172px;
+  height:172px;
+}
 
-  .timerPreviewLabel{
-    font-size:16px;
-  }
+.timerPreviewValue{
+  font-size:34px;
+}
 
-  .timerPreviewValue{
-    font-size:34px;
-  }
+.timerPreviewTop,
+.timerPreviewBottom{
+  font-size:10px;
+}
+
+.timerPreview{
+  gap:14px;
+}
+
+.timerPreviewReset{
+  font-size:12px;
+}
 }
 
 @media (min-width: 900px){
