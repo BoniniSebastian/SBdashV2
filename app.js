@@ -1113,7 +1113,7 @@ function renderPrioPanel() {
   }
 
   function setSlotSwipeVisual(slotEl, dx) {
-    const clamped = Math.max(-72, Math.min(72, dx));
+    const clamped = Math.max(-110, Math.min(110, dx));
     const abs = Math.abs(clamped);
     const scale = 1 - Math.min(abs / 900, 0.035);
     const opacity = 1 - Math.min(abs / 500, 0.10);
