@@ -1,10 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   
-function setAppHeightVar() {
-  const h = window.innerHeight;
-  document.documentElement.style.setProperty("--appH", `${h}px`);
-}
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
@@ -361,6 +357,19 @@ function setAppHeightVar() {
     TIMER.intervalId = setInterval(tickTimer, 250);
   }
 
+  function resetTimerState() {
+    stopTimerInternal();
+    TIMER.finished = false;
+    TIMER.total = 0;
+    TIMER.left = 0;
+    TIMER.endAt = 0;
+    document.body.classList.remove("timerFinished");
+    timerBarWrap?.setAttribute("aria-hidden", "true");
+    updateTimerBar();
+    setTimerDisplayValue();
+    renderSlots();
+  }
+
   function sectorFromDeg(deg) {
     const raw = Math.round(deg / STEP);
     return ((raw % PRESETS.length) + PRESETS.length) % PRESETS.length;
@@ -600,22 +609,35 @@ function setAppHeightVar() {
     return `${mm}:${ss}`;
   }
 
-  function renderTimerPreviewMarkup() {
-    const centerText = TIMER.running
-      ? formatTimerPreviewTime(TIMER.left)
-      : "TIMER";
+  function formatRemainingShort(totalSec) {
+    const mins = Math.floor(Math.max(0, totalSec || 0) / 60);
+    const secs = Math.max(0, totalSec || 0) % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
 
-    const centerClass = TIMER.running
-      ? "timerPreviewValue"
-      : "timerPreviewLabel";
+  function renderTimerPreviewMarkup() {
+    const showReset = TIMER.running || TIMER.finished || TIMER.total > 0 || TIMER.left > 0;
+    const previewValue = TIMER.running ? formatRemainingShort(TIMER.left) : PRESETS[TIMER.presetIndex];
+    const previewBottom = TIMER.running ? "LEFT" : "MIN";
 
     return `
       <div class="timerPreview">
-        <div class="timerPreviewWheel">
-          <div class="timerPreviewCenter">
-            <div class="${centerClass}">${escapeHtml(centerText)}</div>
+        <div class="timerPreviewMain">
+          <div class="timerPreviewWheel">
+            <div class="timerPreviewCenter">
+              <div class="timerPreviewTop">TIMER</div>
+              <div class="timerPreviewValue">${escapeHtml(String(previewValue))}</div>
+              <div class="timerPreviewBottom">${previewBottom}</div>
+            </div>
           </div>
         </div>
+
+        <span
+          class="timerPreviewReset"
+          role="button"
+          aria-label="Återställ timer"
+          ${showReset ? "" : "hidden"}
+        >Reset</span>
       </div>
     `;
   }
@@ -1037,7 +1059,14 @@ function setAppHeightVar() {
     let locked = false;
     let wheelLocked = false;
 
-    slotEl.addEventListener("click", () => {
+    slotEl.addEventListener("click", (e) => {
+      if (e.target.closest(".timerPreviewReset")) {
+        e.preventDefault();
+        e.stopPropagation();
+        resetTimerState();
+        return;
+      }
+
       if (moved) {
         moved = false;
         return;
@@ -1168,50 +1197,64 @@ function setAppHeightVar() {
     moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
   }
 
- function bindUI() {
-  timerIconBtn?.addEventListener("click", () => {
-    openTimerFocus({ finished: false });
-  });
+  function bindUI() {
+    timerIconBtn?.addEventListener("click", () => {
+      openTimerFocus({ finished: false });
+    });
 
-  timerCloseFab?.addEventListener("click", () => {
-    closeTimerFocus(true);
-  });
+    timerCloseFab?.addEventListener("click", () => {
+      closeTimerFocus();
+    });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && timerFocus?.classList.contains("open")) {
-      closeTimerFocus(true);
-    }
-  });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (prioOverlay?.classList.contains("open")) {
+          closePrioOverlay();
+          return;
+        }
+        if (weatherOverlay?.classList.contains("open")) {
+          closeWeatherOverlay();
+          return;
+        }
+        if (genericOverlay?.classList.contains("open")) {
+          closeGenericOverlay();
+          return;
+        }
+        if (timerFocus?.classList.contains("open") && !TIMER.running) {
+          closeTimerFocus();
+        }
+      }
+    });
 
-  timerWheel?.addEventListener("click", () => {
-    if (TIMER.finished) {
-      document.body.classList.remove("timerFinished");
-    }
-  });
+    timerWheel?.addEventListener("click", () => {
+      if (TIMER.finished) {
+        document.body.classList.remove("timerFinished");
+      }
+    });
 
-  prioAddBtn?.addEventListener("click", addPrioFromInput);
-  prioAddInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addPrioFromInput();
-    }
-  });
+    prioAddBtn?.addEventListener("click", addPrioFromInput);
+    prioAddInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addPrioFromInput();
+      }
+    });
 
-  prioCloseFab?.addEventListener("click", closePrioOverlay);
-  weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
-  genericCloseFab?.addEventListener("click", closeGenericOverlay);
+    prioCloseFab?.addEventListener("click", closePrioOverlay);
+    weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
+    genericCloseFab?.addEventListener("click", closeGenericOverlay);
 
-  addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
-  addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
-  addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
+    addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
+    addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
+    addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
 
-  bindModuleSlot(moduleSlot1, "slot1");
-  bindModuleSlot(moduleSlot2, "slot2");
-  bindPrioLongPress();
-}
+    bindModuleSlot(moduleSlot1, "slot1");
+    bindModuleSlot(moduleSlot2, "slot2");
+    bindPrioLongPress();
+  }
 
-function init() {
-  updateClock();
+  function init() {
+    updateClock();
   setInterval(updateClock, 1000);
 
   timerBarWrap?.setAttribute("aria-hidden", "true");
@@ -1226,5 +1269,5 @@ function init() {
   initWeather();
 }
 
-init();
+  init();
 })();
