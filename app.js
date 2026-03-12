@@ -40,6 +40,11 @@
   const weatherTomorrowLine = $("weatherTomorrowLine");
   const weatherCloseFab = $("weatherCloseFab");
 
+  const freeTextOverlay = $("freeTextOverlay");
+  const freeTextCard = $("freeTextCard");
+  const freeTextInput = $("freeTextInput");
+  const freeTextCloseFab = $("freeTextCloseFab");
+  
   const genericOverlay = $("genericOverlay");
   const genericCard = $("genericCard");
   const genericTitle = $("genericTitle");
@@ -100,6 +105,7 @@
 
   const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.5 };
   const PRIO_KEY = "sbdash_prio_v1";
+  const FREE_TEXT_KEY = "sbdash_free_text_v1";
   const WEATHER_CACHE_KEY = "sbdash_weather_cache_v1";
   const WEATHER_CACHE_MS = 10 * 60 * 1000;
 
@@ -122,6 +128,7 @@
   let prioEditingId = null;
   let prioLongPressTriggered = false;
   let weatherData = null;
+    let freeTextValue = loadFreeText();
   let genericOpenModule = 4;
 
   const MODULES = {
@@ -143,11 +150,11 @@
       renderPreview: renderTimerPreviewMarkup,
       open: () => openTimerFocus({ finished: TIMER.finished }),
     },
-    4: {
+       4: {
       id: 4,
-      title: "Modul 4",
-      renderPreview: () => renderPlaceholderPreviewMarkup(4),
-      open: () => openGenericOverlay(4),
+      title: "Fritext",
+      renderPreview: renderFreeTextPreviewMarkup,
+      open: () => openFreeTextOverlay(),
     },
     5: {
       id: 5,
@@ -537,7 +544,60 @@
       icon: pickWeatherIcon(currentCode),
     };
   }
+  function loadFreeText() {
+    try {
+      return String(localStorage.getItem(FREE_TEXT_KEY) || "");
+    } catch {
+      return "";
+    }
+  }
 
+  function saveFreeText(value) {
+    freeTextValue = String(value || "");
+    try {
+      localStorage.setItem(FREE_TEXT_KEY, freeTextValue);
+    } catch {}
+  }
+
+  function renderFreeTextPreviewMarkup() {
+    const trimmed = String(freeTextValue || "").trim();
+    const text = trimmed || "Fritext...";
+
+    return `
+      <div class="freeTextPreview">
+        <div class="freeTextPreviewCard">
+          <div class="freeTextPreviewText ${trimmed ? "" : "is-empty"}">${escapeHtml(text)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function openFreeTextOverlay() {
+    if (!freeTextOverlay) return;
+    closeTimerFocus();
+    closePrioOverlay();
+    closeWeatherOverlay();
+    closeGenericOverlay();
+
+    freeTextOverlay.classList.add("open");
+    freeTextOverlay.setAttribute("aria-hidden", "false");
+
+    if (freeTextInput) {
+      freeTextInput.value = freeTextValue || "";
+      requestAnimationFrame(() => {
+        freeTextInput.focus();
+        freeTextInput.setSelectionRange(freeTextInput.value.length, freeTextInput.value.length);
+      });
+    }
+  }
+
+  function closeFreeTextOverlay() {
+    if (!freeTextOverlay) return;
+    freeTextOverlay.classList.remove("open");
+    freeTextOverlay.setAttribute("aria-hidden", "true");
+    renderSlots();
+  }
+  
 function renderPrioPreviewMarkup() {
   const topFive = prios.slice(0, 5);
 
@@ -925,16 +985,18 @@ function renderPrioPanel() {
     });
   }
 
-  function closeAllModuleOverlays() {
+   function closeAllModuleOverlays() {
     closePrioOverlay();
     closeWeatherOverlay();
+    closeFreeTextOverlay();
     closeGenericOverlay();
   }
 
-  function openPrioOverlay({ focusAdd = false } = {}) {
+   function openPrioOverlay({ focusAdd = false } = {}) {
     if (!prioOverlay) return;
     closeTimerFocus();
     closeWeatherOverlay();
+    closeFreeTextOverlay();
     closeGenericOverlay();
 
     prioOverlay.classList.add("open");
@@ -954,10 +1016,11 @@ function renderPrioPanel() {
     renderSlots();
   }
 
-  function openWeatherOverlay() {
+    function openWeatherOverlay() {
     if (!weatherOverlay) return;
     closeTimerFocus();
     closePrioOverlay();
+    closeFreeTextOverlay();
     closeGenericOverlay();
     weatherOverlay.classList.add("open");
     weatherOverlay.setAttribute("aria-hidden", "false");
@@ -969,10 +1032,11 @@ function renderPrioPanel() {
     weatherOverlay.setAttribute("aria-hidden", "true");
   }
 
-  function openGenericOverlay(moduleId) {
+    function openGenericOverlay(moduleId) {
     closeTimerFocus();
     closePrioOverlay();
     closeWeatherOverlay();
+    closeFreeTextOverlay();
 
     genericOpenModule = wrapModuleIndex(moduleId);
     if (genericTitle) genericTitle.textContent = `Modul ${genericOpenModule}`;
@@ -1275,6 +1339,12 @@ function renderPrioPanel() {
           closePrioOverlay();
           return;
         }
+       
+        if (freeTextOverlay?.classList.contains("open")) {
+  closeFreeTextOverlay();
+  return;
+}
+        
         if (weatherOverlay?.classList.contains("open")) {
           closeWeatherOverlay();
           return;
@@ -1306,6 +1376,14 @@ function renderPrioPanel() {
     prioCloseFab?.addEventListener("click", closePrioOverlay);
     weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
     genericCloseFab?.addEventListener("click", closeGenericOverlay);
+    freeTextCloseFab?.addEventListener("click", closeFreeTextOverlay);
+
+freeTextInput?.addEventListener("input", (e) => {
+  saveFreeText(e.target.value);
+  renderSlots();
+});
+
+addVerticalSwipeToOverlay(freeTextCard, freeTextOverlay, closeFreeTextOverlay);
 
     addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
     addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
