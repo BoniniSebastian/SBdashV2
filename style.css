@@ -1027,20 +1027,44 @@ button{
   position:absolute;
   inset:22px 14px 96px 14px;
   border-radius:24px;
+
   background:rgba(10,15,20,.52);
+
   border:1px solid rgba(255,255,255,.08);
+
   box-shadow:
-    0 18px 60px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.05);
+    0 24px 80px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -40px 80px rgba(0,0,0,.35);
+
   backdrop-filter:blur(22px);
   -webkit-backdrop-filter:blur(22px);
- display:flex;
+
+  display:flex;
   justify-content:center;
   align-items:flex-start;
+
   padding-top:120px;
+
   overflow:hidden;
+
   transform:translateY(8px);
   transition:transform .20s ease;
+}
+
+.timerFocusCard::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:24px;
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle at 30% 0%,
+      rgba(255,255,255,.06),
+      transparent 60%
+    );
 }
 
 .timerFocus.open .timerFocusCard{
