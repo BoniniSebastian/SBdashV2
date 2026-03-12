@@ -58,7 +58,7 @@
 
   const MODULE_COUNT = 7;
   const SLOT_DEFAULTS = { slot1: 1, slot2: 2 };
-  const SLOT_SWIPE_THRESHOLD = 72;
+  const SLOT_SWIPE_THRESHOLD = 88;
   const SLOT_WHEEL_LOCK_MS = 220;
   const SLOT_ANIM_MS = 340;
 
