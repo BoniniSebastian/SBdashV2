@@ -353,6 +353,7 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
+}
 
 .timerPreviewMain{
   display:flex;
