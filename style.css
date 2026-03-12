@@ -347,14 +347,12 @@ button{
 /* timer preview */
 
 .timerPreview{
+  position:relative;
   width:100%;
   height:100%;
-  min-height:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:18px;
-}
 
 .timerPreviewMain{
   display:flex;
@@ -441,17 +439,17 @@ button{
 }
 
 .timerPreviewReset{
-  border:0;
-  background:none;
-  padding:0;
-  margin:0;
-  color:rgba(255,255,255,.46);
-  font-size:13px;
-  line-height:1.2;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  z-index:3;
+  font-size:12px;
+  line-height:1;
+  font-weight:800;
+  color:rgba(255,255,255,.72);
+  letter-spacing:.02em;
   cursor:pointer;
-  flex:0 0 auto;
+  user-select:none;
 }
 
 .timerPreviewReset:hover{
