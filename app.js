@@ -538,7 +538,53 @@
     };
   }
 
-  function renderWeatherPreviewMarkup() {
+function renderPrioPreviewMarkup() {
+  const topFive = prios.slice(0, 5);
+
+  if (!topFive.length) {
+    return `
+      <div class="moduleSlotTrack">
+        <div class="prioPreview">
+          <div class="prioPreviewRow">
+            <span class="prioPreviewDot"></span>
+            <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const rows = topFive.map((item) => {
+    const notePreview = item.note && item.note.trim()
+      ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
+      : "";
+
+    return `
+      <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
+        <span class="prioPreviewDot"></span>
+        <div style="min-width:0;">
+          <div class="prioPreviewText">${escapeHtml(item.text)}</div>
+          ${notePreview}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const more = prios.length > 5
+    ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
+    : "";
+
+  return `
+    <div class="moduleSlotTrack">
+      <div class="prioPreview">
+        ${rows}
+        ${more}
+      </div>
+    </div>
+  `;
+}
+
+function renderWeatherPreviewMarkup() {
   const info = getWeatherPreviewData();
   const rainChanceNow =
     weatherData?.hourly?.precipitation_probability?.find((v) => Number.isFinite(v)) ?? 0;
@@ -561,346 +607,295 @@
   `;
 }
 
-    const rows = topFive.map((item) => {
-      const notePreview = item.note && item.note.trim()
-        ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
-        : "";
+function formatRemainingShort(totalSec) {
+  const safe = Math.max(0, Math.floor(totalSec || 0));
+  const mins = Math.floor(safe / 60);
+  const secs = safe % 60;
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
 
-      return `
-        <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
-          <span class="prioPreviewDot"></span>
-          <div style="min-width:0;">
-            <div class="prioPreviewText">${escapeHtml(item.text)}</div>
-            ${notePreview}
-          </div>
-        </div>
-      `;
-    }).join("");
+function renderTimerPreviewMarkup() {
+  const showReset = TIMER.running || TIMER.finished || TIMER.total > 0 || TIMER.left > 0;
+  const previewValue = TIMER.running ? formatRemainingShort(TIMER.left) : PRESETS[TIMER.presetIndex];
+  const previewBottom = TIMER.running ? "LEFT" : "MIN";
 
-    const more = prios.length > 5
-      ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
-      : "";
-
-    return `
-      <div class="moduleSlotTrack">
-        <div class="prioPreview">
-          ${rows}
-          ${more}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderWeatherPreviewMarkup() {
-    const info = getWeatherPreviewData();
-
-    return `
-      <div class="moduleSlotTrack">
-        <div class="weatherPreview">
-          <div class="weatherPreviewText">
-            <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
-            <div class="weatherPreviewStatus">${escapeHtml(info.status)}</div>
-            <div class="weatherPreviewMeta">Känns som ${escapeHtml(info.feels)}°</div>
-            <div class="weatherPreviewMeta">Vind ${escapeHtml(info.wind)} m/s</div>
-          </div>
-
-          <div class="weatherPreviewVisual">
-            <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
+  return `
+    <div class="timerPreview">
+      <div class="timerPreviewMain">
+        <div class="timerPreviewWheel">
+          <div class="timerPreviewCenter">
+            <div class="timerPreviewTop">TIMER</div>
+            <div class="timerPreviewValue">${escapeHtml(String(previewValue))}</div>
+            <div class="timerPreviewBottom">${previewBottom}</div>
           </div>
         </div>
       </div>
-    `;
-  }
 
-  function formatRemainingShort(totalSec) {
-    const safe = Math.max(0, Math.floor(totalSec || 0));
-    const mins = Math.floor(safe / 60);
-    const secs = safe % 60;
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  }
+      <span
+        class="timerPreviewReset"
+        role="button"
+        aria-label="Återställ timer"
+        ${showReset ? "" : "hidden"}
+      >Reset</span>
+    </div>
+  `;
+}
 
-  function renderTimerPreviewMarkup() {
-    const showReset = TIMER.running || TIMER.finished || TIMER.total > 0 || TIMER.left > 0;
-    const previewValue = TIMER.running ? formatRemainingShort(TIMER.left) : PRESETS[TIMER.presetIndex];
-    const previewBottom = TIMER.running ? "LEFT" : "MIN";
-
-    return `
-      <div class="timerPreview">
-        <div class="timerPreviewMain">
-          <div class="timerPreviewWheel">
-            <div class="timerPreviewCenter">
-              <div class="timerPreviewTop">TIMER</div>
-              <div class="timerPreviewValue">${escapeHtml(String(previewValue))}</div>
-              <div class="timerPreviewBottom">${previewBottom}</div>
-            </div>
-          </div>
-        </div>
-
-        <span
-          class="timerPreviewReset"
-          role="button"
-          aria-label="Återställ timer"
-          ${showReset ? "" : "hidden"}
-        >Reset</span>
-      </div>
-    `;
-  }
-
-  function renderPlaceholderPreviewMarkup(n) {
-    return `
-      <div class="modulePlaceholder">
-        <div class="modulePlaceholderBody">
-          <div class="modulePlaceholderTitle">Modul ${n}</div>
-          <div class="modulePlaceholderText">
-            Tom placeholder just nu. Den här modulen är redo att byggas när du vill.
-          </div>
+function renderPlaceholderPreviewMarkup(n) {
+  return `
+    <div class="modulePlaceholder">
+      <div class="modulePlaceholderBody">
+        <div class="modulePlaceholderTitle">Modul ${n}</div>
+        <div class="modulePlaceholderText">
+          Tom placeholder just nu. Den här modulen är redo att byggas när du vill.
         </div>
       </div>
-    `;
+    </div>
+  `;
+}
+
+function renderSlot(slotKey, el) {
+  if (!el) return;
+  const mod = getModule(SLOT_STATE[slotKey]);
+  el.innerHTML = mod.renderPreview();
+}
+
+function renderSlots() {
+  renderSlot("slot1", moduleSlot1Content);
+  renderSlot("slot2", moduleSlot2Content);
+}
+
+function renderWeather(data) {
+  weatherData = data;
+  renderSlots();
+
+  if (!data?.current) return;
+
+  const currentTemp = Math.round(data.current.temperature_2m ?? 0);
+  const currentCode = data.current.weather_code ?? 0;
+  const feels = Math.round(data.current.apparent_temperature ?? currentTemp);
+  const wind = Math.round(data.current.wind_speed_10m ?? 0);
+  const rain = Number.isFinite(data.current.precipitation) ? data.current.precipitation : 0;
+  const icon = pickWeatherIcon(currentCode);
+  const status = weatherText(currentCode);
+
+  const todayMin = Math.round(data.daily?.temperature_2m_min?.[0] ?? currentTemp);
+  const todayMax = Math.round(data.daily?.temperature_2m_max?.[0] ?? currentTemp);
+  const tomorrowMin = Math.round(data.daily?.temperature_2m_min?.[1] ?? todayMin);
+  const tomorrowMax = Math.round(data.daily?.temperature_2m_max?.[1] ?? todayMax);
+  const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode;
+
+  const hours = getUpcomingHours(data, 4);
+  const firstRainChance = hours[0]?.rainChance ?? 0;
+
+  if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
+  if (weatherHeroStatus) weatherHeroStatus.textContent = status;
+  if (weatherHeroIcon) weatherHeroIcon.src = icon;
+  if (weatherFeelsLike) weatherFeelsLike.textContent = `${feels}°`;
+  if (weatherWind) weatherWind.textContent = `${wind} m/s`;
+  if (weatherRain) weatherRain.textContent = `${rain} mm`;
+  if (weatherRainChance) weatherRainChance.textContent = `${firstRainChance}%`;
+
+  if (weatherHours) {
+    weatherHours.innerHTML = hours.map((h) => `
+      <div class="weatherHour">
+        <div class="weatherHourTime">${escapeHtml(h.time)}</div>
+        <div class="weatherHourTemp">${h.temp}°</div>
+        <div class="weatherHourRain">${h.rainChance}%</div>
+      </div>
+    `).join("");
   }
 
-  function renderSlot(slotKey, el) {
-    if (!el) return;
-    const mod = getModule(SLOT_STATE[slotKey]);
-    el.innerHTML = mod.renderPreview();
+  if (weatherTodayLine) {
+    weatherTodayLine.textContent = `Idag: ${todayMin}° – ${todayMax}° · ${status}`;
+  }
+  if (weatherTomorrowLine) {
+    weatherTomorrowLine.textContent = `Imorgon: ${tomorrowMin}° – ${tomorrowMax}° · ${weatherText(tomorrowCode)}`;
+  }
+}
+
+async function getCoords() {
+  if ("geolocation" in navigator) {
+    try {
+      const pos = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 2500,
+          maximumAge: 60000,
+        })
+      );
+
+      return {
+        name: "Här",
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+      };
+    } catch {}
+  }
+  return DEFAULT_LOC;
+}
+
+async function fetchWeather(lat, lon) {
+  const url =
+    `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${encodeURIComponent(lat)}` +
+    `&longitude=${encodeURIComponent(lon)}` +
+    `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation` +
+    `&hourly=temperature_2m,precipitation_probability` +
+    `&daily=temperature_2m_max,temperature_2m_min,weather_code` +
+    `&timezone=auto`;
+
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("Weather fetch failed");
+  return res.json();
+}
+
+async function initWeather() {
+  const cached = loadWeatherCache();
+  if (cached?.data) {
+    renderWeather(cached.data);
   }
 
-  function renderSlots() {
-    renderSlot("slot1", moduleSlot1Content);
-    renderSlot("slot2", moduleSlot2Content);
-  }
+  try {
+    const loc = await getCoords();
+    const staleEnough = !cached || (Date.now() - cached.ts > WEATHER_CACHE_MS);
 
-  function renderWeather(data) {
-    weatherData = data;
-    renderSlots();
-
-    if (!data?.current) return;
-
-    const currentTemp = Math.round(data.current.temperature_2m ?? 0);
-    const currentCode = data.current.weather_code ?? 0;
-    const feels = Math.round(data.current.apparent_temperature ?? currentTemp);
-    const wind = Math.round(data.current.wind_speed_10m ?? 0);
-    const rain = Number.isFinite(data.current.precipitation) ? data.current.precipitation : 0;
-    const icon = pickWeatherIcon(currentCode);
-    const status = weatherText(currentCode);
-
-    const todayMin = Math.round(data.daily?.temperature_2m_min?.[0] ?? currentTemp);
-    const todayMax = Math.round(data.daily?.temperature_2m_max?.[0] ?? currentTemp);
-    const tomorrowMin = Math.round(data.daily?.temperature_2m_min?.[1] ?? todayMin);
-    const tomorrowMax = Math.round(data.daily?.temperature_2m_max?.[1] ?? todayMax);
-    const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode;
-
-    const hours = getUpcomingHours(data, 4);
-    const firstRainChance = hours[0]?.rainChance ?? 0;
-
-    if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
-    if (weatherHeroStatus) weatherHeroStatus.textContent = status;
-    if (weatherHeroIcon) weatherHeroIcon.src = icon;
-    if (weatherFeelsLike) weatherFeelsLike.textContent = `${feels}°`;
-    if (weatherWind) weatherWind.textContent = `${wind} m/s`;
-    if (weatherRain) weatherRain.textContent = `${rain} mm`;
-    if (weatherRainChance) weatherRainChance.textContent = `${firstRainChance}%`;
-
-    if (weatherHours) {
-      weatherHours.innerHTML = hours.map((h) => `
-        <div class="weatherHour">
-          <div class="weatherHourTime">${escapeHtml(h.time)}</div>
-          <div class="weatherHourTemp">${h.temp}°</div>
-          <div class="weatherHourRain">${h.rainChance}%</div>
-        </div>
-      `).join("");
+    if (staleEnough) {
+      const fresh = await fetchWeather(loc.lat, loc.lon);
+      saveWeatherCache(fresh);
+      renderWeather(fresh);
+    } else if (cached?.data) {
+      setTimeout(async () => {
+        try {
+          const fresh = await fetchWeather(loc.lat, loc.lon);
+          saveWeatherCache(fresh);
+          renderWeather(fresh);
+        } catch {}
+      }, 300);
     }
-
-    if (weatherTodayLine) {
-      weatherTodayLine.textContent = `Idag: ${todayMin}° – ${todayMax}° · ${status}`;
-    }
-    if (weatherTomorrowLine) {
-      weatherTomorrowLine.textContent = `Imorgon: ${tomorrowMin}° – ${tomorrowMax}° · ${weatherText(tomorrowCode)}`;
-    }
+  } catch (e) {
+    console.warn("Weather error:", e);
   }
 
-  async function getCoords() {
-    if ("geolocation" in navigator) {
-      try {
-        const pos = await new Promise((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false,
-            timeout: 2500,
-            maximumAge: 60000,
-          })
-        );
-
-        return {
-          name: "Här",
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        };
-      } catch {}
-    }
-    return DEFAULT_LOC;
-  }
-
-  async function fetchWeather(lat, lon) {
-    const url =
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${encodeURIComponent(lat)}` +
-      `&longitude=${encodeURIComponent(lon)}` +
-      `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation` +
-      `&hourly=temperature_2m,precipitation_probability` +
-      `&daily=temperature_2m_max,temperature_2m_min,weather_code` +
-      `&timezone=auto`;
-
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Weather fetch failed");
-    return res.json();
-  }
-
-  async function initWeather() {
-    const cached = loadWeatherCache();
-    if (cached?.data) {
-      renderWeather(cached.data);
-    }
-
+  setInterval(async () => {
     try {
       const loc = await getCoords();
-      const staleEnough = !cached || (Date.now() - cached.ts > WEATHER_CACHE_MS);
+      const fresh = await fetchWeather(loc.lat, loc.lon);
+      saveWeatherCache(fresh);
+      renderWeather(fresh);
+    } catch {}
+  }, WEATHER_CACHE_MS);
+}
 
-      if (staleEnough) {
-        const fresh = await fetchWeather(loc.lat, loc.lon);
-        saveWeatherCache(fresh);
-        renderWeather(fresh);
-      } else if (cached?.data) {
-        setTimeout(async () => {
-          try {
-            const fresh = await fetchWeather(loc.lat, loc.lon);
-            saveWeatherCache(fresh);
-            renderWeather(fresh);
-          } catch {}
-        }, 300);
-      }
-    } catch (e) {
-      console.warn("Weather error:", e);
-    }
+function movePrio(index, dir) {
+  const next = index + dir;
+  if (next < 0 || next >= prios.length) return;
+  const copy = [...prios];
+  [copy[index], copy[next]] = [copy[next], copy[index]];
+  prios = copy;
+  savePrios();
+  renderPrios();
+}
 
-    setInterval(async () => {
-      try {
-        const loc = await getCoords();
-        const fresh = await fetchWeather(loc.lat, loc.lon);
-        saveWeatherCache(fresh);
-        renderWeather(fresh);
-      } catch {}
-    }, WEATHER_CACHE_MS);
-  }
+function togglePrioDone(id, done) {
+  const next = prios.map((item) =>
+    item.id === id ? { ...item, done } : item
+  );
 
-  function movePrio(index, dir) {
-    const next = index + dir;
-    if (next < 0 || next >= prios.length) return;
-    const copy = [...prios];
-    [copy[index], copy[next]] = [copy[next], copy[index]];
-    prios = copy;
-    savePrios();
-    renderPrios();
-  }
+  const active = next.filter((item) => !item.done);
+  const completed = next.filter((item) => item.done);
 
-  function togglePrioDone(id, done) {
-    const next = prios.map((item) =>
-      item.id === id ? { ...item, done } : item
-    );
+  prios = [...active, ...completed];
 
-    const active = next.filter((item) => !item.done);
-    const completed = next.filter((item) => item.done);
+  savePrios();
+  renderPrios();
+}
 
-    prios = [...active, ...completed];
+function removePrio(id) {
+  prios = prios.filter((item) => item.id !== id);
+  if (prioEditingId === id) prioEditingId = null;
+  savePrios();
+  renderPrios();
+}
 
-    savePrios();
-    renderPrios();
-  }
+function updatePrioField(id, patch) {
+  prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
+  savePrios();
+  renderSlots();
+}
 
-  function removePrio(id) {
-    prios = prios.filter((item) => item.id !== id);
-    if (prioEditingId === id) prioEditingId = null;
-    savePrios();
-    renderPrios();
-  }
+function renderPrioPanel() {
+  if (!prioPanelList) return;
 
-  function updatePrioField(id, patch) {
-    prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
-    savePrios();
-    renderSlots();
-  }
+  prioPanelList.innerHTML = "";
 
-  function renderPrioPanel() {
-    if (!prioPanelList) return;
+  prios.forEach((item, index) => {
+    const isEditing = prioEditingId === item.id;
 
-    prioPanelList.innerHTML = "";
+    const row = document.createElement("div");
+    row.className = `prioItem ${item.done ? "is-done" : ""}`;
 
-    prios.forEach((item, index) => {
-      const isEditing = prioEditingId === item.id;
+    row.innerHTML = `
+      <div class="prioItemMain">
+        <input class="prioCheck" type="checkbox" ${item.done ? "checked" : ""} aria-label="Klar" />
+        <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
+        <div class="prioItemActions">
+          <button class="prioMiniBtn prioMoveUp" type="button" aria-label="Flytta upp" ${index === 0 ? "disabled" : ""}>↑</button>
+          <button class="prioMiniBtn prioMoveDown" type="button" aria-label="Flytta ner" ${index === prios.length - 1 ? "disabled" : ""}>↓</button>
+        </div>
+      </div>
+    `;
 
-      const row = document.createElement("div");
-      row.className = `prioItem ${item.done ? "is-done" : ""}`;
+    const check = row.querySelector(".prioCheck");
+    const textBtn = row.querySelector(".prioItemTextBtn");
+    const upBtn = row.querySelector(".prioMoveUp");
+    const downBtn = row.querySelector(".prioMoveDown");
 
-      row.innerHTML = `
-        <div class="prioItemMain">
-          <input class="prioCheck" type="checkbox" ${item.done ? "checked" : ""} aria-label="Klar" />
-          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
-          <div class="prioItemActions">
-            <button class="prioMiniBtn prioMoveUp" type="button" aria-label="Flytta upp" ${index === 0 ? "disabled" : ""}>↑</button>
-            <button class="prioMiniBtn prioMoveDown" type="button" aria-label="Flytta ner" ${index === prios.length - 1 ? "disabled" : ""}>↓</button>
-          </div>
+    check?.addEventListener("change", (e) => {
+      togglePrioDone(item.id, !!e.target.checked);
+    });
+
+    textBtn?.addEventListener("click", () => {
+      prioEditingId = prioEditingId === item.id ? null : item.id;
+      renderPrioPanel();
+    });
+
+    upBtn?.addEventListener("click", () => movePrio(index, -1));
+    downBtn?.addEventListener("click", () => movePrio(index, 1));
+
+    if (isEditing) {
+      const editor = document.createElement("div");
+      editor.className = "prioEditor";
+      editor.innerHTML = `
+        <input class="prioTextInput" type="text" maxlength="160" value="${escapeHtml(item.text)}" />
+        <textarea class="prioNoteInput" maxlength="600" placeholder="Anteckning...">${escapeHtml(item.note || "")}</textarea>
+        <div class="prioEditorActions">
+          <button class="prioDeleteBtn" type="button">Ta bort</button>
         </div>
       `;
 
-      const check = row.querySelector(".prioCheck");
-      const textBtn = row.querySelector(".prioItemTextBtn");
-      const upBtn = row.querySelector(".prioMoveUp");
-      const downBtn = row.querySelector(".prioMoveDown");
+      const textInput = editor.querySelector(".prioTextInput");
+      const noteInput = editor.querySelector(".prioNoteInput");
+      const deleteBtn = editor.querySelector(".prioDeleteBtn");
 
-      check?.addEventListener("change", (e) => {
-        togglePrioDone(item.id, !!e.target.checked);
+      textInput?.addEventListener("input", (e) => {
+        updatePrioField(item.id, { text: e.target.value });
       });
 
-      textBtn?.addEventListener("click", () => {
-        prioEditingId = prioEditingId === item.id ? null : item.id;
-        renderPrioPanel();
+      noteInput?.addEventListener("input", (e) => {
+        updatePrioField(item.id, { note: e.target.value });
       });
 
-      upBtn?.addEventListener("click", () => movePrio(index, -1));
-      downBtn?.addEventListener("click", () => movePrio(index, 1));
+      deleteBtn?.addEventListener("click", () => {
+        removePrio(item.id);
+      });
 
-      if (isEditing) {
-        const editor = document.createElement("div");
-        editor.className = "prioEditor";
-        editor.innerHTML = `
-          <input class="prioTextInput" type="text" maxlength="160" value="${escapeHtml(item.text)}" />
-          <textarea class="prioNoteInput" maxlength="600" placeholder="Anteckning...">${escapeHtml(item.note || "")}</textarea>
-          <div class="prioEditorActions">
-            <button class="prioDeleteBtn" type="button">Ta bort</button>
-          </div>
-        `;
+      row.appendChild(editor);
+    }
 
-        const textInput = editor.querySelector(".prioTextInput");
-        const noteInput = editor.querySelector(".prioNoteInput");
-        const deleteBtn = editor.querySelector(".prioDeleteBtn");
-
-        textInput?.addEventListener("input", (e) => {
-          updatePrioField(item.id, { text: e.target.value });
-        });
-
-        noteInput?.addEventListener("input", (e) => {
-          updatePrioField(item.id, { note: e.target.value });
-        });
-
-        deleteBtn?.addEventListener("click", () => {
-          removePrio(item.id);
-        });
-
-        row.appendChild(editor);
-      }
-
-      prioPanelList.appendChild(row);
-    });
-  }
+    prioPanelList.appendChild(row);
+  });
+}
 
   function renderPrios() {
     renderSlots();
