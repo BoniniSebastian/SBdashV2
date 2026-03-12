@@ -134,7 +134,26 @@
           <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
         </div>
       </div>
+      
+      <!-- Free text expanded -->
+      <div class="moduleExpandOverlay" id="freeTextOverlay" aria-hidden="true">
+        <div class="moduleExpandCard freeTextCard" id="freeTextCard" role="dialog" aria-modal="false" aria-label="Fritext">
+          <div class="freeTextScroller">
+            <div class="freeTextPanel">
+              <textarea
+                class="freeTextInput"
+                id="freeTextInput"
+                maxlength="6000"
+                placeholder="Fritext..."
+                autocomplete="off"
+                spellcheck="true"
+              ></textarea>
+            </div>
+          </div>
 
+          <button class="freeTextCloseFab" id="freeTextCloseFab" type="button" aria-label="Stäng fritext">✕</button>
+        </div>
+      </div>
       <!-- Generic modules 4-7 expanded -->
       <div class="moduleExpandOverlay" id="genericOverlay" aria-hidden="true">
         <div class="moduleExpandCard genericCard" id="genericCard" role="dialog" aria-modal="false" aria-label="Modul">
