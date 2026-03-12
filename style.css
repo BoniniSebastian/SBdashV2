@@ -551,7 +551,7 @@ button{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns: minmax(0,1fr) 96px;
+  grid-template-columns:minmax(0,1fr) 96px;
   align-items:center;
   gap:6px;
 }
@@ -562,6 +562,7 @@ button{
   flex-direction:column;
   gap:4px;
   align-self:center;
+  transform:translateX(8px);
 }
 
 .weatherPreviewTempBig{
@@ -594,7 +595,7 @@ button{
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  transform:translateX(-14px);
+  transform:translateX(-10px);
 }
 
 .weatherPreviewIcon{
@@ -602,6 +603,7 @@ button{
   height:78px;
   object-fit:contain;
   filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
+}
 
 /* shared module overlay */
 
@@ -1297,15 +1299,20 @@ body.timerRunning .timerBarWrap{
 
 /* responsive */
 
-@media (max-width: 480px){
+@media (max-width:480px){
+
   :root{
-    --pagePadX: 18px;
-    --wheelSize: 192px;
-    --calendarHeight: 16vh;
-    --calendarMin: 132px;
-    --calendarMax: 170px;
-    --moduleTop: 132px;
-    --prioText: 14px;
+    --pagePadX:18px;
+    --wheelSize:192px;
+
+    --calendarHeight:16vh;
+    --calendarMin:132px;
+    --calendarMax:170px;
+
+    /* höj modulerna lite så de inte hamnar under hjulet */
+    --moduleTop:148px;
+
+    --prioText:14px;
   }
 
   .clockDate{
@@ -1320,7 +1327,7 @@ body.timerRunning .timerBarWrap{
     top:112px;
   }
 
-   .timerIconBtn{
+  .timerIconBtn{
     width:38px;
     height:38px;
     margin-top:4px;
@@ -1356,17 +1363,29 @@ body.timerRunning .timerBarWrap{
     padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 
+  /* weather preview */
+
   .weatherPreview{
-    grid-template-columns: minmax(0,1fr) 78px;
+    grid-template-columns:minmax(0,1fr) 84px;
+  }
+
+  .weatherPreviewText{
+    transform:translateX(6px);
   }
 
   .weatherPreviewIcon{
-    width:56px;
-    height:56px;
+    width:64px;
+    height:64px;
   }
 
+  .weatherPreviewVisual{
+    transform:translateX(-8px);
+  }
+
+  /* weather hero */
+
   .weatherHero{
-    grid-template-columns: minmax(0,1fr) 80px;
+    grid-template-columns:minmax(0,1fr) 80px;
   }
 
   .weatherHeroTemp{
@@ -1386,27 +1405,30 @@ body.timerRunning .timerBarWrap{
     font-size:36px;
   }
 
- .timerPreviewWheel{
-  width:172px;
-  height:172px;
-}
+  /* timer preview */
 
-.timerPreviewValue{
-  font-size:34px;
-}
+  .timerPreviewWheel{
+    width:172px;
+    height:172px;
+  }
 
-.timerPreviewTop,
-.timerPreviewBottom{
-  font-size:10px;
-}
+  .timerPreviewValue{
+    font-size:34px;
+  }
 
-.timerPreview{
-  gap:14px;
-}
+  .timerPreviewTop,
+  .timerPreviewBottom{
+    font-size:10px;
+  }
 
-.timerPreviewReset{
-  font-size:12px;
-}
+  .timerPreview{
+    gap:14px;
+  }
+
+  .timerPreviewReset{
+    font-size:12px;
+  }
+
 }
 
 @media (min-width: 900px){
