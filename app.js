@@ -11,7 +11,6 @@ function setAppHeightVar() {
   const timerIconBtn = $("timerIconBtn");
   const timerCloseFab = $("timerCloseFab");
   const timerFocus = $("timerFocus");
-  const timerCloseFab = $("timerCloseFab");
   const timerWheel = $("timerWheel");
   const timerWheelRing = $("timerWheelRing");
   const timerWheelValue = $("timerWheelValue");
