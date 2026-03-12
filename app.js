@@ -9,6 +9,7 @@ function setAppHeightVar() {
   const clockTime = $("clockTime");
 
   const timerIconBtn = $("timerIconBtn");
+  const timerCloseFab = $("timerCloseFab");
   const timerFocus = $("timerFocus");
   const timerCloseFab = $("timerCloseFab");
   const timerWheel = $("timerWheel");
@@ -1168,18 +1169,18 @@ function setAppHeightVar() {
     moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
   }
 
-  function bindUI() {
+ function bindUI() {
   timerIconBtn?.addEventListener("click", () => {
     openTimerFocus({ finished: false });
   });
 
   timerCloseFab?.addEventListener("click", () => {
-    closeTimerFocus();
+    closeTimerFocus(true);
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && timerFocus?.classList.contains("open") && !TIMER.running) {
-      closeTimerFocus();
+    if (e.key === "Escape" && timerFocus?.classList.contains("open")) {
+      closeTimerFocus(true);
     }
   });
 
