@@ -7,7 +7,7 @@
   --safeBottom: env(safe-area-inset-bottom);
 
   --pagePadX:22px;
-  --pageTop:calc(var(--safeTop) + 24px);
+  --pageTop:calc(var(--safeTop) + 14px);
 
   --calendarHeight:16vh;
   --calendarMin:140px;
