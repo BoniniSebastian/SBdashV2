@@ -1511,9 +1511,9 @@ body.timerRunning .timerBarWrap{
     font-size:46px;
   }
 
-.clockSeparator{
-  top:var(--moduleTop);
-}
+  .clockSeparator{
+    top:var(--moduleTop);
+  }
 
   .timerIconBtn{
     width:38px;
@@ -1551,24 +1551,23 @@ body.timerRunning .timerBarWrap{
     padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 
-.weatherPreview{
-  grid-template-columns:80px minmax(0,1fr);
-  gap:8px;
-  padding-left:10px;
-}
+  .weatherPreview{
+    grid-template-columns:minmax(0,1fr) 82px;
+    gap:2px;
+  }
 
-.weatherPreviewIcon{
-  width:66px;
-  height:66px;
-}
+  .weatherPreviewText{
+    transform:translateX(8px);
+  }
 
-.weatherPreviewText{
-  transform:none;
-}
+  .weatherPreviewVisual{
+    transform:translateX(-12px);
+  }
 
-.weatherPreviewVisual{
-  transform:none;
-}
+  .weatherPreviewIcon{
+    width:64px;
+    height:64px;
+  }
 
   .weatherHero{
     grid-template-columns:minmax(0,1fr) 80px;
@@ -1610,6 +1609,13 @@ body.timerRunning .timerBarWrap{
     bottom:10px;
     font-size:12px;
   }
+}
+
+@media (display-mode: standalone) and (max-width:480px){
+  :root{
+    --moduleTop:132px;
+  }
+}
 
     .freeTextPreviewCard{
     padding:16px 14px 14px 14px;
