@@ -1025,26 +1025,22 @@ button{
 
 .timerFocusCard{
   position:absolute;
-  inset:22px 14px 96px 14px;
+  inset:8px 12px;
   border-radius:24px;
 
   background:rgba(10,15,20,.52);
-
   border:1px solid rgba(255,255,255,.08);
 
   box-shadow:
-    0 24px 80px rgba(0,0,0,.45),
-    inset 0 1px 0 rgba(255,255,255,.08),
-    inset 0 -40px 80px rgba(0,0,0,.35);
+    0 18px 60px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.05);
 
   backdrop-filter:blur(22px);
   -webkit-backdrop-filter:blur(22px);
 
   display:flex;
+  align-items:center;
   justify-content:center;
-  align-items:flex-start;
-
-  padding-top:120px;
 
   overflow:hidden;
 
@@ -1076,8 +1072,10 @@ button{
 .timerWheelWrap{
   position:relative;
   z-index:2;
-  width:min(calc(var(--wheelSize) * 1.9), calc(100vw - 36px));
-  height:min(calc(var(--wheelSize) * 1.9), calc(100vw - 36px));
+
+  width:min(calc(var(--wheelSize) * 1.7), calc(100vw - 80px));
+  height:min(calc(var(--wheelSize) * 1.7), calc(100vw - 80px));
+
   display:grid;
   place-items:center;
 }
