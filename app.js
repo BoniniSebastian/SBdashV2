@@ -1,6 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  
+
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
 
@@ -53,6 +53,9 @@
 
   const MODULE_COUNT = 7;
   const SLOT_DEFAULTS = { slot1: 1, slot2: 2 };
+  const SLOT_SWIPE_THRESHOLD = 56;
+  const SLOT_WHEEL_LOCK_MS = 220;
+  const SLOT_ANIM_MS = 340;
 
   const WEATHER_ICONS = {
     clear: "assets/ui/weather/clear.svg",
@@ -602,16 +605,10 @@
     `;
   }
 
-  function formatTimerPreviewTime(totalSeconds) {
-    const secs = Math.max(0, Math.floor(totalSeconds || 0));
-    const mm = String(Math.floor(secs / 60)).padStart(2, "0");
-    const ss = String(secs % 60).padStart(2, "0");
-    return `${mm}:${ss}`;
-  }
-
   function formatRemainingShort(totalSec) {
-    const mins = Math.floor(Math.max(0, totalSec || 0) / 60);
-    const secs = Math.max(0, totalSec || 0) % 60;
+    const safe = Math.max(0, Math.floor(totalSec || 0));
+    const mins = Math.floor(safe / 60);
+    const secs = safe % 60;
     return `${mins}:${String(secs).padStart(2, "0")}`;
   }
 
@@ -1049,11 +1046,38 @@
     });
   }
 
+  function setSlotSwipeVisual(slotEl, dx) {
+    const clamped = Math.max(-72, Math.min(72, dx));
+    const abs = Math.abs(clamped);
+    const scale = 1 - Math.min(abs / 900, 0.035);
+    const opacity = 1 - Math.min(abs / 500, 0.10);
+    const blur = Math.min(abs / 36, 2);
+
+    slotEl.classList.add("is-swiping");
+    slotEl.classList.toggle("swipe-left", clamped < 0);
+    slotEl.classList.toggle("swipe-right", clamped > 0);
+
+    slotEl.style.setProperty("--swipeX", `${clamped}px`);
+    slotEl.style.setProperty("--swipeScale", scale.toFixed(3));
+    slotEl.style.setProperty("--swipeOpacity", opacity.toFixed(3));
+    slotEl.style.setProperty("--swipeFilter", `brightness(1.05) blur(${blur.toFixed(2)}px)`);
+  }
+
+  function clearSlotSwipeVisual(slotEl) {
+    slotEl.classList.remove("is-swiping", "swipe-left", "swipe-right");
+    slotEl.style.removeProperty("--swipeX");
+    slotEl.style.removeProperty("--swipeScale");
+    slotEl.style.removeProperty("--swipeOpacity");
+    slotEl.style.removeProperty("--swipeFilter");
+  }
+
   function bindModuleSlot(slotEl, slotKey) {
     if (!slotEl) return;
 
+    let pointerId = null;
     let startX = 0;
     let startY = 0;
+    let lastDx = 0;
     let dragging = false;
     let moved = false;
     let locked = false;
@@ -1081,13 +1105,17 @@
     });
 
     slotEl.addEventListener("pointerdown", (e) => {
+      if (e.target.closest(".timerPreviewReset")) return;
+
       dragging = true;
       moved = false;
       locked = false;
+      pointerId = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
+      lastDx = 0;
 
-      slotEl.classList.add("is-swiping");
+      clearSlotSwipeVisual(slotEl);
 
       if (slotKey === "slot1") {
         prioLongPressTriggered = false;
@@ -1097,23 +1125,87 @@
     });
 
     slotEl.addEventListener("pointermove", (e) => {
-      if (!dragging || locked) return;
+      if (!dragging || locked || e.pointerId !== pointerId) return;
 
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
+      lastDx = dx;
 
       if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
         dragging = false;
-        slotEl.classList.remove("is-swiping");
+        clearSlotSwipeVisual(slotEl);
         return;
       }
 
-      if (Math.abs(dx) < 28) return;
+      if (Math.abs(dx) < 4) return;
 
-      locked = true;
       moved = true;
+      setSlotSwipeVisual(slotEl, dx);
+    });
 
-      if (dx < 0) {
+    slotEl.addEventListener("pointerup", (e) => {
+      if (e.pointerId !== pointerId) return;
+
+      dragging = false;
+
+      const dx = lastDx;
+      const shouldCommit = Math.abs(dx) >= SLOT_SWIPE_THRESHOLD;
+
+      clearSlotSwipeVisual(slotEl);
+
+      if (shouldCommit && !locked) {
+        locked = true;
+
+        if (dx < 0) {
+          shiftSlot(slotKey, 1);
+          slotEl.classList.remove("is-animating-right");
+          slotEl.classList.add("is-animating-left");
+        } else {
+          shiftSlot(slotKey, -1);
+          slotEl.classList.remove("is-animating-left");
+          slotEl.classList.add("is-animating-right");
+        }
+
+        window.setTimeout(() => {
+          slotEl.classList.remove("is-animating-left", "is-animating-right");
+          locked = false;
+        }, SLOT_ANIM_MS);
+      } else {
+        requestAnimationFrame(() => {
+          moved = false;
+        });
+      }
+
+      pointerId = null;
+      lastDx = 0;
+
+      requestAnimationFrame(() => {
+        moved = false;
+      });
+    });
+
+    slotEl.addEventListener("pointercancel", (e) => {
+      if (e.pointerId !== pointerId) return;
+
+      dragging = false;
+      locked = false;
+      moved = false;
+      pointerId = null;
+      lastDx = 0;
+      clearSlotSwipeVisual(slotEl);
+      slotEl.classList.remove("is-animating-left", "is-animating-right");
+    });
+
+    slotEl.addEventListener("wheel", (e) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(delta) < 12) return;
+
+      e.preventDefault();
+      if (wheelLocked) return;
+
+      wheelLocked = true;
+
+      if (delta > 0) {
         shiftSlot(slotKey, 1);
         slotEl.classList.remove("is-animating-right");
         slotEl.classList.add("is-animating-left");
@@ -1125,39 +1217,8 @@
 
       window.setTimeout(() => {
         slotEl.classList.remove("is-animating-left", "is-animating-right");
-      }, 260);
-    }, { passive: true });
-
-    slotEl.addEventListener("pointerup", () => {
-      dragging = false;
-      locked = false;
-      slotEl.classList.remove("is-swiping");
-
-      requestAnimationFrame(() => {
-        moved = false;
-      });
-    });
-
-    slotEl.addEventListener("pointercancel", () => {
-      dragging = false;
-      locked = false;
-      moved = false;
-      slotEl.classList.remove("is-swiping", "is-animating-left", "is-animating-right");
-    });
-
-    slotEl.addEventListener("wheel", (e) => {
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (Math.abs(delta) < 12) return;
-
-      e.preventDefault();
-      if (wheelLocked) return;
-
-      wheelLocked = true;
-      shiftSlot(slotKey, delta > 0 ? 1 : -1);
-
-      window.setTimeout(() => {
         wheelLocked = false;
-      }, 220);
+      }, SLOT_WHEEL_LOCK_MS);
     }, { passive: false });
   }
 
@@ -1255,19 +1316,19 @@
 
   function init() {
     updateClock();
-  setInterval(updateClock, 1000);
+    setInterval(updateClock, 1000);
 
-  timerBarWrap?.setAttribute("aria-hidden", "true");
-  updateTimerBar();
+    timerBarWrap?.setAttribute("aria-hidden", "true");
+    updateTimerBar();
 
-  renderSlots();
-  renderPrioPanel();
+    renderSlots();
+    renderPrioPanel();
 
-  setTimerDisplayValue();
-  makeWheelEngine();
-  bindUI();
-  initWeather();
-}
+    setTimerDisplayValue();
+    makeWheelEngine();
+    bindUI();
+    initWeather();
+  }
 
   init();
 })();
