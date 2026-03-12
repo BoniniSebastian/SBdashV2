@@ -6,21 +6,21 @@
   --safeTop: env(safe-area-inset-top);
   --safeBottom: env(safe-area-inset-bottom);
 
-  --pagePadX: 22px;
-  --pageTop: calc(var(--safeTop) + 24px);
+  --pagePadX:22px;
+  --pageTop:calc(var(--safeTop) + 24px);
 
-  --calendarHeight: 16vh;
-  --calendarMin: 140px;
-  --calendarMax: 180px;
+  --calendarHeight:16vh;
+  --calendarMin:140px;
+  --calendarMax:180px;
 
-  --wheelSize: 210px;
+  --wheelSize:210px;
 
-  --cyan: rgba(0,209,255,1);
-  --pink: rgba(255,100,180,1);
+  --cyan:rgba(0,209,255,1);
+  --pink:rgba(255,100,180,1);
 
-  --moduleTop: 132px;
-  --prioText: 14px;
-  --prioLine: 1.4;
+  --moduleTop:132px;
+  --prioText:14px;
+  --prioLine:1.4;
 }
 
 *{ box-sizing:border-box; }
@@ -36,18 +36,18 @@ html,body{
 body{
   overflow:hidden;
   color:var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background:
-    radial-gradient(1200px 800px at 40% 15%, rgba(0,220,255,.10), transparent 60%),
-    radial-gradient(900px 700px at 70% 70%, rgba(255,100,180,.06), transparent 60%),
-    linear-gradient(180deg, #050b12, #050b12);
+    radial-gradient(1200px 800px at 40% 15%, rgba(0,220,255,.08), transparent 58%),
+    radial-gradient(900px 700px at 70% 70%, rgba(255,100,180,.05), transparent 58%),
+    linear-gradient(180deg, #04080f 0%, #050b12 100%);
 }
 
-input, textarea, button { font-size:16px; }
+input, textarea, button{ font-size:16px; }
 
 button{
-  font: inherit;
-  color: inherit;
+  font:inherit;
+  color:inherit;
 }
 
 .app{
@@ -73,8 +73,8 @@ button{
     radial-gradient(circle at 30% 30%, rgba(0,209,255,.34), transparent 55%),
     radial-gradient(circle at 70% 70%, rgba(255,100,180,.24), transparent 55%),
     radial-gradient(circle at 65% 35%, rgba(0,255,180,.14), transparent 60%);
-  filter:blur(70px);
-  opacity:.60;
+  filter:blur(72px);
+  opacity:.66;
   animation:zenPulse 4.2s ease-in-out infinite;
 }
 
@@ -87,22 +87,22 @@ button{
   transform:translate(-50%,-50%);
   border-radius:999px;
   background:
-    radial-gradient(circle at 35% 35%, rgba(0,209,255,.26), transparent 55%),
-    radial-gradient(circle at 70% 65%, rgba(255,100,180,.20), transparent 60%),
-    radial-gradient(circle at 60% 30%, rgba(0,255,180,.14), transparent 65%);
-  filter:blur(54px);
-  opacity:.34;
+    radial-gradient(circle at 35% 35%, rgba(0,209,255,.28), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(255,100,180,.22), transparent 60%),
+    radial-gradient(circle at 60% 30%, rgba(0,255,180,.15), transparent 65%);
+  filter:blur(48px);
+  opacity:.44;
   animation:ambientPulse 5.5s ease-in-out infinite;
 }
 
 @keyframes zenPulse{
-  0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.60; }
-  50%{ transform:translate(-50%,-50%) scale(1.04); opacity:.84; }
+  0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.66; }
+  50%{ transform:translate(-50%,-50%) scale(1.04); opacity:.88; }
 }
 
 @keyframes ambientPulse{
-  0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.38; }
-  50%{ transform:translate(-50%,-50%) scale(1.03); opacity:.52; }
+  0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.44; }
+  50%{ transform:translate(-50%,-50%) scale(1.03); opacity:.58; }
 }
 
 /* top bar */
@@ -204,9 +204,9 @@ button{
   min-height:0;
   border-radius:0;
   border:0;
-  background:rgba(10,18,26,.10);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
+  background:rgba(10,18,26,.08);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
   box-shadow:none;
   overflow:hidden;
   position:relative;
@@ -243,7 +243,7 @@ button{
     transform .22s ease,
     opacity .22s ease,
     filter .22s ease;
-  will-change: transform, opacity, filter;
+  will-change:transform, opacity, filter;
 }
 
 .moduleSlot.is-swiping .moduleSlotContent{
@@ -307,8 +307,7 @@ button{
   flex-direction:column;
   gap:10px;
   min-width:0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
   border:1px solid rgba(255,255,255,.08);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.05),
@@ -443,7 +442,7 @@ button{
   position:absolute;
   left:12px;
   bottom:12px;
-  z-index:3;
+  z-index:5;
   font-size:12px;
   line-height:1;
   font-weight:800;
@@ -451,10 +450,11 @@ button{
   letter-spacing:.02em;
   cursor:pointer;
   user-select:none;
+  pointer-events:auto;
 }
 
 .timerPreviewReset:hover{
-  color:rgba(255,255,255,.74);
+  color:rgba(255,255,255,.88);
 }
 
 .timerPreviewReset:active{
@@ -478,7 +478,7 @@ button{
 
 .prioPreviewRow{
   display:grid;
-  grid-template-columns: 10px 1fr;
+  grid-template-columns:10px 1fr;
   align-items:start;
   gap:8px;
   min-width:0;
@@ -501,7 +501,7 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   letter-spacing:.01em;
 }
 
@@ -514,7 +514,7 @@ button{
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .prioPreviewRow.is-done .prioPreviewDot{
@@ -524,16 +524,16 @@ button{
 
 .prioPreviewRow.is-done .prioPreviewText{
   opacity:.46;
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgba(255,255,255,.28);
+  text-decoration:line-through;
+  text-decoration-thickness:1px;
+  text-decoration-color:rgba(255,255,255,.28);
 }
 
 .prioPreviewRow.is-done .prioPreviewNote{
   opacity:.45;
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgba(255,255,255,.20);
+  text-decoration:line-through;
+  text-decoration-thickness:1px;
+  text-decoration-color:rgba(255,255,255,.20);
 }
 
 .prioPreviewMore{
@@ -550,9 +550,9 @@ button{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 88px;
+  grid-template-columns:minmax(0,1fr) 92px;
   align-items:center;
-  gap:2px;
+  gap:4px;
 }
 
 .weatherPreviewText{
@@ -561,7 +561,7 @@ button{
   flex-direction:column;
   gap:4px;
   align-self:center;
-  transform:translateX(14px);
+  transform:translateX(12px);
 }
 
 .weatherPreviewTempBig{
@@ -594,12 +594,12 @@ button{
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  transform:translateX(-22px);
+  transform:translateX(-16px);
 }
 
 .weatherPreviewIcon{
-  width:72px;
-  height:72px;
+  width:78px;
+  height:78px;
   object-fit:contain;
   filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
 }
@@ -633,13 +633,13 @@ button{
   position:absolute;
   inset:8px 12px;
   border-radius:24px;
-  background:rgba(10,15,20,.52);
+  background:rgba(10,15,20,.46);
   border:1px solid rgba(255,255,255,.08);
   box-shadow:
     0 18px 60px rgba(0,0,0,.35),
     inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -679,7 +679,7 @@ button{
 
 .prioItemMain{
   display:grid;
-  grid-template-columns: 18px minmax(0,1fr) auto;
+  grid-template-columns:18px minmax(0,1fr) auto;
   align-items:start;
   gap:10px;
   padding:11px 10px 11px 10px;
@@ -733,9 +733,9 @@ button{
 
 .prioItem.is-done .prioItemTextBtn{
   color:rgba(255,255,255,.55);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgba(255,255,255,.35);
+  text-decoration:line-through;
+  text-decoration-thickness:1px;
+  text-decoration-color:rgba(255,255,255,.35);
 }
 
 .prioItemActions{
@@ -811,7 +811,7 @@ button{
 .prioAddBar{
   border-top:1px solid rgba(255,255,255,.06);
   display:grid;
-  grid-template-columns: 18px 1fr 28px;
+  grid-template-columns:18px 1fr 28px;
   gap:10px;
   align-items:center;
   padding:12px 52px calc(12px + env(safe-area-inset-bottom)) 16px;
@@ -849,29 +849,22 @@ button{
   left:50%;
   bottom:calc(32px + env(safe-area-inset-bottom));
   transform:translateX(-50%);
-
   width:30px;
   height:30px;
   border-radius:999px;
-
   border:1px solid rgba(255,255,255,.10);
   background:rgba(15,20,28,.48);
   color:rgba(255,255,255,.82);
-
   display:grid;
   place-items:center;
   padding:0;
-
   cursor:pointer;
   z-index:5;
-
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
-
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.05),
     0 8px 20px rgba(0,0,0,.18);
-
   font-size:13px;
   line-height:1;
 }
@@ -932,7 +925,7 @@ button{
 
 .weatherHero{
   display:grid;
-  grid-template-columns: minmax(0,1fr) 92px;
+  grid-template-columns:minmax(0,1fr) 92px;
   align-items:center;
   gap:10px;
 }
@@ -964,7 +957,7 @@ button{
 
 .weatherStats{
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:10px;
 }
 
@@ -991,7 +984,7 @@ button{
 
 .weatherHours{
   display:grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns:repeat(4, 1fr);
   gap:10px;
 }
 
@@ -1096,33 +1089,30 @@ button{
   position:absolute;
   inset:0;
   border-radius:0;
-  background:rgba(10,15,20,.52);
+  background:rgba(10,15,20,.46);
   border:0;
   box-shadow:none;
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
   transform:none;
   transition:none;
-  
 }
 
 .timerFocus.open .timerFocusCard{
   transform:none;
 }
 
-/* TIMER WHEEL */
+/* timer wheel */
 
 .timerWheelWrap{
   position:relative;
   z-index:2;
-
   width:min(calc(var(--wheelSize) * 1.7), calc(100vw - 80px));
   height:min(calc(var(--wheelSize) * 1.7), calc(100vw - 80px));
-
   display:grid;
   place-items:center;
 }
@@ -1303,14 +1293,10 @@ body.timerRunning .timerBarWrap{
   :root{
     --pagePadX:18px;
     --wheelSize:192px;
-
     --calendarHeight:16vh;
     --calendarMin:132px;
     --calendarMax:170px;
-
-    /* höj modulerna lite så de inte hamnar under hjulet */
-    --moduleTop:148px;
-
+    --moduleTop:132px;
     --prioText:14px;
   }
 
@@ -1362,26 +1348,23 @@ body.timerRunning .timerBarWrap{
     padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 
-  /* weather preview */
-
   .weatherPreview{
-  grid-template-columns:minmax(0,1fr) 76px;
-}
+    grid-template-columns:minmax(0,1fr) 82px;
+    gap:2px;
+  }
 
-.weatherPreviewText{
-  transform:translateX(10px);
-}
+  .weatherPreviewText{
+    transform:translateX(8px);
+  }
 
   .weatherPreviewVisual{
-  transform:translateX(-16px);
-}
+    transform:translateX(-12px);
+  }
 
-.weatherPreviewIcon{
-  width:58px;
-  height:58px;
-}
-
-  /* weather hero */
+  .weatherPreviewIcon{
+    width:64px;
+    height:64px;
+  }
 
   .weatherHero{
     grid-template-columns:minmax(0,1fr) 80px;
@@ -1404,8 +1387,6 @@ body.timerRunning .timerBarWrap{
     font-size:36px;
   }
 
-  /* timer preview */
-
   .timerPreviewWheel{
     width:172px;
     height:172px;
@@ -1420,24 +1401,21 @@ body.timerRunning .timerBarWrap{
     font-size:10px;
   }
 
-  .timerPreview{
-    gap:14px;
-  }
-
   .timerPreviewReset{
+    left:10px;
+    bottom:10px;
     font-size:12px;
   }
-
 }
 
-@media (min-width: 900px){
+@media (min-width:900px){
   :root{
-    --pagePadX: 28px;
-    --wheelSize: 240px;
-    --calendarHeight: 15vh;
-    --calendarMin: 150px;
-    --calendarMax: 190px;
-    --moduleTop: 156px;
+    --pagePadX:28px;
+    --wheelSize:240px;
+    --calendarHeight:15vh;
+    --calendarMin:150px;
+    --calendarMax:190px;
+    --moduleTop:156px;
   }
 
   .clockDate{
