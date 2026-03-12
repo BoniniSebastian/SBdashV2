@@ -281,9 +281,9 @@ button{
   opacity:var(--swipeOpacity, 1);
   filter:var(--swipeFilter, none);
   transition:
-    transform .28s cubic-bezier(.22,.8,.22,1),
-    opacity .22s ease,
-    filter .22s ease;
+    transform .38s cubic-bezier(.18,.88,.22,1),
+    opacity .28s ease,
+    filter .28s ease;
   will-change:transform, opacity, filter;
 }
 
