@@ -785,7 +785,8 @@ button{
 
 .prioCloseFab,
 .weatherCloseFab,
-.genericCloseFab{
+.genericCloseFab,
+.timerCloseFab{
   position:absolute;
   right:12px;
   bottom:calc(12px + env(safe-area-inset-bottom));
@@ -811,7 +812,8 @@ button{
 
 .prioCloseFab:active,
 .weatherCloseFab:active,
-.genericCloseFab:active{
+.genericCloseFab:active,
+.timerCloseFab:active{
   transform:scale(.97);
 }
 
