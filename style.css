@@ -210,6 +210,38 @@ button{
   box-shadow:none;
   overflow:hidden;
   position:relative;
+  isolation:isolate;
+}
+
+/* sidokanterna som vaknar vid swipe */
+.moduleSlot::before,
+.moduleSlot::after{
+  content:"";
+  position:absolute;
+  top:10px;
+  bottom:10px;
+  width:1px;
+  opacity:0;
+  pointer-events:none;
+  z-index:2;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.02),
+    rgba(255,255,255,.14),
+    rgba(255,255,255,.02)
+  );
+  transition:
+    opacity .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.moduleSlot::before{
+  left:0;
+}
+
+.moduleSlot::after{
+  right:0;
 }
 
 .moduleSlot + .moduleSlot{
@@ -225,7 +257,10 @@ button{
   border:0;
   padding:16px 18px 14px 18px;
   touch-action:pan-y;
-  transition:background .18s ease, transform .18s ease;
+  transition:
+    background .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
 }
 
 .moduleSlot--dynamic:active{
@@ -239,44 +274,102 @@ button{
   display:flex;
   flex-direction:column;
   justify-content:flex-start;
+  transform:
+    translate3d(var(--swipeX, 0px), 0, 0)
+    scale(var(--swipeScale, 1));
+  opacity:var(--swipeOpacity, 1);
+  filter:var(--swipeFilter, none);
   transition:
-    transform .22s ease,
+    transform .28s cubic-bezier(.22,.8,.22,1),
     opacity .22s ease,
     filter .22s ease;
   will-change:transform, opacity, filter;
 }
 
-.moduleSlot.is-swiping .moduleSlotContent{
-  filter:brightness(1.05);
+/* under själva draget */
+.moduleSlot.is-swiping{
+  background:rgba(255,255,255,.02);
 }
 
+.moduleSlot.is-swiping::before,
+.moduleSlot.is-swiping::after{
+  opacity:1;
+  box-shadow:0 0 12px rgba(255,255,255,.06);
+}
+
+/* lyft fram kanten i dragriktningen */
+.moduleSlot.is-swiping.swipe-left::after{
+  opacity:1;
+  background:linear-gradient(
+    180deg,
+    rgba(0,209,255,.08),
+    rgba(255,255,255,.22),
+    rgba(255,100,180,.10)
+  );
+  box-shadow:
+    0 0 14px rgba(0,209,255,.12),
+    0 0 22px rgba(255,100,180,.08);
+}
+
+.moduleSlot.is-swiping.swipe-right::before{
+  opacity:1;
+  background:linear-gradient(
+    180deg,
+    rgba(0,209,255,.08),
+    rgba(255,255,255,.22),
+    rgba(255,100,180,.10)
+  );
+  box-shadow:
+    0 0 14px rgba(0,209,255,.12),
+    0 0 22px rgba(255,100,180,.08);
+}
+
+.moduleSlot.is-swiping .moduleSlotContent{
+  transition:none;
+}
+
+/* när ny modul kommer in */
 .moduleSlot.is-animating-left .moduleSlotContent{
-  animation:slotSwapLeft .24s ease;
+  animation:slotSwapLeft .34s cubic-bezier(.22,.8,.22,1);
 }
 
 .moduleSlot.is-animating-right .moduleSlotContent{
-  animation:slotSwapRight .24s ease;
+  animation:slotSwapRight .34s cubic-bezier(.22,.8,.22,1);
 }
 
 @keyframes slotSwapLeft{
   0%{
-    transform:translateX(18px);
-    opacity:.72;
+    transform:translate3d(34px,0,0) scale(.975);
+    opacity:.58;
+    filter:blur(2px) brightness(1.04);
+  }
+  55%{
+    transform:translate3d(-3px,0,0) scale(1.002);
+    opacity:1;
+    filter:blur(0) brightness(1.02);
   }
   100%{
-    transform:translateX(0);
+    transform:translate3d(0,0,0) scale(1);
     opacity:1;
+    filter:none;
   }
 }
 
 @keyframes slotSwapRight{
   0%{
-    transform:translateX(-18px);
-    opacity:.72;
+    transform:translate3d(-34px,0,0) scale(.975);
+    opacity:.58;
+    filter:blur(2px) brightness(1.04);
+  }
+  55%{
+    transform:translate3d(3px,0,0) scale(1.002);
+    opacity:1;
+    filter:blur(0) brightness(1.02);
   }
   100%{
-    transform:translateX(0);
+    transform:translate3d(0,0,0) scale(1);
     opacity:1;
+    filter:none;
   }
 }
 
