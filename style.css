@@ -90,8 +90,8 @@ button{
     radial-gradient(circle at 35% 35%, rgba(0,209,255,.26), transparent 55%),
     radial-gradient(circle at 70% 65%, rgba(255,100,180,.20), transparent 60%),
     radial-gradient(circle at 60% 30%, rgba(0,255,180,.14), transparent 65%);
-  filter:blur(78px);
-  opacity:.42;
+  filter:blur(54px);
+  opacity:.34;
   animation:ambientPulse 5.5s ease-in-out infinite;
 }
 
