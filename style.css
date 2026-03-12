@@ -785,8 +785,7 @@ button{
 
 .prioCloseFab,
 .weatherCloseFab,
-.genericCloseFab,
-.timerCloseFab{
+.genericCloseFab{
   position:absolute;
   right:12px;
   bottom:calc(12px + env(safe-area-inset-bottom));
@@ -810,11 +809,46 @@ button{
   line-height:1;
 }
 
+.timerCloseFab{
+  position:absolute;
+  left:50%;
+  bottom:calc(32px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+
+  width:30px;
+  height:30px;
+  border-radius:999px;
+
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(15,20,28,.48);
+  color:rgba(255,255,255,.82);
+
+  display:grid;
+  place-items:center;
+  padding:0;
+
+  cursor:pointer;
+  z-index:5;
+
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 8px 20px rgba(0,0,0,.18);
+
+  font-size:13px;
+  line-height:1;
+}
+
 .prioCloseFab:active,
 .weatherCloseFab:active,
-.genericCloseFab:active,
-.timerCloseFab:active{
+.genericCloseFab:active{
   transform:scale(.97);
+}
+
+.timerCloseFab:active{
+  transform:translateX(-50%) scale(.97);
 }
 
 .prioFakeCheck{
