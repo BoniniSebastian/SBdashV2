@@ -643,9 +643,23 @@ button{
   width:100%;
   height:100%;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 92px;
+  grid-template-columns:88px minmax(0,1fr);
   align-items:center;
-  gap:4px;
+  gap:10px;
+}
+
+.weatherPreviewVisual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:none;
+}
+
+.weatherPreviewIcon{
+  width:72px;
+  height:72px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
 }
 
 .weatherPreviewText{
@@ -654,7 +668,7 @@ button{
   flex-direction:column;
   gap:4px;
   align-self:center;
-  transform:translateX(12px);
+  transform:none;
 }
 
 .weatherPreviewTempBig{
@@ -681,20 +695,6 @@ button{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-}
-
-.weatherPreviewVisual{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  transform:translateX(-16px);
-}
-
-.weatherPreviewIcon{
-  width:78px;
-  height:78px;
-  object-fit:contain;
-  filter:drop-shadow(0 0 14px rgba(255,255,255,.04));
 }
 
 /* shared module overlay */
@@ -1441,22 +1441,22 @@ body.timerRunning .timerBarWrap{
     padding:10px 52px calc(10px + env(safe-area-inset-bottom)) 12px;
   }
 
- .weatherPreview{
-  grid-template-columns:minmax(0,1fr) 82px;
-  gap:2px;
-}
-
-.weatherPreviewText{
-  transform:translateX(8px);
+.weatherPreview{
+  grid-template-columns:74px minmax(0,1fr);
+  gap:8px;
 }
 
 .weatherPreviewVisual{
-  transform:translateX(-12px);
+  transform:none;
 }
 
 .weatherPreviewIcon{
-  width:64px;
-  height:64px;
+  width:60px;
+  height:60px;
+}
+
+.weatherPreviewText{
+  transform:none;
 }
 
   .weatherHero{
