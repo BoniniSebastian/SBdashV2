@@ -1335,20 +1335,21 @@ function renderPrioPanel() {
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        if (prioOverlay?.classList.contains("open")) {
+                if (prioOverlay?.classList.contains("open")) {
           closePrioOverlay();
           return;
         }
-       
-        if (freeTextOverlay?.classList.contains("open")) {
-  closeFreeTextOverlay();
-  return;
-}
-        
+
         if (weatherOverlay?.classList.contains("open")) {
           closeWeatherOverlay();
           return;
         }
+
+        if (freeTextOverlay?.classList.contains("open")) {
+          closeFreeTextOverlay();
+          return;
+        }
+
         if (genericOverlay?.classList.contains("open")) {
           closeGenericOverlay();
           return;
