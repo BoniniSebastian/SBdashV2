@@ -592,15 +592,15 @@ function renderWeatherPreviewMarkup() {
   return `
     <div class="moduleSlotTrack">
       <div class="weatherPreview">
+        <div class="weatherPreviewVisual">
+          <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
+        </div>
+
         <div class="weatherPreviewText">
           <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
           <div class="weatherPreviewStatus">${escapeHtml(info.status)}</div>
           <div class="weatherPreviewMeta">Känns som ${escapeHtml(info.feels)}° · Vind ${escapeHtml(info.wind)} m/s</div>
           <div class="weatherPreviewMeta">Regnrisk ${escapeHtml(Math.round(rainChanceNow))}%</div>
-        </div>
-
-        <div class="weatherPreviewVisual">
-          <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
         </div>
       </div>
     </div>
