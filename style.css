@@ -1025,7 +1025,7 @@ button{
 
 .timerFocusCard{
   position:absolute;
-  inset:10px 14px;
+  inset:34px 14px 96px 14px;
   border-radius:24px;
   background:rgba(10,15,20,.52);
   border:1px solid rgba(255,255,255,.08);
@@ -1237,6 +1237,11 @@ body.timerRunning .timerBarWrap{
     --moduleTop: 132px;
     --prioText: 14px;
   }
+
+  .timerFocusCard{
+    inset:28px 12px 88px 12px;
+    border-radius:20px;
+}
 
   .clockDate{
     font-size:14px;
