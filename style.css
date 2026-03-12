@@ -74,7 +74,7 @@ button{
     radial-gradient(circle at 70% 70%, rgba(255,100,180,.24), transparent 55%),
     radial-gradient(circle at 65% 35%, rgba(0,255,180,.14), transparent 60%);
   filter:blur(70px);
-  opacity:.90;
+  opacity:.60;
   animation:zenPulse 4.2s ease-in-out infinite;
 }
 
