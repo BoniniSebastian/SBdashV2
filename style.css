@@ -340,14 +340,14 @@ button{
 
 @keyframes slotSwapLeft{
   0%{
-    transform:translate3d(34px,0,0) scale(.975);
-    opacity:.58;
-    filter:blur(2px) brightness(1.04);
+    transform:translate3d(42px,0,0) scale(.972);
+    opacity:.52;
+    filter:blur(2px) brightness(1.03);
   }
-  55%{
-    transform:translate3d(-3px,0,0) scale(1.002);
+  58%{
+    transform:translate3d(-4px,0,0) scale(1.002);
     opacity:1;
-    filter:blur(0) brightness(1.02);
+    filter:blur(0) brightness(1.01);
   }
   100%{
     transform:translate3d(0,0,0) scale(1);
@@ -358,14 +358,14 @@ button{
 
 @keyframes slotSwapRight{
   0%{
-    transform:translate3d(-34px,0,0) scale(.975);
-    opacity:.58;
-    filter:blur(2px) brightness(1.04);
+    transform:translate3d(-42px,0,0) scale(.972);
+    opacity:.52;
+    filter:blur(2px) brightness(1.03);
   }
-  55%{
-    transform:translate3d(3px,0,0) scale(1.002);
+  58%{
+    transform:translate3d(4px,0,0) scale(1.002);
     opacity:1;
-    filter:blur(0) brightness(1.02);
+    filter:blur(0) brightness(1.01);
   }
   100%{
     transform:translate3d(0,0,0) scale(1);
