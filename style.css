@@ -1656,648 +1656,355 @@ body.timerRunning .timerBarWrap{
 
 
 /* =========================
-   v10.1 overrides + new modules
+   v10.2 visual overrides
 ========================= */
 
-.freeTextPreviewCard{
-  min-height:112px;
-  max-height:168px;
-  padding:22px 18px 18px 18px;
-  border-radius:24px;
+/* smoother band feeling */
+.moduleSlot{
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
 
+.moduleSlotContent{
+  width:100%;
+  height:100%;
+  transition:transform .34s cubic-bezier(.22,.8,.22,1), opacity .28s ease, filter .28s ease;
+  will-change:transform, opacity, filter;
+}
+
+@keyframes slotSwapLeft{
+  0%{ transform:translate3d(56px,0,0) scale(.985); opacity:.62; filter:blur(1.2px); }
+  45%{ transform:translate3d(8px,0,0) scale(1); opacity:1; filter:none; }
+  100%{ transform:translate3d(0,0,0) scale(1); opacity:1; filter:none; }
+}
+
+@keyframes slotSwapRight{
+  0%{ transform:translate3d(-56px,0,0) scale(.985); opacity:.62; filter:blur(1.2px); }
+  45%{ transform:translate3d(-8px,0,0) scale(1); opacity:1; filter:none; }
+  100%{ transform:translate3d(0,0,0) scale(1); opacity:1; filter:none; }
+}
+
+/* remove heavy glass from previews by default */
+.modulePlaceholderBody,
+.freeTextPreviewCard,
+.prioPreviewCard,
+.genericPreviewCard,
+.newsPreviewCard,
+.powerPreviewCard,
+.stocksPreviewCard{
+  background:transparent !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* prio preview back, lower and tighter */
 .prioPreview{
-  align-items:center;
   justify-content:center;
+  padding:14px 26px 0 26px;
+  gap:6px;
 }
-
-.prioPreviewCard{
-  width:100%;
-  min-height:112px;
-  max-height:160px;
-  padding:24px 18px 18px 18px;
-  border-radius:24px;
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 14px 40px rgba(0,0,0,.18);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
-  gap:8px;
-  overflow:hidden;
-}
-
-.weatherPreview{
-  align-items:center;
-  justify-content:center;
-  padding-left:0;
-}
-
-.weatherPreviewCard{
-  width:100%;
-  min-height:126px;
-  border-radius:24px;
-  padding:16px 16px 14px 16px;
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 14px 40px rgba(0,0,0,.18);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  display:grid;
-  grid-template-columns:88px minmax(0,1fr);
-  gap:14px;
-  align-items:center;
-}
-
-.weatherPreviewVisual{
-  align-self:center;
-}
-
-.weatherPreviewIcon{
-  width:74px;
-  height:74px;
-}
-
-.weatherPreviewText{
-  gap:2px;
-  min-width:0;
-  align-self:center;
-}
-
-.weatherPreviewTempBig{
-  font-size:40px;
-}
-
-.weatherPreviewStatus{
+.prioPreviewText{
   font-size:15px;
 }
-
-.weatherPreviewMetaRow{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:6px;
+.prioPreviewNote{
+  font-size:11px;
+  opacity:.72;
+}
+.prioPreviewMore{
+  font-size:12px;
+  padding-left:18px;
 }
 
-.weatherPreviewChip{
-  padding:4px 8px;
-  border-radius:999px;
-  font-size:11px;
+/* free text preview label */
+.freeTextPreview{
+  align-items:flex-start;
+}
+.freeTextPreview::before{
+  content:"Fritext";
+  position:absolute;
+  top:20px;
+  left:26px;
+  font-size:13px;
   line-height:1;
-  color:rgba(255,255,255,.68);
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.06);
-}
-
-.weatherPreviewHours{
-  grid-column:1 / -1;
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:8px;
-  margin-top:2px;
-}
-
-.weatherPreviewHour{
-  padding:8px 8px;
-  border-radius:12px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-  text-align:center;
-}
-
-.weatherPreviewHourTime{
-  font-size:11px;
-  color:rgba(255,255,255,.48);
-}
-
-.weatherPreviewHourTemp{
-  margin-top:4px;
-  font-size:17px;
   font-weight:900;
-  color:rgba(255,255,255,.92);
-  line-height:1;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.82);
 }
-
-.weatherPreviewHourRain{
-  margin-top:3px;
-  font-size:11px;
-  color:rgba(255,255,255,.46);
-}
-
-.timerPreview{
-  align-items:center;
-  justify-content:center;
-}
-
-.timerPreviewWrap{
+.freeTextPreviewCard{
   width:100%;
-  min-height:132px;
-  padding:14px 14px 12px 14px;
-  border-radius:24px;
-  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 14px 40px rgba(0,0,0,.18);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
+  min-height:116px;
+  max-height:none;
+  padding:42px 26px 18px 26px;
+}
+.freeTextPreviewText{
+  font-size:14px;
+  line-height:1.4;
+  -webkit-line-clamp:5;
 }
 
+/* weather preview: keep only inner glass, center content better */
+.weatherPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 18px;
+}
+.weatherPreview::before{
+  content:"";
+  position:absolute;
+  inset:18px 24px;
+  border-radius:28px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 12px 30px rgba(0,0,0,.10);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.weatherPreview > *{
+  position:relative;
+  z-index:1;
+}
+.weatherPreviewVisual{
+  width:96px;
+  min-width:96px;
+  justify-content:center;
+}
+.weatherPreviewIcon{
+  width:72px;
+  height:72px;
+  object-fit:contain;
+}
+.weatherPreviewText{
+  flex:0 1 240px;
+  min-width:0;
+  gap:6px;
+  align-items:flex-start;
+}
+.weatherPreviewTempBig{ font-size:38px; }
+.weatherPreviewStatus,
+.weatherPreviewMeta{ white-space:normal; }
+
+/* timer preview directly like module */
+.timerPreview{
+  pointer-events:auto;
+}
 .timerPreviewMain{
   width:100%;
+  height:100%;
 }
-
 .timerPreviewWheel{
-  width:138px;
-  height:138px;
+  width:min(220px, 78vw);
+  height:min(220px, 78vw);
+}
+.timerPreviewReset{
+  display:block !important;
 }
 
-.timerPreviewValue{
-  font-size:34px;
-}
-
-.timerPreviewStatus{
-  font-size:12px;
-  line-height:1.2;
-  font-weight:800;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.52);
-}
-
-.timerPreviewPresets{
-  display:flex;
-  gap:7px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.timerPreviewPreset{
-  padding:4px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.07);
-  background:rgba(255,255,255,.04);
-  color:rgba(255,255,255,.62);
-  font-size:11px;
-  line-height:1;
-  font-weight:800;
-}
-
-.previewGlassCard{
-  width:100%;
-  min-height:126px;
-  border-radius:24px;
-  padding:14px;
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+/* generic overlays: remove title area / card-in-card feel */
+.genericCard{
+  background:linear-gradient(180deg, rgba(4,8,14,.80), rgba(6,10,16,.72));
   border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 14px 40px rgba(0,0,0,.18);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
+  box-shadow:0 18px 50px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.genericScroller{
+  padding:12px 12px 52px 12px;
+}
+.genericPanel{
+  justify-content:flex-start;
+  gap:0;
+}
+.genericTitle,
+.genericBody{
+  display:none !important;
+}
+.genericCloseFab,
+.weatherCloseFab,
+.freeTextCloseFab,
+.prioCloseFab,
+.timerCloseFab{
+  right:12px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
 }
 
-.stocksPreviewCard{
-  background:linear-gradient(180deg, rgba(6,8,12,.94), rgba(7,10,16,.86));
-  border:1px solid rgba(255,255,255,.06);
+/* try to make embedded TradingView fill more */
+.genericPanel iframe,
+.genericPanel .tradingview-widget-container,
+.genericPanel .tradingview-widget-container__widget,
+.genericBody iframe,
+.genericBody .tradingview-widget-container,
+.genericBody .tradingview-widget-container__widget{
+  width:100% !important;
+}
+.genericPanel iframe,
+.genericBody iframe{
+  min-height:500px !important;
+  height:calc(100dvh - 330px) !important;
+  border:0 !important;
+  border-radius:22px;
+  background:#050607 !important;
 }
 
-.stocksPreviewHead,
-.newsPreviewHead,
-.powerPreviewHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
+/* stock module should look like iframe, not glass-in-glass */
+.genericCard[data-module="stocks"],
+.genericCard.is-stocks,
+body[data-module-open="stocks"] .genericCard{
+  background:#050607;
+  border-color:rgba(255,255,255,.05);
+  box-shadow:0 14px 40px rgba(0,0,0,.34);
 }
 
-.previewTitle{
+/* likely preview card names from JS */
+.stocksPreview,
+.marketPreview,
+.newsPreview,
+.powerPreview,
+.elPricePreview,
+.genericPreview{
+  width:100%;
+  height:100%;
+}
+
+.stocksPreview,
+.marketPreview,
+.stocksPreviewCard,
+.marketPreviewCard{
+  background:#050607 !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+/* stock preview tiles */
+.stocksPreviewGrid,
+.marketPreviewGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  padding:18px;
+}
+.stocksPreviewItem,
+.marketPreviewItem{
+  min-height:106px;
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.05);
+  padding:16px 18px;
+}
+.stocksPreviewItemLabel,
+.marketPreviewItemLabel{
+  font-size:13px;
+  color:rgba(255,255,255,.56);
+  letter-spacing:.08em;
+}
+.stocksPreviewItemValue,
+.marketPreviewItemValue{
+  margin-top:6px;
+  font-size:27px;
+  line-height:1;
+  font-weight:950;
+}
+.stocksPreviewItemMeta,
+.marketPreviewItemMeta{
+  margin-top:8px;
   font-size:12px;
-  line-height:1;
-  letter-spacing:.16em;
-  font-weight:900;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.54);
-}
-
-.previewSideText{
-  font-size:11px;
-  line-height:1;
   color:rgba(255,255,255,.42);
 }
 
-.stocksPreviewGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+/* news preview closer to module */
+.newsPreview,
+.newsPreviewCard{
+  padding:20px 22px;
 }
-
-.stockMini{
-  padding:10px 10px 9px 10px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
+.newsPreviewCard,
+.newsPreviewList,
+.newsPreviewInner{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
 }
-
-.stockMiniLabel{
-  font-size:11px;
-  line-height:1;
-  color:rgba(255,255,255,.52);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-.stockMiniValue{
-  margin-top:6px;
-  font-size:18px;
-  line-height:1;
-  font-weight:900;
-  color:rgba(255,255,255,.94);
-}
-
-.stockMiniMeta{
-  margin-top:5px;
-  font-size:11px;
-  color:rgba(255,255,255,.44);
-}
-
-.newsPreviewList{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.newsPreviewItem{
-  padding:10px 12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-}
-
-.newsPreviewItemTitle{
+.newsPreviewHeader,
+.newsPreviewEyebrow,
+.newsPreviewBrand{
   font-size:13px;
-  line-height:1.25;
-  color:rgba(255,255,255,.84);
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-
-.newsPreviewItemMeta{
-  margin-top:6px;
-  font-size:11px;
-  color:rgba(255,255,255,.46);
-}
-
-.powerPreviewStats{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:8px;
-  margin-bottom:10px;
-}
-
-.powerPreviewStat{
-  padding:10px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-  text-align:center;
-}
-
-.powerPreviewStatLabel{
-  font-size:11px;
-  color:rgba(255,255,255,.46);
-}
-
-.powerPreviewStatValue{
-  margin-top:4px;
-  font-size:18px;
   line-height:1;
   font-weight:900;
-  color:rgba(255,255,255,.94);
-}
-
-.powerPreviewBars{
-  display:grid;
-  grid-template-columns:repeat(8, 1fr);
-  gap:5px;
-  align-items:end;
-  height:54px;
-}
-
-.powerPreviewBar{
-  border-radius:999px;
-  background:linear-gradient(180deg, rgba(0,209,255,.85), rgba(255,100,180,.72));
-  opacity:.92;
-}
-
-.genericCard{
-  inset:10px 12px;
-}
-
-.genericScroller{
-  padding:16px 14px 64px 14px;
-}
-
-.genericPanel{
-  min-height:100%;
-  justify-content:flex-start;
-}
-
-.genericPanel--stocks{
-  gap:14px;
-}
-
-.genericTitleRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.genericTitle{
-  font-size:34px;
-}
-
-.genericSubtle{
-  font-size:12px;
-  color:rgba(255,255,255,.46);
-  letter-spacing:.08em;
+  letter-spacing:.16em;
   text-transform:uppercase;
+  color:rgba(255,255,255,.82);
+  margin-bottom:14px;
 }
-
-.stocksPager{
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  padding-top:2px;
+.newsPreviewItem{
+  padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
-
-.stocksPagerDot{
-  width:7px;
-  height:7px;
-  border-radius:999px;
-  background:rgba(255,255,255,.28);
-  transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
-}
-
-.stocksPagerDot.is-active{
-  background:rgba(255,255,255,.95);
-  box-shadow:0 0 10px rgba(255,255,255,.28);
-  transform:scale(1.05);
-}
-
-.stocksCarousel{
-  display:flex;
-  gap:12px;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-  padding-bottom:4px;
-}
-
-.stocksCarousel::-webkit-scrollbar{
-  display:none;
-}
-
-.stockSlide{
-  flex:0 0 100%;
-  min-width:100%;
-  scroll-snap-align:start;
-}
-
-.stockSlideCard{
-  height:360px;
-  border-radius:24px;
-  overflow:hidden;
-  background:#06080d;
-  border:1px solid rgba(255,255,255,.06);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 16px 40px rgba(0,0,0,.22);
-}
-
-.stockSlideHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:12px 14px;
-  background:rgba(255,255,255,.03);
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-
-.stockSlideName{
-  font-size:14px;
-  font-weight:900;
+.newsPreviewItem:last-child{ border-bottom:0; }
+.newsPreviewTitle{
+  font-size:18px;
+  line-height:1.28;
   color:rgba(255,255,255,.94);
 }
-
-.stockSlideSymbol{
-  font-size:11px;
-  color:rgba(255,255,255,.46);
-  letter-spacing:.08em;
-}
-
-.stockWidgetMount{
-  height:calc(100% - 48px);
-}
-
-.tvWidgetFill,
-.tvWidgetFill > div,
-.tvWidgetFill iframe{
-  width:100% !important;
-  height:100% !important;
-}
-
-.newsWidgetCard,
-.powerPanelCard{
-  min-height:420px;
-  border-radius:24px;
-  overflow:hidden;
-  background:linear-gradient(180deg, rgba(15,20,28,.48), rgba(10,15,20,.40));
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 16px 40px rgba(0,0,0,.22);
-}
-
-.newsWidgetMount{
-  min-height:420px;
-}
-
-.newsWidgetMount,
-.newsWidgetMount > div,
-.newsWidgetMount iframe{
-  width:100% !important;
-}
-
-.powerHead{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  padding:16px 16px 10px 16px;
-}
-
-.powerHeroTemp{
-  font-size:44px;
-  line-height:.92;
-  font-weight:950;
-  color:rgba(255,255,255,.96);
-}
-
-.powerHeroMeta{
+.newsPreviewMeta{
   margin-top:6px;
-  font-size:14px;
-  color:rgba(255,255,255,.70);
-}
-
-.powerBody{
-  padding:0 16px 16px 16px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.powerStatsGrid{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:10px;
-}
-
-.powerStatCard{
-  padding:12px 10px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
-  text-align:center;
-}
-
-.powerStatCardLabel{
   font-size:12px;
   color:rgba(255,255,255,.48);
 }
 
-.powerStatCardValue{
-  margin-top:6px;
-  font-size:20px;
-  font-weight:900;
-  color:rgba(255,255,255,.94);
-  line-height:1;
+/* elpris preview more informative */
+.powerPreview,
+.elPricePreview{
+  padding:18px 22px;
 }
-
-.powerBarsBig{
-  height:180px;
+.powerPreviewTitle,
+.elPricePreviewTitle{ display:none !important; }
+.powerPreviewStats,
+.elPricePreviewStats{
   display:grid;
-  grid-template-columns:repeat(24, 1fr);
-  gap:5px;
-  align-items:end;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:14px;
 }
-
-.powerBarCol{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  gap:6px;
-}
-
-.powerBar{
-  width:100%;
-  border-radius:999px 999px 6px 6px;
-  background:linear-gradient(180deg, rgba(0,209,255,.90), rgba(255,100,180,.78));
-  box-shadow:0 0 12px rgba(0,209,255,.10);
-  min-height:10px;
-}
-
-.powerBarLabel{
-  font-size:10px;
-  text-align:center;
-  color:rgba(255,255,255,.40);
-}
-
-.powerTomorrowList{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.powerTomorrowChip{
-  padding:10px 12px;
-  border-radius:14px;
+.powerPreviewStat,
+.elPricePreviewStat{
+  padding:14px 12px;
+  border-radius:18px;
   background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.06);
+  text-align:center;
+}
+.powerPreviewStatLabel,
+.elPricePreviewStatLabel{ font-size:12px; color:rgba(255,255,255,.55); }
+.powerPreviewStatValue,
+.elPricePreviewStatValue{ margin-top:4px; font-size:17px; font-weight:900; }
+.powerPreviewBars,
+.elPricePreviewBars{ display:grid; grid-template-columns:repeat(8,1fr); gap:8px; align-items:end; height:52px; }
+.powerPreviewBar,
+.elPricePreviewBar{ border-radius:999px; background:linear-gradient(180deg, rgba(0,209,255,.9), rgba(255,100,180,.9)); opacity:.9; }
+
+/* remove big card feeling in weather/preview modules where JS injects cards */
+.weatherPreviewCard,
+.prioPreviewCard{
+  width:100%;
+  min-height:0;
+  max-height:none;
+  padding:0;
 }
 
-.powerTomorrowChipLabel{
-  font-size:11px;
-  color:rgba(255,255,255,.46);
-}
-
-.powerTomorrowChipValue{
-  margin-top:5px;
-  font-size:15px;
-  font-weight:900;
-  color:rgba(255,255,255,.92);
-}
-
-.genericCloseFab,
-.weatherCloseFab,
-.prioCloseFab,
-.freeTextCloseFab,
-.timerCloseFab{
-  right:12px;
-  bottom:calc(12px + env(safe-area-inset-bottom));
-}
-
-@media (max-width:480px){
-  .weatherPreviewCard{
-    grid-template-columns:80px minmax(0,1fr);
-    padding:14px 14px 12px 14px;
-  }
-
-  .weatherPreviewTempBig{
-    font-size:38px;
-  }
-
-  .weatherPreviewStatus{
-    white-space:normal;
-    overflow:visible;
-    text-overflow:clip;
-    line-height:1.15;
-  }
-
-  .weatherPreviewMeta{
-    white-space:normal;
-    overflow:visible;
-    text-overflow:clip;
-  }
-
-  .weatherPreviewChip{
-    font-size:10px;
-  }
-
-  .timerPreviewWheel{
-    width:128px;
-    height:128px;
-  }
-
-  .timerPreviewValue{
-    font-size:32px;
-  }
-
-  .stockSlideCard{
-    height:330px;
-  }
-
-  .powerStatsGrid,
-  .powerPreviewStats{
-    grid-template-columns:1fr 1fr 1fr;
-  }
-
-  .powerTomorrowList{
-    grid-template-columns:1fr;
-  }
+/* mobile tune */
+@media (max-width: 480px){
+  .weatherPreview::before{ inset:14px 20px; }
+  .weatherPreviewVisual{ width:86px; min-width:86px; }
+  .weatherPreviewIcon{ width:64px; height:64px; }
+  .weatherPreviewTempBig{ font-size:34px; }
+  .stocksPreviewGrid,
+  .marketPreviewGrid{ gap:12px; padding:16px; }
+  .stocksPreviewItem,
+  .marketPreviewItem{ min-height:100px; padding:14px 16px; }
+  .genericPanel iframe,
+  .genericBody iframe{ min-height:470px !important; height:calc(100dvh - 316px) !important; }
 }
