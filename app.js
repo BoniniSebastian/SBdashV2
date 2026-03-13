@@ -25,6 +25,10 @@
     { id: "stocks", label: "Aktier" },
     { id: "news", label: "Nyheter" },
     { id: "power", label: "Elpris" },
+    { id: "iss", label: "ISS" },
+    { id: "lightning", label: "Lightning" },
+    { id: "solar", label: "Solar" },
+    { id: "flights", label: "Flight Radar" },
   ];
 
   const STOCKS = [
@@ -145,80 +149,30 @@
     return Math.min(max, Math.max(min, num));
   }
 
+  function weatherEmoji(code) {
+    if ([0, 1].includes(code)) return '☀️';
+    if ([2].includes(code)) return '⛅';
+    if ([3, 45, 48].includes(code)) return '☁️';
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+    if ([95, 96, 99].includes(code)) return '⛈️';
+    return '☁️';
+  }
+
   function weatherIconPath(code) {
-    const symbolMap = {
-      0: "☀",
-      1: "☀",
-      2: "⛅",
-      3: "☁",
-      45: "〰",
-      48: "〰",
-      51: "🌦",
-      53: "🌦",
-      55: "🌦",
-      56: "🌨",
-      57: "🌨",
-      61: "🌧",
-      63: "🌧",
-      65: "🌧",
-      66: "🌨",
-      67: "🌨",
-      71: "❄",
-      73: "❄",
-      75: "❄",
-      77: "❄",
-      80: "🌦",
-      81: "🌦",
-      82: "⛈",
-      85: "❄",
-      86: "❄",
-      95: "⛈",
-      96: "⛈",
-      99: "⛈",
-    };
-    const bgMap = {
-      0: "#0a1520",
-      1: "#0a1520",
-      2: "#0d1723",
-      3: "#0f1822",
-      45: "#10161d",
-      48: "#10161d",
-      51: "#0d1620",
-      53: "#0d1620",
-      55: "#0d1620",
-      56: "#111821",
-      57: "#111821",
-      61: "#0d1620",
-      63: "#0d1620",
-      65: "#0d1620",
-      66: "#111821",
-      67: "#111821",
-      71: "#101722",
-      73: "#101722",
-      75: "#101722",
-      77: "#101722",
-      80: "#0d1620",
-      81: "#0d1620",
-      82: "#0d1620",
-      85: "#101722",
-      86: "#101722",
-      95: "#0b141d",
-      96: "#0b141d",
-      99: "#0b141d",
-    };
-    const symbol = symbolMap[code] || "☁";
-    const bg = bgMap[code] || "#0d1620";
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88">
-      <defs>
-        <radialGradient id="g" cx="50%" cy="40%" r="70%">
-          <stop offset="0%" stop-color="#173041"/>
-          <stop offset="100%" stop-color="${bg}"/>
-        </radialGradient>
-      </defs>
-      <circle cx="44" cy="44" r="36" fill="url(#g)" stroke="rgba(255,255,255,.08)" />
-      <text x="44" y="54" text-anchor="middle" font-size="34" font-family="Arial, Apple Color Emoji, Segoe UI Emoji, sans-serif" fill="#ffffff">${symbol}</text>
-    </svg>`;
-    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    const emoji = weatherEmoji(code);
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+        <defs>
+          <radialGradient id="g" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+        </defs>
+        <circle cx="64" cy="64" r="56" fill="url(#g)"/>
+        <text x="64" y="78" text-anchor="middle" font-size="62">${emoji}</text>
+      </svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   }
 
   function weatherLabel(code) {
@@ -273,16 +227,13 @@
     const w = state.weather;
     if (!w || !w.current || !w.hourly) {
       return `
-        <div class="weatherPreview weatherPreview--loading">
-          <div class="weatherPreviewMain">
-            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="${weatherIconPath(3)}" alt="" draggable="false"></div>
+        <div class="weatherPreview">
+          <div class="weatherPreviewCard">
+            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
             <div class="weatherPreviewText">
               <div class="weatherPreviewTempBig">--°</div>
               <div class="weatherPreviewStatus">Laddar väder…</div>
-              <div class="weatherPreviewMetaRow">
-                <div class="weatherPreviewChip">Värmdö</div>
-                <div class="weatherPreviewChip">Väder</div>
-              </div>
+              <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
             </div>
           </div>
         </div>`;
@@ -295,7 +246,7 @@
 
     return `
       <div class="weatherPreview">
-        <div class="weatherPreviewMain">
+        <div class="weatherPreviewCard">
           <div class="weatherPreviewVisual">
             <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
           </div>
@@ -305,18 +256,19 @@
             <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
             <div class="weatherPreviewMetaRow">
               <div class="weatherPreviewChip">Värmdö</div>
-              <div class="weatherPreviewChip">Regn ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
+              <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
+              <div class="weatherPreviewChip">Nästa timmar</div>
             </div>
           </div>
-        </div>
-        <div class="weatherPreviewHours">
-          ${hours.map((hour) => `
-            <div class="weatherPreviewHour">
-              <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
-              <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
-              <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
-            </div>
-          `).join("")}
+          <div class="weatherPreviewHours">
+            ${hours.map((hour) => `
+              <div class="weatherPreviewHour">
+                <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
+                <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
+                <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
+              </div>
+            `).join("")}
+          </div>
         </div>
       </div>`;
   }
@@ -370,20 +322,18 @@
     const visible = state.prios.slice(0, 3);
     const more = state.prios.length - visible.length;
     return `
-      <div class="prioPreview">
-        <div class="prioPreviewHeader">Prio</div>
-        <div class="prioPreviewList">
-          ${visible.map((item) => `
-            <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
-              <div class="prioPreviewDot"></div>
-              <div>
-                <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
-                ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 28))}</div>` : ''}
-              </div>
+      <div class="prioPreview prioPreview--compact">
+        <div class="miniSectionLabel">Prio</div>
+        ${visible.map((item) => `
+          <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
+            <div class="prioPreviewDot"></div>
+            <div>
+              <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
+              ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 26))}</div>` : ''}
             </div>
-          `).join("")}
-          ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
-        </div>
+          </div>
+        `).join("")}
+        ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
       </div>`;
   }
 
@@ -392,10 +342,10 @@
       <div class="prioItem ${item.done ? 'is-done' : ''}" data-id="${escapeHtml(item.id)}">
         <div class="prioItemMain">
           <input class="prioCheck" type="checkbox" ${item.done ? 'checked' : ''} aria-label="Klar">
-          <input class="prioTextInput" type="text" value="${escapeHtml(item.text)}" maxlength="160" aria-label="Prio">
+          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
           <button class="prioDeleteBtn" type="button" aria-label="Ta bort">✕</button>
         </div>
-        <input class="prioNoteInput" type="text" value="${escapeHtml(item.note || '')}" maxlength="220" placeholder="Anteckning" aria-label="Anteckning">
+        <textarea class="prioNoteInput" placeholder="Anteckning...">${escapeHtml(item.note || '')}</textarea>
       </div>
     `).join("");
   }
@@ -403,8 +353,8 @@
   function renderFreeTextPreview() {
     const text = state.freeText.trim();
     return `
-      <div class="freeTextPreview">
-        <div class="freeTextPreviewLabel">Fritext</div>
+      <div class="freeTextPreview freeTextPreview--compact">
+        <div class="miniSectionLabel">Fritext</div>
         <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
       </div>`;
   }
@@ -425,91 +375,84 @@
     const center = state.timer.running ? formatRemainingShort(remaining) : state.timer.minutes;
     const bottom = state.timer.running ? 'KVAR' : 'MIN';
     return `
-      <div class="timerPreview timerPreview--direct">
-        <div class="timerPreviewWrap">
-          <div class="timerPreviewMain">
-            <div class="timerPreviewWheel">
-              <div class="timerPreviewCenter">
-                <div class="timerPreviewTop">Timer</div>
-                <div class="timerPreviewValue">${escapeHtml(String(center))}</div>
-                <div class="timerPreviewBottom">${escapeHtml(bottom)}</div>
-              </div>
+      <div class="timerPreview">
+        <div class="timerPreviewMain">
+          <div class="timerPreviewWheel">
+            <div class="timerPreviewCenter">
+              <div class="timerPreviewTop">Timer</div>
+              <div class="timerPreviewValue">${escapeHtml(String(center))}</div>
+              <div class="timerPreviewBottom">${escapeHtml(bottom)}</div>
             </div>
           </div>
-          <div class="timerPreviewActions">
-            ${[5, 10, 15, 25].map((m) => `<button class="timerPreviewPresetBtn ${state.timer.minutes === m ? 'is-active' : ''}" data-timer-min="${m}" type="button">${m}</button>`).join("")}
-          </div>
-          <div class="timerPreviewActionRow">
-            <button class="timerPreviewAction is-primary" data-timer-action="${state.timer.running ? 'restart' : 'start'}" type="button">${state.timer.running ? 'Starta om' : 'Starta'}</button>
-            <button class="timerPreviewAction" data-timer-action="reset" type="button">Reset</button>
-          </div>
         </div>
+        <div class="timerPreviewReset" ${state.timer.running ? '' : 'hidden'}>Reset</div>
       </div>`;
   }
 
   function renderStocksPreview() {
+    const rows = [
+      { key: 'gold', color: 'up' },
+      { key: 'silver', color: 'down' },
+      { key: 'oil', color: 'up' },
+      { key: 'us100', color: 'down' },
+      { key: 'eurusd', color: 'flat' },
+    ];
     return `
-      <div class="stocksPreview">
-        <div class="stocksPreviewTape">
-          ${STOCKS.map((stock, idx) => `
-            <div class="stockMiniRow">
-              <div class="stockMiniLeft">
-                <div class="stockMiniLabel">${escapeHtml(stock.short)}</div>
-                <div class="stockMiniSpark">
-                  <span style="height:${12 + (idx * 3)}px"></span>
-                  <span style="height:${18 + (idx * 2)}px"></span>
-                  <span style="height:${10 + (idx * 4)}px"></span>
-                  <span style="height:${20 + (idx * 2)}px"></span>
+      <div class="stocksPreviewCompact">
+        ${rows.map((row, idx) => {
+          const stock = STOCKS.find((s) => s.key === row.key);
+          const meta = state.stockMini[row.key] || {};
+          return `
+            <div class="stocksMiniRow">
+              <div class="stocksMiniLeft">
+                <div class="stocksMiniSymbol">${escapeHtml(stock.short)}</div>
+                <div class="stocksMiniMeta">${escapeHtml(meta.meta || 'Live i modul')}</div>
+              </div>
+              <div class="stocksMiniRight">
+                <div class="stocksMiniValue">${escapeHtml(meta.value || stock.short)}</div>
+                <div class="stocksMiniSpark stocksMiniSpark--${row.color}">
+                  <span></span><span></span><span></span><span></span>
                 </div>
               </div>
-              <div class="stockMiniRight">
-                <div class="stockMiniValue">${escapeHtml(state.stockMini[stock.key]?.value || stock.short)}</div>
-                <div class="stockMiniMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Live i modul')}</div>
-              </div>
-            </div>
-          `).join("")}
-        </div>
+            </div>`;
+        }).join("")}
       </div>`;
   }
 
   function renderNewsPreview() {
+    const headlines = [
+      'Marknadsnyheter och top stories',
+      'Valutor, index och råvaror live',
+      'Öppna modulen för hela feeden',
+    ];
     return `
-      <div class="newsPreview">
-        <div class="newsPreviewTicker">MARKNAD · LIVE · TV</div>
-        <div class="newsPreviewList">
-          <div class="newsPreviewItem">
-            <div class="newsPreviewItemTitle">Makro, index och råvaror i en mörk live-feed.</div>
-            <div class="newsPreviewItemMeta">Öppna för hela flödet</div>
+      <div class="newsPreviewCompact">
+        <div class="miniSectionLabel">Nyheter</div>
+        ${headlines.map((h, i) => `
+          <div class="newsPreviewCompactItem">
+            <div class="newsPreviewCompactDot"></div>
+            <div class="newsPreviewCompactText">${escapeHtml(h)}</div>
           </div>
-          <div class="newsPreviewItem">
-            <div class="newsPreviewItemTitle">US100, FX och olja samlat i samma vy.</div>
-            <div class="newsPreviewItemMeta">TradingView</div>
-          </div>
-          <div class="newsPreviewPulseRow">
-            <span></span><span></span><span></span><span></span>
-          </div>
-        </div>
+        `).join("")}
       </div>`;
   }
 
   function renderPowerPreview() {
     const p = state.power;
-    const bars = p?.today?.slice(0, 6) || [];
-    const nowPrice = p?.nowPriceText || '--';
-    const next = p?.today?.[new Date().getHours() + 1];
-    const cheapest = p?.bestWindow || '--';
+    const today = p?.today || [];
+    const now = p?.nowPriceText || '--';
+    const next = today[new Date().getHours() + 1]?.price;
+    const nextText = Number.isFinite(next) ? `${next.toFixed(2)} kr` : '—';
     return `
-      <div class="powerPreview">
-        <div class="powerPreviewTop">
-          <div class="powerPreviewValue">${escapeHtml(nowPrice)}</div>
-          <div class="powerPreviewMeta">Nu · ${escapeHtml(p?.nowLabel || 'SE3')}</div>
+      <div class="powerPreviewCompact">
+        <div class="miniSectionLabel">Elpris · SE3</div>
+        <div class="powerPreviewCompactStats">
+          <div><span>Nu</span><strong>${escapeHtml(now)}</strong></div>
+          <div><span>Nästa</span><strong>${escapeHtml(nextText)}</strong></div>
+          <div><span>Billigast</span><strong>${escapeHtml(p?.bestWindow || '--')}</strong></div>
         </div>
-        <div class="powerPreviewStats">
-          <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Nästa</div><div class="powerPreviewStatValue">${escapeHtml(next ? `${next.price.toFixed(2)} kr` : '--')}</div></div>
-          <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Billigast</div><div class="powerPreviewStatValue">${escapeHtml(cheapest)}</div></div>
-        </div>
-        <div class="powerPreviewBars">
-          ${bars.map((item) => `<div class="powerPreviewBarWrap"><div class="powerPreviewBar" style="height:${Math.max(10, item.ratio * 44)}px"></div><div class="powerPreviewBarHour">${escapeHtml(item.hour)}</div></div>`).join("")}
+        <div class="powerPreviewCompactBars">
+          ${today.slice(0, 12).map((item) => `<div class="powerPreviewCompactBar" style="height:${Math.max(10, item.ratio * 42)}px"></div>`).join('')}
         </div>
       </div>`;
   }
@@ -527,8 +470,20 @@
       case 'stocks': return renderStocksPreview();
       case 'news': return renderNewsPreview();
       case 'power': return renderPowerPreview();
+      case 'iss': return renderSimplePreview('ISS', 'Live position · öppna för karta');
+      case 'lightning': return renderSimplePreview('Lightning', 'Åska live · öppna för karta');
+      case 'solar': return renderSimplePreview('Solar', 'Solaktivitet · öppna monitor');
+      case 'flights': return renderSimplePreview('Flights', 'Flyg live · öppna radar');
       default: return '<div class="modulePlaceholder"><div class="modulePlaceholderBody"><div class="modulePlaceholderTitle">Modul</div><div class="modulePlaceholderText">Tom modul</div></div></div>';
     }
+  }
+
+  function renderSimplePreview(title, meta) {
+    return `
+      <div class="simplePreviewCompact">
+        <div class="miniSectionLabel">${escapeHtml(title)}</div>
+        <div class="simplePreviewCompactMeta">${escapeHtml(meta)}</div>
+      </div>`;
   }
 
   function renderSlots() {
@@ -545,7 +500,7 @@
     slot.classList.remove('is-animating-left', 'is-animating-right');
     slot.classList.add(delta > 0 ? 'is-animating-left' : 'is-animating-right');
     renderSlots();
-    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 260);
+    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 360);
   }
 
   function attachSlotSwipe(slot, slotIndex) {
@@ -569,9 +524,9 @@
       slot.classList.add('is-swiping');
       slot.classList.toggle('swipe-left', dx < 0);
       slot.classList.toggle('swipe-right', dx > 0);
-      content.style.setProperty('--swipeX', `${dx * 0.48}px`);
-      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 1800, 0.015)}`);
-      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 520, 0.08)}`);
+      content.style.setProperty('--swipeX', `${dx * 0.46}px`);
+      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 2200, 0.018)}`);
+      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 520, 0.10)}`);
     });
 
     function end(e) {
@@ -588,9 +543,7 @@
         slot.dataset.swiped = '1';
         setTimeout(() => { slot.dataset.swiped = ''; }, 200);
       } else if (e.type === 'pointerup' && !slot.dataset.swiped) {
-        if (e.target.closest('[data-timer-action], [data-timer-min]')) return;
-        const moduleId = slot.dataset.moduleId;
-        if (moduleId !== 'timer') openCurrentModule(slotIndex);
+        openCurrentModule(slotIndex);
       }
     }
 
@@ -630,10 +583,15 @@
       case 'stocks':
       case 'news':
       case 'power':
+      case 'iss':
+      case 'lightning':
+      case 'solar':
+      case 'flights':
         renderGenericModule(module.id);
         openOverlay(genericOverlay);
         break;
       case 'timer':
+        openTimer();
         break;
       default:
         break;
@@ -672,15 +630,11 @@
   });
 
   prioPanelList?.addEventListener('input', (e) => {
+    if (!e.target.classList.contains('prioNoteInput')) return;
     const itemEl = e.target.closest('.prioItem');
     if (!itemEl) return;
     const id = itemEl.dataset.id;
-    if (e.target.classList.contains('prioTextInput')) {
-      state.prios = state.prios.map((item) => item.id === id ? { ...item, text: e.target.value } : item);
-    }
-    if (e.target.classList.contains('prioNoteInput')) {
-      state.prios = state.prios.map((item) => item.id === id ? { ...item, note: e.target.value } : item);
-    }
+    state.prios = state.prios.map((item) => item.id === id ? { ...item, note: e.target.value } : item);
     persistPrios();
     renderSlots();
   });
@@ -801,26 +755,6 @@
     }
   });
 
-  document.addEventListener('click', (e) => {
-    const presetBtn = e.target.closest('[data-timer-min]');
-    if (presetBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      setTimerMinutes(Number(presetBtn.dataset.timerMin));
-      updateTimerWheelText();
-      return;
-    }
-
-    const actionBtn = e.target.closest('[data-timer-action]');
-    if (actionBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const action = actionBtn.dataset.timerAction;
-      if (action === 'start' || action === 'restart') startTimer();
-      if (action === 'reset') resetTimer();
-    }
-  });
-
   timerIconBtn?.addEventListener('click', openTimer);
   timerCloseFab?.addEventListener('click', closeTimer);
   prioCloseFab?.addEventListener('click', () => closeOverlay(prioOverlay));
@@ -858,12 +792,12 @@
 
   function renderGenericModule(type) {
     if (type === 'stocks') {
-      genericPanel.className = 'genericPanel genericPanel--stocks';
+      genericPanel.className = 'genericPanel genericPanel--stocks genericPanel--edge';
       genericPanel.innerHTML = `
         <div class="stocksCarousel" id="stocksCarousel">
           ${STOCKS.map((stock, idx) => `
             <section class="stockSlide">
-              <div class="stockSlideCard">
+              <div class="stockSlideCard stockSlideCard--edge">
                 <div class="stockWidgetMount tvWidgetFill" id="tvChart${idx}"></div>
               </div>
             </section>
@@ -878,31 +812,33 @@
     }
 
     if (type === 'news') {
-      genericPanel.className = 'genericPanel genericPanel--news';
+      genericPanel.className = 'genericPanel genericPanel--edge';
       genericPanel.innerHTML = `
-        <div class="newsWidgetMount" id="newsWidgetMount"></div>
+        <div class="newsWidgetCard newsWidgetCard--edge">
+          <div class="newsWidgetMount" id="newsWidgetMount"></div>
+        </div>
       `;
       mountTradingViewNews();
       return;
     }
 
     if (type === 'power') {
-      genericPanel.className = 'genericPanel genericPanel--power';
+      genericPanel.className = 'genericPanel genericPanel--edge';
       const p = state.power;
       genericPanel.innerHTML = `
-        <div class="powerPanelCard">
+        <div class="powerPanelCard powerPanelCard--edge">
           <div class="powerHead">
             <div>
               <div class="powerHeroTemp">${escapeHtml(p?.nowPriceText || '--')}</div>
               <div class="powerHeroMeta">Just nu · ${escapeHtml(p?.nowLabel || 'saknas')}</div>
             </div>
-            <div class="genericSubtle">SE3</div>
+            <div class="genericSubtle">${escapeHtml(p?.todayDateText || '')}</div>
           </div>
           <div class="powerBody">
             <div class="powerStatsGrid">
               <div class="powerStatCard"><div class="powerStatCardLabel">Lägst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayLowText || '--')}</div></div>
               <div class="powerStatCard"><div class="powerStatCardLabel">Högst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayHighText || '--')}</div></div>
-              <div class="powerStatCard"><div class="powerStatCardLabel">Snitt idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayAvgText || '--')}</div></div>
+              <div class="powerStatCard"><div class="powerStatCardLabel">Billigast</div><div class="powerStatCardValue">${escapeHtml(p?.bestWindow || '--')}</div></div>
             </div>
             <div class="powerBarsBig">
               ${(p?.today || []).map((item) => `
@@ -912,17 +848,24 @@
                 </div>
               `).join('')}
             </div>
-            <div class="powerTomorrowList">
-              <div class="powerTomorrowChip">
-                <div class="powerTomorrowChipLabel">Billigaste nästa fönster</div>
-                <div class="powerTomorrowChipValue">${escapeHtml(p?.bestWindow || '--')}</div>
-              </div>
-              <div class="powerTomorrowChip">
-                <div class="powerTomorrowChipLabel">Imorgon</div>
-                <div class="powerTomorrowChipValue">${escapeHtml(p?.tomorrowText || 'Ingen prognos än')}</div>
-              </div>
-            </div>
           </div>
+        </div>
+      `;
+      return;
+    }
+
+    const iframeMap = {
+      iss: 'https://isstracker.spaceflight.esa.int/',
+      lightning: 'https://www.lightningmaps.org/?lang=sv#m=oss;t=3;s=0;o=0;b=0.00;ts=0;',
+      solar: 'https://www.spaceweatherlive.com/en/solar-activity.html',
+      flights: 'https://www.flightradar24.com/'
+    };
+
+    if (iframeMap[type]) {
+      genericPanel.className = 'genericPanel genericPanel--edge';
+      genericPanel.innerHTML = `
+        <div class="embedFrameCard">
+          <iframe class="embedFrame" src="${iframeMap[type]}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
       `;
       return;
@@ -947,15 +890,15 @@
           timezone: 'Europe/Stockholm',
           theme: 'dark',
           style: '1',
-          locale: 'sv',
+          locale: 'sv_SE',
           allow_symbol_change: false,
           save_image: false,
           hide_side_toolbar: true,
           hide_top_toolbar: false,
-          hide_legend: true,
-          withdateranges: true,
+          hide_legend: false,
+          withdateranges: false,
           container_id: `tvChart${idx}`,
-          backgroundColor: '#05070b',
+          backgroundColor: '#06080d',
           gridColor: 'rgba(255,255,255,0.05)',
           studies: [],
         });
@@ -987,7 +930,7 @@
       isTransparent: true,
       displayMode: 'adaptive',
       width: '100%',
-      height: 620,
+      height: 560,
       colorTheme: 'dark',
       locale: 'sv'
     });
@@ -1048,7 +991,7 @@
     return {
       today: prices.map((p) => ({ ...p, ratio: (p.price - min) / ((max - min) || 1) })),
       nowPriceText: `${nowPrice.price.toFixed(2)} kr`,
-      nowLabel: `${nowPrice.fullHour}–${String(Number(nowPrice.hour) + 1).padStart(2, '0')}:00`,
+      nowLabel: `${nowPrice.fullHour}–${String((Number(nowPrice.hour) || currentHour) + 1).padStart(2, '0')}:00`,
       todayLowText: `${min.toFixed(2)} kr`,
       todayHighText: `${max.toFixed(2)} kr`,
       todayAvgText: `${avg.toFixed(2)} kr`,
@@ -1061,11 +1004,11 @@
   async function refreshStocksMini() {
     const nowStamp = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
     state.stockMini = {
-      gold: { value: 'Live', meta: `XAU/USD · ${nowStamp}` },
-      silver: { value: 'Live', meta: `XAG/USD · ${nowStamp}` },
-      oil: { value: 'Live', meta: `USOIL · ${nowStamp}` },
-      us100: { value: 'Live', meta: `US100 · ${nowStamp}` },
-      eurusd: { value: 'Live', meta: `EUR/USD · ${nowStamp}` },
+      gold: { value: 'Guld live', meta: `TradingView · ${nowStamp}` },
+      silver: { value: 'Silver live', meta: `TradingView · ${nowStamp}` },
+      oil: { value: 'Olja live', meta: `TradingView · ${nowStamp}` },
+      us100: { value: 'US100 live', meta: `TradingView · ${nowStamp}` },
+      eurusd: { value: 'EUR/USD live', meta: `TradingView · ${nowStamp}` },
     };
     saveJson(LS.stocksMini, state.stockMini);
     renderSlots();
