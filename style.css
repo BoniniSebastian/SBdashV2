@@ -1,4 +1,605 @@
 :root{
+  --bg:#050b12;
+  --text:rgba(255,255,255,.94);
+  --muted:rgba(255,255,255,.64);
+  --line:rgba(255,255,255,.10);
+  --lineSide:rgba(255,255,255,.06);
+  --safeTop:env(safe-area-inset-top);
+  --safeBottom:env(safe-area-inset-bottom);
+  --padX:18px;
+  --topH:72px;
+  --calendarH:170px;
+  --calendarScale:0.80;
+}
+
+*{box-sizing:border-box;}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+body{overflow:hidden;}
+button,input,textarea{font:inherit;}
+button{color:inherit;}
+
+.app{
+  position:fixed;
+  inset:0;
+  height:100dvh;
+  overflow:hidden;
+  background:
+    radial-gradient(900px 560px at 24% 16%, rgba(0,180,255,.10), transparent 58%),
+    radial-gradient(840px 520px at 82% 74%, rgba(255,100,180,.08), transparent 58%),
+    linear-gradient(180deg, #04080f 0%, #050b12 100%);
+}
+
+.ambient{
+  position:absolute;
+  inset:auto;
+  border-radius:999px;
+  filter:blur(64px);
+  pointer-events:none;
+  opacity:.32;
+}
+.ambient--one{
+  width:360px;
+  height:360px;
+  left:-80px;
+  top:90px;
+  background:radial-gradient(circle, rgba(0,209,255,.28), transparent 68%);
+}
+.ambient--two{
+  width:300px;
+  height:300px;
+  right:-80px;
+  bottom:180px;
+  background:radial-gradient(circle, rgba(255,100,180,.20), transparent 70%);
+}
+
+.topBar{
+  position:absolute;
+  left:var(--padX);
+  right:var(--padX);
+  top:calc(var(--safeTop) + 10px);
+  height:52px;
+  display:flex;
+  align-items:center;
+  z-index:10;
+}
+.dayDate{
+  font-size:14px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.78);
+}
+
+.line{
+  position:absolute;
+  left:0;
+  right:0;
+  height:1px;
+  background:var(--line);
+  z-index:6;
+}
+.line--top{top:calc(var(--safeTop) + var(--topH));}
+
+.slots{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(var(--safeTop) + var(--topH));
+  bottom:var(--calendarH);
+  display:grid;
+  grid-template-rows:1fr 1px 1fr;
+  z-index:5;
+}
+
+.line--middle{
+  position:relative;
+  left:auto;
+  right:auto;
+  top:auto;
+  background:var(--line);
+}
+
+.slotSection{
+  position:relative;
+  min-height:0;
+  overflow:hidden;
+}
+
+.slotButton{
+  appearance:none;
+  -webkit-appearance:none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  padding:18px 30px;
+  border:0;
+  background:transparent;
+  text-align:left;
+  cursor:pointer;
+}
+
+.slotContent{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  transform:translate3d(var(--slotX, 0px), 0, 0);
+  opacity:var(--slotOpacity, 1);
+  transition:transform .28s ease, opacity .22s ease;
+}
+
+.sideRail{
+  position:absolute;
+  top:12px;
+  bottom:12px;
+  width:18px;
+  border:0;
+  background:transparent;
+  padding:0;
+  z-index:3;
+  cursor:pointer;
+}
+.sideRail::after{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:1px;
+  background:linear-gradient(180deg, rgba(255,255,255,.02), var(--lineSide), rgba(255,255,255,.02));
+  opacity:.18;
+  transition:opacity .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.sideRail--left{left:0;}
+.sideRail--left::after{left:8px;}
+.sideRail--right{right:0;}
+.sideRail--right::after{right:8px;}
+.slotSection.is-swiping .sideRail::after,
+.sideRail:hover::after{
+  opacity:.9;
+  box-shadow:0 0 10px rgba(255,255,255,.06);
+}
+.slotSection.swipe-left .sideRail--right::after,
+.slotSection.swipe-right .sideRail--left::after{
+  background:linear-gradient(180deg, rgba(0,209,255,.06), rgba(255,255,255,.18), rgba(255,100,180,.08));
+  box-shadow:0 0 16px rgba(0,209,255,.10), 0 0 16px rgba(255,100,180,.06);
+  opacity:1;
+}
+
+.moduleTitle{
+  font-size:13px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.46);
+  margin-bottom:12px;
+}
+
+.moduleTitleRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+/* weather preview */
+.weatherPreview{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns:110px 1fr;
+  gap:10px;
+  align-items:center;
+}
+.weatherPreviewVisual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.weatherGlyph{
+  position:relative;
+  width:82px;
+  height:82px;
+}
+.weatherGlyph .sun{
+  position:absolute;
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  left:24px;
+  top:16px;
+  background:rgba(255,214,90,.95);
+  box-shadow:0 0 18px rgba(255,214,90,.26);
+  animation:sunFloat 4s ease-in-out infinite;
+}
+.weatherGlyph .cloud,
+.weatherGlyph .cloud::before,
+.weatherGlyph .cloud::after{
+  position:absolute;
+  background:rgba(255,255,255,.90);
+  border-radius:999px;
+}
+.weatherGlyph .cloud{
+  width:48px;
+  height:18px;
+  left:18px;
+  top:38px;
+  animation:cloudDrift 4.8s ease-in-out infinite;
+}
+.weatherGlyph .cloud::before,
+.weatherGlyph .cloud::after{content:"";}
+.weatherGlyph .cloud::before{width:22px;height:22px;left:6px;top:-10px;}
+.weatherGlyph .cloud::after{width:26px;height:26px;right:4px;top:-14px;}
+.weatherGlyph .rain{
+  position:absolute;
+  left:22px;
+  right:22px;
+  bottom:6px;
+  height:18px;
+  opacity:.9;
+}
+.weatherGlyph .rain::before,
+.weatherGlyph .rain::after{
+  content:"";
+  position:absolute;
+  width:2px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(110,210,255,.92);
+  box-shadow:10px 2px 0 rgba(110,210,255,.9), 20px -1px 0 rgba(110,210,255,.9);
+  animation:rainDrop .9s linear infinite;
+}
+.weatherGlyph .rain::after{left:8px;animation-delay:.25s;}
+.weatherGlyph.is-sun .cloud,
+.weatherGlyph.is-sun .rain{display:none;}
+.weatherGlyph.is-cloud .sun,
+.weatherGlyph.is-cloud .rain{display:none;}
+.weatherGlyph.is-rain .sun{display:none;}
+
+.weatherPreviewText{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+}
+.weatherPreviewTemp{
+  font-size:36px;
+  line-height:.9;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+.weatherPreviewStatus,
+.weatherPreviewMeta{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.weatherPreviewStatus{font-size:15px;color:rgba(255,255,255,.84);}
+.weatherPreviewMeta{font-size:13px;color:rgba(255,255,255,.52);}
+
+/* tasks preview */
+.tasksPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.tasksListPreview{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.tasksItemPreview{
+  display:grid;
+  grid-template-columns:14px 1fr;
+  gap:10px;
+  align-items:start;
+}
+.tasksDot{
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(0,209,255,.95);
+  margin-top:7px;
+  box-shadow:0 0 10px rgba(0,209,255,.4);
+}
+.tasksTextWrap{min-width:0;}
+.tasksText{
+  font-size:16px;
+  line-height:1.28;
+  color:rgba(255,255,255,.90);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tasksSub{
+  margin-top:3px;
+  font-size:12px;
+  color:rgba(255,255,255,.44);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tasksEmpty{
+  font-size:15px;
+  line-height:1.4;
+  color:rgba(255,255,255,.38);
+  max-width:28ch;
+}
+
+/* free text preview */
+.freeTextPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.freeTextPreviewBody{
+  font-size:15px;
+  line-height:1.45;
+  color:rgba(255,255,255,.78);
+  display:-webkit-box;
+  -webkit-line-clamp:5;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:pre-wrap;
+}
+.freeTextPreviewBody.is-empty{color:rgba(255,255,255,.34);}
+
+/* placeholder preview */
+.placeholderPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:8px;
+}
+.placeholderTitle{
+  font-size:28px;
+  line-height:.95;
+  font-weight:800;
+}
+.placeholderBody{
+  font-size:14px;
+  line-height:1.4;
+  color:rgba(255,255,255,.46);
+  max-width:28ch;
+}
+
+/* overlay */
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+.overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+.overlayInner{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(900px 560px at 24% 16%, rgba(0,180,255,.08), transparent 58%),
+    radial-gradient(840px 520px at 82% 74%, rgba(255,100,180,.06), transparent 58%),
+    rgba(5,11,18,.96);
+}
+.overlayScroll{
+  position:absolute;
+  inset:calc(var(--safeTop) + 22px) 0 calc(var(--safeBottom) + 78px) 0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.overlayContent{
+  min-height:100%;
+  padding:0 18px 26px 18px;
+}
+.closeFab{
+  position:absolute;
+  left:50%;
+  bottom:calc(var(--safeBottom) + 18px);
+  transform:translateX(-50%);
+  width:36px;
+  height:36px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.92);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+/* overlay shared */
+.fullModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.fullModuleHead{
+  padding:0 0 18px 0;
+}
+.fullModuleLabel{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.44);
+}
+.fullModuleTitle{
+  margin-top:8px;
+  font-size:40px;
+  line-height:.94;
+  font-weight:800;
+}
+.fullModuleText{
+  margin-top:10px;
+  font-size:15px;
+  line-height:1.5;
+  color:rgba(255,255,255,.62);
+  max-width:36ch;
+}
+
+/* weather module */
+.weatherModuleTop{
+  display:grid;
+  grid-template-columns:1fr 120px;
+  gap:12px;
+  align-items:center;
+  padding:6px 0 16px 0;
+}
+.weatherBigTemp{font-size:68px;line-height:.88;font-weight:800;}
+.weatherBigStatus{margin-top:8px;font-size:16px;color:rgba(255,255,255,.82);}
+.weatherMetaLine{margin-top:8px;font-size:14px;color:rgba(255,255,255,.56);}
+.weatherGlyphLarge{width:104px;height:104px;margin-left:auto;}
+.weatherRows{display:flex;flex-direction:column;gap:14px;padding-top:10px;}
+.weatherRow{
+  display:grid;
+  grid-template-columns:92px 1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:0 0 10px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.weatherRowTime{font-size:13px;color:rgba(255,255,255,.46);text-transform:uppercase;letter-spacing:.08em;}
+.weatherRowMain{font-size:15px;color:rgba(255,255,255,.82);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weatherRowTemp{font-size:20px;font-weight:700;color:rgba(255,255,255,.94);}
+
+/* tasks module */
+.tasksModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.tasksComposer{
+  display:grid;
+  grid-template-columns:1fr 44px;
+  gap:10px;
+  align-items:center;
+  padding:12px 0 18px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.tasksInput,
+.taskSubInput,
+.freeTextInput{
+  width:100%;
+  border:0;
+  outline:none;
+  background:transparent;
+  color:rgba(255,255,255,.94);
+}
+.tasksInput{
+  min-height:42px;
+  font-size:18px;
+}
+.tasksInput::placeholder,
+.taskSubInput::placeholder,
+.freeTextInput::placeholder{color:rgba(255,255,255,.28);}
+.tasksAddBtn{
+  width:44px;
+  height:44px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  background:rgba(255,255,255,.04);
+  font-size:26px;
+  line-height:1;
+  cursor:pointer;
+}
+.tasksModuleList{display:flex;flex-direction:column;gap:16px;padding:18px 0 0 0;}
+.taskCard{
+  padding:0 0 16px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.taskMainRow{
+  display:grid;
+  grid-template-columns:20px 1fr auto;
+  gap:12px;
+  align-items:start;
+}
+.taskCheck{
+  appearance:none;
+  -webkit-appearance:none;
+  width:16px;
+  height:16px;
+  border:1.5px solid rgba(255,255,255,.44);
+  background:transparent;
+  margin-top:4px;
+  cursor:pointer;
+}
+.taskCheck:checked{
+  border-color:rgba(0,209,255,.95);
+  background:rgba(0,209,255,.16);
+  box-shadow:0 0 10px rgba(0,209,255,.2);
+}
+.taskTextBtn,
+.taskDeleteBtn,
+.addSubBtn{
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  color:inherit;
+  cursor:pointer;
+}
+.taskTextBtn{
+  text-align:left;
+  font-size:20px;
+  line-height:1.22;
+  color:rgba(255,255,255,.92);
+}
+.taskDeleteBtn{font-size:14px;color:rgba(255,255,255,.34);padding-top:4px;}
+.taskCard.is-done .taskTextBtn{opacity:.46;text-decoration:line-through;}
+.subTasks{
+  margin:12px 0 0 32px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.subTaskRow{
+  display:grid;
+  grid-template-columns:14px 1fr;
+  gap:10px;
+  align-items:start;
+}
+.subTaskMark{
+  width:5px;
+  height:5px;
+  border-radius:999px;
+  background:rgba(255,255,255,.34);
+  margin-top:8px;
+}
+.subTaskText{
+  font-size:15px;
+  line-height:1.35;
+  color:rgba(255,255,255,.62);
+}
+.subTaskInputRow{
+  margin:10px 0 0 32px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+}
+.taskSubInput{font-size:15px;min-height:34px;}
+.addSubBtn{font-size:13px;color:rgba(0,209,255,.86);}
 
 /* free text module */
 .freeTextModule{min-height:100%;display:flex;flex-direction:column;}
