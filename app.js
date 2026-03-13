@@ -16,7 +16,7 @@
     power: "sbdash_power_v101",
   };
 
-  const SWIPE_THRESHOLD = 54;
+  const SWIPE_THRESHOLD = 36;
   const MODULES = [
     { id: "timer", label: "Timer" },
     { id: "prio", label: "Prio" },
@@ -44,7 +44,7 @@
   };
 
   const state = {
-    slotIndexes: [3, 2],
+    slotIndexes: [1, 2],
     prios: loadJson(LS.prio, [
       { id: uid(), text: "Hämta bilen på vägen hem", note: "", done: false },
     ]),
@@ -146,37 +146,79 @@
   }
 
   function weatherIconPath(code) {
-    const map = {
-      0: "sun.svg",
-      1: "sun.svg",
-      2: "partly-cloudy.svg",
-      3: "cloud.svg",
-      45: "fog.svg",
-      48: "fog.svg",
-      51: "drizzle.svg",
-      53: "drizzle.svg",
-      55: "drizzle.svg",
-      56: "sleet.svg",
-      57: "sleet.svg",
-      61: "rain.svg",
-      63: "rain.svg",
-      65: "rain.svg",
-      66: "sleet.svg",
-      67: "sleet.svg",
-      71: "snow.svg",
-      73: "snow.svg",
-      75: "snow.svg",
-      77: "snow.svg",
-      80: "rain.svg",
-      81: "rain.svg",
-      82: "rain.svg",
-      85: "snow.svg",
-      86: "snow.svg",
-      95: "storm.svg",
-      96: "storm.svg",
-      99: "storm.svg",
+    const symbolMap = {
+      0: "☀",
+      1: "☀",
+      2: "⛅",
+      3: "☁",
+      45: "〰",
+      48: "〰",
+      51: "🌦",
+      53: "🌦",
+      55: "🌦",
+      56: "🌨",
+      57: "🌨",
+      61: "🌧",
+      63: "🌧",
+      65: "🌧",
+      66: "🌨",
+      67: "🌨",
+      71: "❄",
+      73: "❄",
+      75: "❄",
+      77: "❄",
+      80: "🌦",
+      81: "🌦",
+      82: "⛈",
+      85: "❄",
+      86: "❄",
+      95: "⛈",
+      96: "⛈",
+      99: "⛈",
     };
-    return `assets/ui/weather/${map[code] || "cloud.svg"}`;
+    const bgMap = {
+      0: "#0a1520",
+      1: "#0a1520",
+      2: "#0d1723",
+      3: "#0f1822",
+      45: "#10161d",
+      48: "#10161d",
+      51: "#0d1620",
+      53: "#0d1620",
+      55: "#0d1620",
+      56: "#111821",
+      57: "#111821",
+      61: "#0d1620",
+      63: "#0d1620",
+      65: "#0d1620",
+      66: "#111821",
+      67: "#111821",
+      71: "#101722",
+      73: "#101722",
+      75: "#101722",
+      77: "#101722",
+      80: "#0d1620",
+      81: "#0d1620",
+      82: "#0d1620",
+      85: "#101722",
+      86: "#101722",
+      95: "#0b141d",
+      96: "#0b141d",
+      99: "#0b141d",
+    };
+    const symbol = symbolMap[code] || "☁";
+    const bg = bgMap[code] || "#0d1620";
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88">
+      <defs>
+        <radialGradient id="g" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stop-color="#173041"/>
+          <stop offset="100%" stop-color="${bg}"/>
+        </radialGradient>
+      </defs>
+      <circle cx="44" cy="44" r="36" fill="url(#g)" stroke="rgba(255,255,255,.08)" />
+      <text x="44" y="54" text-anchor="middle" font-size="34" font-family="Arial, Apple Color Emoji, Segoe UI Emoji, sans-serif" fill="#ffffff">${symbol}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
   function weatherLabel(code) {
@@ -231,15 +273,16 @@
     const w = state.weather;
     if (!w || !w.current || !w.hourly) {
       return `
-        <div class="weatherPreview">
-          <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
-          <div class="weatherPreviewText">
-            <div class="weatherPreviewTempBig">--°</div>
-            <div class="weatherPreviewStatus">Laddar väder…</div>
-            <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
-            <div class="weatherPreviewMetaRow">
-              <div class="weatherPreviewChip">Värmdö</div>
-              <div class="weatherPreviewChip">Regnrisk --</div>
+        <div class="weatherPreview weatherPreview--loading">
+          <div class="weatherPreviewMain">
+            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="${weatherIconPath(3)}" alt="" draggable="false"></div>
+            <div class="weatherPreviewText">
+              <div class="weatherPreviewTempBig">--°</div>
+              <div class="weatherPreviewStatus">Laddar väder…</div>
+              <div class="weatherPreviewMetaRow">
+                <div class="weatherPreviewChip">Värmdö</div>
+                <div class="weatherPreviewChip">Väder</div>
+              </div>
             </div>
           </div>
         </div>`;
@@ -252,16 +295,18 @@
 
     return `
       <div class="weatherPreview">
-        <div class="weatherPreviewVisual">
-          <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
-        </div>
-        <div class="weatherPreviewText">
-          <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
-          <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
-          <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
-          <div class="weatherPreviewMetaRow">
-            <div class="weatherPreviewChip">Värmdö</div>
-            <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
+        <div class="weatherPreviewMain">
+          <div class="weatherPreviewVisual">
+            <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
+          </div>
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
+            <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
+            <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
+            <div class="weatherPreviewMetaRow">
+              <div class="weatherPreviewChip">Värmdö</div>
+              <div class="weatherPreviewChip">Regn ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
+            </div>
           </div>
         </div>
         <div class="weatherPreviewHours">
@@ -326,19 +371,18 @@
     const more = state.prios.length - visible.length;
     return `
       <div class="prioPreview">
-        <div class="prioPreviewBody">
-          <div class="prioPreviewHeader">Prio</div>
-          <div class="prioPreviewList">
-            ${visible.map((item) => `
-              <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
-                <div class="prioPreviewDot"></div>
-                <div>
-                  <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
-                </div>
+        <div class="prioPreviewHeader">Prio</div>
+        <div class="prioPreviewList">
+          ${visible.map((item) => `
+            <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
+              <div class="prioPreviewDot"></div>
+              <div>
+                <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
+                ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 28))}</div>` : ''}
               </div>
-            `).join("")}
-            ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
-          </div>
+            </div>
+          `).join("")}
+          ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
         </div>
       </div>`;
   }
@@ -348,9 +392,10 @@
       <div class="prioItem ${item.done ? 'is-done' : ''}" data-id="${escapeHtml(item.id)}">
         <div class="prioItemMain">
           <input class="prioCheck" type="checkbox" ${item.done ? 'checked' : ''} aria-label="Klar">
-          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
+          <input class="prioTextInput" type="text" value="${escapeHtml(item.text)}" maxlength="160" aria-label="Prio">
           <button class="prioDeleteBtn" type="button" aria-label="Ta bort">✕</button>
         </div>
+        <input class="prioNoteInput" type="text" value="${escapeHtml(item.note || '')}" maxlength="220" placeholder="Anteckning" aria-label="Anteckning">
       </div>
     `).join("");
   }
@@ -359,12 +404,8 @@
     const text = state.freeText.trim();
     return `
       <div class="freeTextPreview">
-        <div class="freeTextPreviewCard">
-          <div class="freeTextPreviewHeader">Fritext</div>
-          <div class="freeTextPreviewBody">
-            <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
-          </div>
-        </div>
+        <div class="freeTextPreviewLabel">Fritext</div>
+        <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
       </div>`;
   }
 
@@ -384,7 +425,7 @@
     const center = state.timer.running ? formatRemainingShort(remaining) : state.timer.minutes;
     const bottom = state.timer.running ? 'KVAR' : 'MIN';
     return `
-      <div class="timerPreview">
+      <div class="timerPreview timerPreview--direct">
         <div class="timerPreviewWrap">
           <div class="timerPreviewMain">
             <div class="timerPreviewWheel">
@@ -395,45 +436,57 @@
               </div>
             </div>
           </div>
-          <button class="timerPreviewReset" type="button" data-timer-reset="1">Reset</button>
+          <div class="timerPreviewActions">
+            ${[5, 10, 15, 25].map((m) => `<button class="timerPreviewPresetBtn ${state.timer.minutes === m ? 'is-active' : ''}" data-timer-min="${m}" type="button">${m}</button>`).join("")}
+          </div>
+          <div class="timerPreviewActionRow">
+            <button class="timerPreviewAction is-primary" data-timer-action="${state.timer.running ? 'restart' : 'start'}" type="button">${state.timer.running ? 'Starta om' : 'Starta'}</button>
+            <button class="timerPreviewAction" data-timer-action="reset" type="button">Reset</button>
+          </div>
         </div>
       </div>`;
   }
 
   function renderStocksPreview() {
     return `
-      <div class="stocksTapePreview">
-        ${STOCKS.map((stock) => `
-          <div class="stockTapeRow">
-            <div class="stockTapeLeft">
-              <div class="stockTapeSymbol">${escapeHtml(stock.short)}</div>
-              <div class="stockTapeName">${escapeHtml(stock.miniSymbol)}</div>
+      <div class="stocksPreview">
+        <div class="stocksPreviewTape">
+          ${STOCKS.map((stock, idx) => `
+            <div class="stockMiniRow">
+              <div class="stockMiniLeft">
+                <div class="stockMiniLabel">${escapeHtml(stock.short)}</div>
+                <div class="stockMiniSpark">
+                  <span style="height:${12 + (idx * 3)}px"></span>
+                  <span style="height:${18 + (idx * 2)}px"></span>
+                  <span style="height:${10 + (idx * 4)}px"></span>
+                  <span style="height:${20 + (idx * 2)}px"></span>
+                </div>
+              </div>
+              <div class="stockMiniRight">
+                <div class="stockMiniValue">${escapeHtml(state.stockMini[stock.key]?.value || stock.short)}</div>
+                <div class="stockMiniMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Live i modul')}</div>
+              </div>
             </div>
-            <div class="stockTapeRight">
-              <div class="stockTapeValue">${escapeHtml(state.stockMini[stock.key]?.value || '--')}</div>
-              <div class="stockTapeMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Väntar data')}</div>
-            </div>
-          </div>
-        `).join("")}
+          `).join("")}
+        </div>
       </div>`;
   }
 
   function renderNewsPreview() {
     return `
-      <div class="newsTapePreview">
-        <div class="newsPreviewHeader">Nyheter</div>
-        <div class="newsPreviewBody">
-          <div class="newsTapeItem">
-            <div class="newsTapeTitle">Top stories från TradingView i ren mörk vy.</div>
-            <div class="newsTapeMeta">Live-feed i modulen</div>
+      <div class="newsPreview">
+        <div class="newsPreviewTicker">MARKNAD · LIVE · TV</div>
+        <div class="newsPreviewList">
+          <div class="newsPreviewItem">
+            <div class="newsPreviewItemTitle">Makro, index och råvaror i en mörk live-feed.</div>
+            <div class="newsPreviewItemMeta">Öppna för hela flödet</div>
           </div>
-          <div class="newsTapeItem">
-            <div class="newsTapeTitle">Marknadsrubriker, index och valuta på ett ställe.</div>
-            <div class="newsTapeMeta">Öppna för hela listan</div>
+          <div class="newsPreviewItem">
+            <div class="newsPreviewItemTitle">US100, FX och olja samlat i samma vy.</div>
+            <div class="newsPreviewItemMeta">TradingView</div>
           </div>
-          <div class="newsTapeItem">
-            <div class="newsTapeTitle">Scrollbar lista utan extra rutor i rutan.</div>
-            <div class="newsTapeMeta">TradingView</div>
+          <div class="newsPreviewPulseRow">
+            <span></span><span></span><span></span><span></span>
           </div>
         </div>
       </div>`;
@@ -441,17 +494,22 @@
 
   function renderPowerPreview() {
     const p = state.power;
-    const next = p?.today?.[1];
+    const bars = p?.today?.slice(0, 6) || [];
+    const nowPrice = p?.nowPriceText || '--';
+    const next = p?.today?.[new Date().getHours() + 1];
+    const cheapest = p?.bestWindow || '--';
     return `
-      <div class="powerTapePreview">
-        <div class="powerPreviewHeader">Elpris SE3</div>
-        <div class="powerPreviewBody">
-          <div class="powerTapeTop">
-            <div class="powerTapeStat"><div class="powerTapeStatLabel">Nu</div><div class="powerTapeStatValue">${escapeHtml(p?.nowPriceText || '--')}</div></div>
-            <div class="powerTapeStat"><div class="powerTapeStatLabel">Nästa</div><div class="powerTapeStatValue">${escapeHtml(next ? next.price.toFixed(2) + ' kr' : '--')}</div></div>
-            <div class="powerTapeStat"><div class="powerTapeStatLabel">Lägst</div><div class="powerTapeStatValue">${escapeHtml(p?.todayLowText || '--')}</div></div>
-          </div>
-          <div class="powerTapeBottom">Billigast fönster: ${escapeHtml(p?.bestWindow || '--')}</div>
+      <div class="powerPreview">
+        <div class="powerPreviewTop">
+          <div class="powerPreviewValue">${escapeHtml(nowPrice)}</div>
+          <div class="powerPreviewMeta">Nu · ${escapeHtml(p?.nowLabel || 'SE3')}</div>
+        </div>
+        <div class="powerPreviewStats">
+          <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Nästa</div><div class="powerPreviewStatValue">${escapeHtml(next ? `${next.price.toFixed(2)} kr` : '--')}</div></div>
+          <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Billigast</div><div class="powerPreviewStatValue">${escapeHtml(cheapest)}</div></div>
+        </div>
+        <div class="powerPreviewBars">
+          ${bars.map((item) => `<div class="powerPreviewBarWrap"><div class="powerPreviewBar" style="height:${Math.max(10, item.ratio * 44)}px"></div><div class="powerPreviewBarHour">${escapeHtml(item.hour)}</div></div>`).join("")}
         </div>
       </div>`;
   }
@@ -487,7 +545,7 @@
     slot.classList.remove('is-animating-left', 'is-animating-right');
     slot.classList.add(delta > 0 ? 'is-animating-left' : 'is-animating-right');
     renderSlots();
-    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 360);
+    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 260);
   }
 
   function attachSlotSwipe(slot, slotIndex) {
@@ -511,9 +569,9 @@
       slot.classList.add('is-swiping');
       slot.classList.toggle('swipe-left', dx < 0);
       slot.classList.toggle('swipe-right', dx > 0);
-      content.style.setProperty('--swipeX', `${dx * 0.35}px`);
-      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 1200, 0.03)}`);
-      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 320, 0.18)}`);
+      content.style.setProperty('--swipeX', `${dx * 0.48}px`);
+      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 1800, 0.015)}`);
+      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 520, 0.08)}`);
     });
 
     function end(e) {
@@ -525,16 +583,14 @@
       content.style.removeProperty('--swipeX');
       content.style.removeProperty('--swipeScale');
       content.style.removeProperty('--swipeOpacity');
-      if (e.type === 'pointerup' && e.target.closest?.('[data-timer-reset]')) {
-        resetTimer();
-        return;
-      }
       if (Math.abs(dx) > SWIPE_THRESHOLD) {
         stepSlot(slotIndex, dx < 0 ? 1 : -1);
         slot.dataset.swiped = '1';
         setTimeout(() => { slot.dataset.swiped = ''; }, 200);
       } else if (e.type === 'pointerup' && !slot.dataset.swiped) {
-        openCurrentModule(slotIndex);
+        if (e.target.closest('[data-timer-action], [data-timer-min]')) return;
+        const moduleId = slot.dataset.moduleId;
+        if (moduleId !== 'timer') openCurrentModule(slotIndex);
       }
     }
 
@@ -578,7 +634,6 @@
         openOverlay(genericOverlay);
         break;
       case 'timer':
-        openTimer();
         break;
       default:
         break;
@@ -613,6 +668,20 @@
     }
     persistPrios();
     renderPrioList();
+    renderSlots();
+  });
+
+  prioPanelList?.addEventListener('input', (e) => {
+    const itemEl = e.target.closest('.prioItem');
+    if (!itemEl) return;
+    const id = itemEl.dataset.id;
+    if (e.target.classList.contains('prioTextInput')) {
+      state.prios = state.prios.map((item) => item.id === id ? { ...item, text: e.target.value } : item);
+    }
+    if (e.target.classList.contains('prioNoteInput')) {
+      state.prios = state.prios.map((item) => item.id === id ? { ...item, note: e.target.value } : item);
+    }
+    persistPrios();
     renderSlots();
   });
 
@@ -732,6 +801,26 @@
     }
   });
 
+  document.addEventListener('click', (e) => {
+    const presetBtn = e.target.closest('[data-timer-min]');
+    if (presetBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      setTimerMinutes(Number(presetBtn.dataset.timerMin));
+      updateTimerWheelText();
+      return;
+    }
+
+    const actionBtn = e.target.closest('[data-timer-action]');
+    if (actionBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const action = actionBtn.dataset.timerAction;
+      if (action === 'start' || action === 'restart') startTimer();
+      if (action === 'reset') resetTimer();
+    }
+  });
+
   timerIconBtn?.addEventListener('click', openTimer);
   timerCloseFab?.addEventListener('click', closeTimer);
   prioCloseFab?.addEventListener('click', () => closeOverlay(prioOverlay));
@@ -770,8 +859,6 @@
   function renderGenericModule(type) {
     if (type === 'stocks') {
       genericPanel.className = 'genericPanel genericPanel--stocks';
-      genericOverlay.querySelector('.moduleExpandCard')?.classList.add('genericCard--stocks');
-      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--news');
       genericPanel.innerHTML = `
         <div class="stocksCarousel" id="stocksCarousel">
           ${STOCKS.map((stock, idx) => `
@@ -791,37 +878,25 @@
     }
 
     if (type === 'news') {
-      genericPanel.className = 'genericPanel';
-      genericOverlay.querySelector('.moduleExpandCard')?.classList.add('genericCard--news');
-      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--stocks');
+      genericPanel.className = 'genericPanel genericPanel--news';
       genericPanel.innerHTML = `
-        <div class="newsWidgetCard">
-          <div class="newsWidgetMount" id="newsWidgetMount"></div>
-        </div>
+        <div class="newsWidgetMount" id="newsWidgetMount"></div>
       `;
       mountTradingViewNews();
       return;
     }
 
     if (type === 'power') {
-      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--stocks','genericCard--news');
-      genericPanel.className = 'genericPanel';
+      genericPanel.className = 'genericPanel genericPanel--power';
       const p = state.power;
       genericPanel.innerHTML = `
-        <div class="genericTitleRow">
-          <div>
-            <div class="genericTitle">Elpris</div>
-            <div class="genericSubtle">Stockholm · SE3</div>
-          </div>
-          <div class="genericSubtle">Timpris</div>
-        </div>
         <div class="powerPanelCard">
           <div class="powerHead">
             <div>
               <div class="powerHeroTemp">${escapeHtml(p?.nowPriceText || '--')}</div>
               <div class="powerHeroMeta">Just nu · ${escapeHtml(p?.nowLabel || 'saknas')}</div>
             </div>
-            <div class="genericSubtle">${escapeHtml(p?.todayDateText || '')}</div>
+            <div class="genericSubtle">SE3</div>
           </div>
           <div class="powerBody">
             <div class="powerStatsGrid">
@@ -872,15 +947,15 @@
           timezone: 'Europe/Stockholm',
           theme: 'dark',
           style: '1',
-          locale: 'sv_SE',
+          locale: 'sv',
           allow_symbol_change: false,
           save_image: false,
           hide_side_toolbar: true,
           hide_top_toolbar: false,
-          hide_legend: false,
-          withdateranges: false,
+          hide_legend: true,
+          withdateranges: true,
           container_id: `tvChart${idx}`,
-          backgroundColor: '#06080d',
+          backgroundColor: '#05070b',
           gridColor: 'rgba(255,255,255,0.05)',
           studies: [],
         });
@@ -912,7 +987,7 @@
       isTransparent: true,
       displayMode: 'adaptive',
       width: '100%',
-      height: 420,
+      height: 620,
       colorTheme: 'dark',
       locale: 'sv'
     });
@@ -986,11 +1061,11 @@
   async function refreshStocksMini() {
     const nowStamp = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
     state.stockMini = {
-      gold: { value: 'XAU/USD', meta: `Live i modul · ${nowStamp}` },
-      silver: { value: 'XAG/USD', meta: `Live i modul · ${nowStamp}` },
-      oil: { value: 'USOIL', meta: `Live i modul · ${nowStamp}` },
-      us100: { value: 'US100', meta: `Live i modul · ${nowStamp}` },
-      eurusd: { value: 'EUR/USD', meta: `Live i modul · ${nowStamp}` },
+      gold: { value: 'Live', meta: `XAU/USD · ${nowStamp}` },
+      silver: { value: 'Live', meta: `XAG/USD · ${nowStamp}` },
+      oil: { value: 'Live', meta: `USOIL · ${nowStamp}` },
+      us100: { value: 'Live', meta: `US100 · ${nowStamp}` },
+      eurusd: { value: 'Live', meta: `EUR/USD · ${nowStamp}` },
     };
     saveJson(LS.stocksMini, state.stockMini);
     renderSlots();
