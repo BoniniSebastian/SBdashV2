@@ -1655,846 +1655,374 @@ body.timerRunning .timerBarWrap{
 }
 
 
-/* =========================
-   SB Dash v10.5 overrides
-========================= */
-
-:root{
-  --pageTop:calc(var(--safeTop) + 12px);
-  --moduleTop:128px;
-  --pagePadX:20px;
-  --prioText:12px;
-  --prioLine:1.28;
-}
-
-body{
-  font-size:14px;
-}
-
-.topBar{
-  top:var(--pageTop);
-}
-
-.clockBlock{
-  gap:6px;
-}
-
+/* ===== v10.6 overrides ===== */
+body{ overflow-x:hidden; }
 .clockDate{
-  font-size:12px;
-  letter-spacing:.12em;
-  opacity:.76;
+  font-size:13px;
+  letter-spacing:.08em;
 }
-
 .clockTime{
-  font-size:40px;
-  letter-spacing:0;
+  font-size:42px;
 }
-
 .timerIconBtn{
   display:none;
 }
-
-.clockSeparator{
-  top:var(--moduleTop);
-  opacity:.8;
-}
-
-.moduleArea{
-  top:var(--moduleTop);
-}
-
 .moduleSlot{
-  background:rgba(10,18,26,.02);
+  background:rgba(8,12,18,.02);
   backdrop-filter:none;
   -webkit-backdrop-filter:none;
 }
-
 .moduleSlot--dynamic{
-  padding:16px 18px 14px 18px;
+  padding:14px 16px 12px 16px;
+  touch-action:pan-y pinch-zoom;
 }
-
-.moduleSlot + .moduleSlot{
-  border-top:1px solid rgba(255,255,255,.06);
-}
-
 .moduleSlotContent{
   transition:
-    transform .24s cubic-bezier(.2,.82,.2,1),
-    opacity .18s ease,
-    filter .18s ease;
+    transform .26s cubic-bezier(.2,.82,.2,1),
+    opacity .22s ease,
+    filter .22s ease;
 }
-
 .moduleSlot.is-swiping{
   background:rgba(255,255,255,.012);
 }
-
-.moduleSlot::before,
-.moduleSlot::after{
-  top:18px;
-  bottom:18px;
-}
-
-@keyframes slotSwapLeft{
-  0%{
-    transform:translate3d(28px,0,0) scale(.988);
-    opacity:.78;
-    filter:blur(1px);
-  }
-  100%{
-    transform:translate3d(0,0,0) scale(1);
-    opacity:1;
-    filter:none;
-  }
-}
-
-@keyframes slotSwapRight{
-  0%{
-    transform:translate3d(-28px,0,0) scale(.988);
-    opacity:.78;
-    filter:blur(1px);
-  }
-  100%{
-    transform:translate3d(0,0,0) scale(1);
-    opacity:1;
-    filter:none;
-  }
-}
-
-/* all preview text smaller */
-.previewTitle,
-.previewSideText,
-.modulePlaceholderText,
-.genericSubtle,
-.weatherStatLabel,
-.weatherHourTime,
-.weatherHourRain,
-.freeTextInput,
-.powerStatCardLabel,
-.powerTomorrowChipLabel{
-  font-size:12px !important;
-}
-
-/* timer preview direct */
-.timerPreview{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.timerPreviewWrap{
+.prioPreview--compact,
+.freeTextPreview--compact,
+.newsPreviewCompact,
+.powerPreviewCompact,
+.simplePreviewCompact,
+.stocksPreviewCompact{
   width:100%;
   height:100%;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
-  gap:12px;
+  gap:10px;
+  padding:4px 8px 4px 10px;
 }
-
-.timerPreviewMain{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.timerPreviewWheel{
-  width:186px;
-  height:186px;
-}
-
-.timerPreviewTop,
-.timerPreviewBottom{
-  font-size:10px;
-}
-
-.timerPreviewValue{
-  font-size:36px;
-  margin:8px 0 6px 0;
-}
-
-.timerPreviewStatus,
-.timerPreviewPresets{
-  display:none !important;
-}
-
-.timerPreviewActions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.timerPreviewPresetBtn,
-.timerPreviewAction{
-  appearance:none;
-  -webkit-appearance:none;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.03);
-  color:rgba(255,255,255,.82);
-  border-radius:999px;
-  min-width:34px;
-  height:28px;
-  padding:0 11px;
+.miniSectionLabel{
   font-size:11px;
-  font-weight:800;
-  letter-spacing:.02em;
-}
-
-.timerPreviewPresetBtn.is-active,
-.timerPreviewAction.is-primary{
-  border-color:rgba(0,209,255,.28);
-  box-shadow:0 0 16px rgba(0,209,255,.10);
-  color:rgba(255,255,255,.96);
-}
-
-.timerPreviewActionRow{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  justify-content:center;
-}
-
-/* prio preview */
-.prioPreview{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:8px 0 0 0;
-}
-
-.prioPreviewHeader{
-  font-size:12px;
   font-weight:900;
   letter-spacing:.12em;
   text-transform:uppercase;
   color:rgba(255,255,255,.42);
-  margin:0 0 10px 12px;
 }
-
-.prioPreviewCard{
-  display:none !important;
-}
-
-.prioPreviewList{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  padding-left:12px;
-  padding-right:8px;
-}
-
 .prioPreviewRow{
   grid-template-columns:8px 1fr;
-  gap:8px;
+  gap:10px;
 }
-
 .prioPreviewText{
-  font-size:12px;
-}
-
-.prioPreviewNote{
-  font-size:11px;
-  line-height:1.2;
-  color:rgba(255,255,255,.34);
-}
-
-.prioPreviewMore{
-  padding-left:16px;
-  font-size:11px;
-}
-
-/* prio overlay note editing */
-.prioTextInput,
-.prioNoteInput,
-.prioAddInput{
   font-size:13px;
 }
-
-.prioItem{
-  border-radius:14px;
+.prioPreviewNote{
+  font-size:11px;
 }
-
-.prioItemMain{
-  grid-template-columns:16px minmax(0,1fr) auto;
-  padding:10px 10px 8px 10px;
-}
-
-.prioTextInput{
-  min-height:34px;
-  padding:7px 9px;
-  background:transparent;
-}
-
-.prioNoteInput{
-  min-height:34px;
-  padding:0 10px 10px 36px;
-  background:transparent;
-  border-top:0;
-  color:rgba(255,255,255,.52);
-}
-
-.prioDeleteBtn{
-  padding:2px 0;
-}
-
-/* free text preview */
 .freeTextPreview{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
+  align-items:stretch;
   justify-content:center;
-  align-items:flex-start;
-  gap:10px;
-  padding:0 12px;
 }
-
-.freeTextPreviewCard{
-  display:none !important;
-}
-
-.freeTextPreviewLabel{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.42);
-}
-
 .freeTextPreviewText{
-  width:100%;
-  color:rgba(255,255,255,.62);
-  font-size:12px;
-  line-height:1.35;
+  font-size:13px;
+  line-height:1.4;
+  color:rgba(255,255,255,.72);
   display:-webkit-box;
-  -webkit-line-clamp:4;
+  -webkit-line-clamp:5;
   -webkit-box-orient:vertical;
-  overflow:hidden;
-  text-align:left;
 }
-
-.freeTextPreviewText.is-empty{
-  color:rgba(255,255,255,.34);
-}
-
-/* weather preview */
 .weatherPreview{
-  width:100%;
-  height:100%;
   display:flex;
   flex-direction:column;
   justify-content:center;
-  gap:12px;
-  padding:0 2px;
-}
-
-.weatherPreviewCard{
-  display:none !important;
-}
-
-.weatherPreviewMain{
-  width:100%;
-  display:grid;
-  grid-template-columns:74px minmax(0,1fr);
   align-items:center;
-  gap:12px;
-  padding:0 10px;
+  gap:8px;
+  padding:0;
+  text-align:center;
 }
-
-.weatherPreviewVisual{
-  justify-content:center;
+.weatherPreviewCard{
+  display:contents;
 }
-
 .weatherPreviewIcon{
-  width:68px;
-  height:68px;
+  width:74px;
+  height:74px;
 }
-
 .weatherPreviewText{
-  gap:5px;
+  align-items:center;
+  text-align:center;
 }
-
-.weatherPreviewTempBig{
-  font-size:30px;
-}
-
 .weatherPreviewStatus{
   font-size:13px;
 }
-
 .weatherPreviewMeta{
   font-size:12px;
-  color:rgba(255,255,255,.48);
 }
-
 .weatherPreviewMetaRow{
   display:flex;
-  gap:6px;
+  gap:8px;
   flex-wrap:wrap;
-  margin-top:1px;
+  justify-content:center;
 }
-
 .weatherPreviewChip{
-  padding:6px 10px;
+  padding:7px 10px;
   border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.07);
+  font-size:11px;
+  color:rgba(255,255,255,.76);
+}
+.weatherPreviewHours{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  width:100%;
+  margin-top:4px;
+}
+.weatherPreviewHour{
+  min-width:56px;
+  padding:8px 8px;
+  border-radius:16px;
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.05);
-  color:rgba(255,255,255,.68);
-  font-size:11px;
-  line-height:1;
 }
-
-.weatherPreviewHours{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0,1fr));
-  gap:8px;
-  padding:0 10px;
-}
-
-.weatherPreviewHour{
-  padding:9px 6px;
-  border-radius:999px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.04);
-  text-align:center;
-}
-
 .weatherPreviewHourTime{
   font-size:10px;
-  color:rgba(255,255,255,.42);
+  color:rgba(255,255,255,.48);
 }
-
 .weatherPreviewHourTemp{
-  margin-top:3px;
-  font-size:13px;
-  font-weight:900;
-}
-
-.weatherPreviewHourRain{
-  margin-top:2px;
-  font-size:10px;
-  color:rgba(255,255,255,.42);
-}
-
-/* stocks preview */
-.stocksPreview{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:0 2px;
-}
-
-.previewGlassCard,
-.stocksPreviewCard{
-  background:none !important;
-  border:0 !important;
-  box-shadow:none !important;
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
-}
-
-.stocksPreviewTape{
-  width:100%;
-  background:#05070b;
-  border:1px solid rgba(255,255,255,.03);
-  border-radius:20px;
-  padding:10px 12px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
-}
-
-.stockMiniRow{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  gap:10px;
-  align-items:center;
-}
-
-.stockMiniLeft{
-  min-width:0;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.stockMiniLabel{
-  min-width:56px;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.08em;
-  color:rgba(255,255,255,.62);
-}
-
-.stockMiniSpark{
-  flex:1;
-  height:22px;
-  display:flex;
-  align-items:flex-end;
-  gap:3px;
-}
-
-.stockMiniSpark span{
-  display:block;
-  width:5px;
-  border-radius:999px;
-  background:linear-gradient(180deg, rgba(0,209,255,.9), rgba(255,255,255,.18));
-  opacity:.9;
-}
-
-.stockMiniRight{
-  text-align:right;
-}
-
-.stockMiniValue{
-  font-size:10px;
-  font-weight:900;
-  color:rgba(255,255,255,.94);
-  line-height:1.1;
-}
-
-.stockMiniMeta{
-  font-size:10px;
-  color:rgba(255,255,255,.38);
-  line-height:1.1;
-}
-
-/* news preview */
-.newsPreview{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:8px;
-  padding:0 12px;
-}
-
-.newsPreviewHead{
-  display:none !important;
-}
-
-.newsPreviewTicker{
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.16em;
-  color:rgba(255,255,255,.36);
-}
-
-.newsPreviewList{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.newsPreviewItem{
-  border-radius:14px;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.03);
-  padding:10px 12px;
-}
-
-.newsPreviewItemTitle{
-  font-size:11px;
-  line-height:1.28;
-  color:rgba(255,255,255,.84);
-}
-
-.newsPreviewItemMeta{
   margin-top:4px;
+  font-size:16px;
+  font-weight:900;
+}
+.weatherPreviewHourRain{
   font-size:10px;
-  color:rgba(255,255,255,.36);
+  color:rgba(255,255,255,.48);
 }
-
-.newsPreviewPulseRow{
-  display:flex;
-  gap:6px;
-  padding-left:2px;
+.timerPreview{
+  cursor:pointer;
 }
-
-.newsPreviewPulseRow span{
-  width:16px;
-  height:4px;
-  border-radius:999px;
-  background:linear-gradient(90deg, rgba(0,209,255,.75), rgba(255,100,180,.55));
-  opacity:.65;
-}
-
-/* power preview */
-.powerPreview{
+.timerPreviewMain{
   width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
   justify-content:center;
+}
+.timerPreviewWheel{
+  width:182px;
+  height:182px;
+}
+.stocksPreviewCompact{
+  padding:0;
+  gap:8px;
+}
+.stocksMiniRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
-  padding:0 12px;
+  padding:4px 0;
 }
-
-.powerPreviewHead{
-  display:none !important;
-}
-
-.powerPreviewTop{
+.stocksMiniLeft,.stocksMiniRight{
   display:flex;
   flex-direction:column;
   gap:2px;
+  min-width:0;
 }
-
-.powerPreviewValue{
-  font-size:22px;
-  font-weight:950;
-  line-height:1;
-}
-
-.powerPreviewMeta{
+.stocksMiniSymbol{
   font-size:11px;
-  color:rgba(255,255,255,.44);
+  font-weight:900;
+  letter-spacing:.08em;
+  color:rgba(255,255,255,.90);
 }
-
-.powerPreviewStats{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+.stocksMiniValue{
+  font-size:12px;
+  color:rgba(255,255,255,.78);
+  text-align:right;
 }
-
-.powerPreviewStat{
-  padding:8px 10px;
-  border-radius:14px;
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.03);
-}
-
-.powerPreviewStatLabel{
+.stocksMiniMeta{
   font-size:10px;
-  color:rgba(255,255,255,.38);
+  color:rgba(255,255,255,.42);
 }
-
-.powerPreviewStatValue{
-  margin-top:3px;
-  font-size:11px;
-  color:rgba(255,255,255,.86);
-  line-height:1.2;
-}
-
-.powerPreviewBars{
+.stocksMiniSpark{
   display:flex;
   align-items:flex-end;
-  gap:8px;
-  min-height:58px;
+  justify-content:flex-end;
+  gap:2px;
+  height:12px;
 }
-
-.powerPreviewBarWrap{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-}
-
-.powerPreviewBar{
-  width:16px;
+.stocksMiniSpark span{
+  width:3px;
   border-radius:999px;
-  background:linear-gradient(180deg, rgba(0,209,255,.85), rgba(255,255,255,.14));
+  background:rgba(255,255,255,.24);
 }
+.stocksMiniSpark span:nth-child(1){ height:5px; }
+.stocksMiniSpark span:nth-child(2){ height:9px; }
+.stocksMiniSpark span:nth-child(3){ height:7px; }
+.stocksMiniSpark span:nth-child(4){ height:12px; }
+.stocksMiniSpark--up span{ background:rgba(0,209,255,.8); }
+.stocksMiniSpark--down span{ background:rgba(255,100,180,.8); }
+.stocksMiniSpark--flat span{ background:rgba(255,255,255,.45); }
 
-.powerPreviewBarHour{
-  font-size:10px;
-  color:rgba(255,255,255,.34);
+.newsPreviewCompactItem{
+  display:grid;
+  grid-template-columns:8px 1fr;
+  gap:8px;
+  align-items:start;
 }
-
-/* generic overlays */
-.genericScroller{
-  padding:10px 10px 48px 10px;
+.newsPreviewCompactDot{
+  width:4px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.8);
+  margin-top:8px;
 }
-
-.genericPanel{
-  min-height:100%;
-  justify-content:flex-start;
-  gap:0;
+.newsPreviewCompactText{
+  font-size:12px;
+  line-height:1.35;
+  color:rgba(255,255,255,.78);
 }
-
-.genericTitleRow,
-.genericTitle,
-.genericBody{
-  display:none !important;
+.powerPreviewCompactStats{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:6px;
 }
-
-.genericCloseFab,
-.weatherCloseFab,
-.prioCloseFab,
-.freeTextCloseFab{
-  right:10px;
-  bottom:calc(8px + env(safe-area-inset-bottom));
-  width:28px;
-  height:28px;
-  background:rgba(10,15,20,.68);
-  border-color:rgba(255,255,255,.08);
-  box-shadow:none;
+.powerPreviewCompactStats div{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
 }
-
+.powerPreviewCompactStats span{
+  font-size:11px;
+  color:rgba(255,255,255,.46);
+}
+.powerPreviewCompactStats strong{
+  font-size:12px;
+  color:rgba(255,255,255,.92);
+}
+.powerPreviewCompactBars{
+  display:flex;
+  align-items:flex-end;
+  gap:4px;
+  margin-top:4px;
+}
+.powerPreviewCompactBar{
+  flex:1;
+  min-width:0;
+  border-radius:999px 999px 4px 4px;
+  background:linear-gradient(180deg, rgba(0,209,255,.86), rgba(255,100,180,.86));
+  opacity:.92;
+}
+.simplePreviewCompactMeta{
+  font-size:12px;
+  color:rgba(255,255,255,.6);
+  line-height:1.35;
+}
 .genericCard{
-  background:rgba(8,12,17,.94);
-  border:1px solid rgba(255,255,255,.04);
+  inset:8px 8px;
+  border-radius:22px;
 }
-
+.genericScroller{
+  padding:8px 8px 54px 8px;
+}
+.genericPanel--edge{
+  justify-content:flex-start;
+}
+.genericCloseFab{
+  right:12px;
+  bottom:calc(12px + env(safe-area-inset-bottom));
+}
 .genericPanel--stocks,
-.genericPanel--news{
-  background:#05070b;
-}
-
-.genericPanel--stocks .stockSlide{
-  min-width:100%;
+.genericPanel--edge,
+.stockSlide,
+.stockSlideCard--edge,
+.newsWidgetCard--edge,
+.embedFrameCard{
   width:100%;
-  scroll-snap-align:start;
+  height:100%;
 }
-
 .stocksCarousel{
   width:100%;
-  height:calc(100% - 36px);
+  height:calc(100% - 28px);
   display:flex;
   overflow-x:auto;
   scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;
 }
-
+.stockSlide{
+  min-width:100%;
+  scroll-snap-align:start;
+}
 .stockSlideCard{
   width:100%;
   height:100%;
-  min-height:68vh;
-  background:#05070b;
   border-radius:18px;
+  background:#05070b;
+  border:0;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.02);
 }
-
 .stockWidgetMount{
   width:100%;
   height:100%;
-  min-height:68vh;
 }
-
-.tvWidgetFill iframe{
-  width:100% !important;
-  height:100% !important;
+.newsWidgetCard{
+  border-radius:18px;
+  background:#05070b;
+  overflow:hidden;
 }
-
-.stocksPager{
-  display:flex;
-  justify-content:center;
-  gap:7px;
-  padding:10px 0 0 0;
-}
-
-.stocksPagerDot{
-  width:5px;
-  height:5px;
-  border-radius:999px;
-  background:rgba(255,255,255,.22);
-}
-
-.stocksPagerDot.is-active{
-  background:rgba(255,255,255,.82);
-}
-
-.genericPanel--news .newsWidgetMount{
+.newsWidgetMount{
   width:100%;
-  min-height:72vh;
+  min-height:560px;
+}
+.powerPanelCard{
+  width:100%;
+  min-height:100%;
+}
+.embedFrameCard{
   border-radius:18px;
   overflow:hidden;
   background:#05070b;
-  border:1px solid rgba(255,255,255,.03);
 }
-
-.genericPanel--power .powerPanelCard{
+.embedFrame{
+  width:100%;
+  height:100%;
+  min-height:70vh;
+  border:0;
+  background:#05070b;
+}
+.prioNoteInput{
+  width:100%;
+  margin-top:8px;
+  padding:0 4px 4px 34px;
+  min-height:42px;
   background:transparent;
   border:0;
-  box-shadow:none;
-  padding:4px 2px 0 2px;
-}
-
-.powerHead{
-  margin-bottom:12px;
-}
-
-.powerHeroTemp{
-  font-size:36px;
-}
-
-.powerHeroMeta{
+  outline:none;
+  resize:none;
+  color:rgba(255,255,255,.66);
   font-size:12px;
+  line-height:1.35;
+  font-family:inherit;
 }
-
-.powerStatsGrid{
-  gap:8px;
+.prioItem.is-done .prioNoteInput{
+  opacity:.5;
+  text-decoration:line-through;
 }
-
-.powerStatCard{
-  border-radius:14px;
-  padding:10px 12px;
-}
-
-.powerBarCol{
-  gap:6px;
-}
-
-.powerBar{
-  width:16px;
-}
-
-.powerBarLabel{
-  font-size:10px;
-}
-
-/* desktop scroll and sizing */
 @media (min-width: 900px){
-  html,body{
-    height:auto;
-    min-height:100%;
-  }
-
   body{
     overflow:auto;
   }
-
   .app{
     position:relative;
-    min-height:100vh;
-    height:100vh;
+    min-height:100dvh;
+    height:100dvh;
   }
-
-  .calendarStrip{
-    position:fixed;
-  }
-
-  .moduleExpandOverlay,
-  .timerFocus{
-    position:fixed;
+  .moduleArea{
+    bottom:190px;
   }
 }
 
-/* mobile tweak */
-@media (max-width: 480px){
-  :root{
-    --moduleTop:120px;
-    --pagePadX:18px;
-  }
-
-  .clockTime{
-    font-size:36px;
-  }
-
-  .timerPreviewWheel{
-    width:176px;
-    height:176px;
-  }
-
-  .stockSlideCard,
-  .stockWidgetMount{
-    min-height:64vh;
-  }
+.previewGlassCard,
+.freeTextPreviewCard,
+.prioPreviewCard,
+.weatherPreviewCard{
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
 }
