@@ -232,12 +232,14 @@
     if (!w || !w.current || !w.hourly) {
       return `
         <div class="weatherPreview">
-          <div class="weatherPreviewCard">
-            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
-            <div class="weatherPreviewText">
-              <div class="weatherPreviewTempBig">--°</div>
-              <div class="weatherPreviewStatus">Laddar väder…</div>
-              <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
+          <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig">--°</div>
+            <div class="weatherPreviewStatus">Laddar väder…</div>
+            <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
+            <div class="weatherPreviewMetaRow">
+              <div class="weatherPreviewChip">Värmdö</div>
+              <div class="weatherPreviewChip">Regnrisk --</div>
             </div>
           </div>
         </div>`;
@@ -250,29 +252,26 @@
 
     return `
       <div class="weatherPreview">
-        <div class="weatherPreviewCard">
-          <div class="weatherPreviewVisual">
-            <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
+        <div class="weatherPreviewVisual">
+          <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
+        </div>
+        <div class="weatherPreviewText">
+          <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
+          <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
+          <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
+          <div class="weatherPreviewMetaRow">
+            <div class="weatherPreviewChip">Värmdö</div>
+            <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
           </div>
-          <div class="weatherPreviewText">
-            <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
-            <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
-            <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
-            <div class="weatherPreviewMetaRow">
-              <div class="weatherPreviewChip">Värmdö</div>
-              <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
-              <div class="weatherPreviewChip">Nästa timmar</div>
+        </div>
+        <div class="weatherPreviewHours">
+          ${hours.map((hour) => `
+            <div class="weatherPreviewHour">
+              <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
+              <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
+              <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
             </div>
-          </div>
-          <div class="weatherPreviewHours">
-            ${hours.map((hour) => `
-              <div class="weatherPreviewHour">
-                <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
-                <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
-                <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
-              </div>
-            `).join("")}
-          </div>
+          `).join("")}
         </div>
       </div>`;
   }
@@ -327,17 +326,19 @@
     const more = state.prios.length - visible.length;
     return `
       <div class="prioPreview">
-        <div class="prioPreviewCard">
-          ${visible.map((item) => `
-            <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
-              <div class="prioPreviewDot"></div>
-              <div>
-                <div class="prioPreviewText">${escapeHtml(item.text)}</div>
-                ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 40))}</div>` : ''}
+        <div class="prioPreviewBody">
+          <div class="prioPreviewHeader">Prio</div>
+          <div class="prioPreviewList">
+            ${visible.map((item) => `
+              <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
+                <div class="prioPreviewDot"></div>
+                <div>
+                  <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
+                </div>
               </div>
-            </div>
-          `).join("")}
-          ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
+            `).join("")}
+            ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
+          </div>
         </div>
       </div>`;
   }
@@ -359,7 +360,10 @@
     return `
       <div class="freeTextPreview">
         <div class="freeTextPreviewCard">
-          <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
+          <div class="freeTextPreviewHeader">Fritext</div>
+          <div class="freeTextPreviewBody">
+            <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
+          </div>
         </div>
       </div>`;
   }
@@ -379,7 +383,6 @@
     const remaining = timerRemainingSec();
     const center = state.timer.running ? formatRemainingShort(remaining) : state.timer.minutes;
     const bottom = state.timer.running ? 'KVAR' : 'MIN';
-    const status = state.timer.running ? 'Timer aktiv' : 'Tryck för att välja';
     return `
       <div class="timerPreview">
         <div class="timerPreviewWrap">
@@ -392,52 +395,45 @@
               </div>
             </div>
           </div>
-          <div class="timerPreviewStatus">${escapeHtml(status)}</div>
-          <div class="timerPreviewPresets">
-            ${[5, 10, 15, 25].map((m) => `<div class="timerPreviewPreset">${m} min</div>`).join("")}
-          </div>
+          <button class="timerPreviewReset" type="button" data-timer-reset="1">Reset</button>
         </div>
       </div>`;
   }
 
   function renderStocksPreview() {
     return `
-      <div class="freeTextPreview">
-        <div class="previewGlassCard stocksPreviewCard">
-          <div class="stocksPreviewHead">
-            <div class="previewTitle">Aktier / marknad</div>
-            <div class="previewSideText">TradingView</div>
+      <div class="stocksTapePreview">
+        ${STOCKS.map((stock) => `
+          <div class="stockTapeRow">
+            <div class="stockTapeLeft">
+              <div class="stockTapeSymbol">${escapeHtml(stock.short)}</div>
+              <div class="stockTapeName">${escapeHtml(stock.miniSymbol)}</div>
+            </div>
+            <div class="stockTapeRight">
+              <div class="stockTapeValue">${escapeHtml(state.stockMini[stock.key]?.value || '--')}</div>
+              <div class="stockTapeMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Väntar data')}</div>
+            </div>
           </div>
-          <div class="stocksPreviewGrid">
-            ${STOCKS.map((stock) => `
-              <div class="stockMini">
-                <div class="stockMiniLabel">${escapeHtml(stock.short)}</div>
-                <div class="stockMiniValue">${escapeHtml(state.stockMini[stock.key]?.value || '--')}</div>
-                <div class="stockMiniMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Väntar data')}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
+        `).join("")}
       </div>`;
   }
 
   function renderNewsPreview() {
     return `
-      <div class="freeTextPreview">
-        <div class="previewGlassCard">
-          <div class="newsPreviewHead">
-            <div class="previewTitle">Nyheter</div>
-            <div class="previewSideText">TradingView</div>
+      <div class="newsTapePreview">
+        <div class="newsPreviewHeader">Nyheter</div>
+        <div class="newsPreviewBody">
+          <div class="newsTapeItem">
+            <div class="newsTapeTitle">Top stories från TradingView i ren mörk vy.</div>
+            <div class="newsTapeMeta">Live-feed i modulen</div>
           </div>
-          <div class="newsPreviewList">
-            <div class="newsPreviewItem">
-              <div class="newsPreviewItemTitle">Top stories, marknadsrubriker och valutaflöde i en ren mörk vy.</div>
-              <div class="newsPreviewItemMeta">Öppna modulen för live-feed</div>
-            </div>
-            <div class="newsPreviewItem">
-              <div class="newsPreviewItemTitle">Byggd för att passa samma glaskort som vädermodulen.</div>
-              <div class="newsPreviewItemMeta">Swipea vidare mellan moduler</div>
-            </div>
+          <div class="newsTapeItem">
+            <div class="newsTapeTitle">Marknadsrubriker, index och valuta på ett ställe.</div>
+            <div class="newsTapeMeta">Öppna för hela listan</div>
+          </div>
+          <div class="newsTapeItem">
+            <div class="newsTapeTitle">Scrollbar lista utan extra rutor i rutan.</div>
+            <div class="newsTapeMeta">TradingView</div>
           </div>
         </div>
       </div>`;
@@ -445,25 +441,17 @@
 
   function renderPowerPreview() {
     const p = state.power;
-    const bars = p?.today?.slice(0, 8) || [];
-    const nowPrice = p?.nowPriceText || '--';
-    const low = p?.todayLowText || '--';
-    const avg = p?.todayAvgText || '--';
+    const next = p?.today?.[1];
     return `
-      <div class="freeTextPreview">
-        <div class="previewGlassCard">
-          <div class="powerPreviewHead">
-            <div class="previewTitle">Elpris Stockholm</div>
-            <div class="previewSideText">SE3</div>
+      <div class="powerTapePreview">
+        <div class="powerPreviewHeader">Elpris SE3</div>
+        <div class="powerPreviewBody">
+          <div class="powerTapeTop">
+            <div class="powerTapeStat"><div class="powerTapeStatLabel">Nu</div><div class="powerTapeStatValue">${escapeHtml(p?.nowPriceText || '--')}</div></div>
+            <div class="powerTapeStat"><div class="powerTapeStatLabel">Nästa</div><div class="powerTapeStatValue">${escapeHtml(next ? next.price.toFixed(2) + ' kr' : '--')}</div></div>
+            <div class="powerTapeStat"><div class="powerTapeStatLabel">Lägst</div><div class="powerTapeStatValue">${escapeHtml(p?.todayLowText || '--')}</div></div>
           </div>
-          <div class="powerPreviewStats">
-            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Nu</div><div class="powerPreviewStatValue">${escapeHtml(nowPrice)}</div></div>
-            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Lägst</div><div class="powerPreviewStatValue">${escapeHtml(low)}</div></div>
-            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Snitt</div><div class="powerPreviewStatValue">${escapeHtml(avg)}</div></div>
-          </div>
-          <div class="powerPreviewBars">
-            ${bars.map((item) => `<div class="powerPreviewBar" style="height:${Math.max(12, item.ratio * 54)}px"></div>`).join("")}
-          </div>
+          <div class="powerTapeBottom">Billigast fönster: ${escapeHtml(p?.bestWindow || '--')}</div>
         </div>
       </div>`;
   }
@@ -537,6 +525,10 @@
       content.style.removeProperty('--swipeX');
       content.style.removeProperty('--swipeScale');
       content.style.removeProperty('--swipeOpacity');
+      if (e.type === 'pointerup' && e.target.closest?.('[data-timer-reset]')) {
+        resetTimer();
+        return;
+      }
       if (Math.abs(dx) > SWIPE_THRESHOLD) {
         stepSlot(slotIndex, dx < 0 ? 1 : -1);
         slot.dataset.swiped = '1';
@@ -778,25 +770,13 @@
   function renderGenericModule(type) {
     if (type === 'stocks') {
       genericPanel.className = 'genericPanel genericPanel--stocks';
+      genericOverlay.querySelector('.moduleExpandCard')?.classList.add('genericCard--stocks');
+      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--news');
       genericPanel.innerHTML = `
-        <div class="genericTitleRow">
-          <div>
-            <div class="genericTitle">Aktier</div>
-            <div class="genericSubtle">Swipe mellan symbolerna</div>
-          </div>
-          <div class="genericSubtle">TradingView</div>
-        </div>
         <div class="stocksCarousel" id="stocksCarousel">
           ${STOCKS.map((stock, idx) => `
             <section class="stockSlide">
               <div class="stockSlideCard">
-                <div class="stockSlideHead">
-                  <div>
-                    <div class="stockSlideName">${escapeHtml(stock.name)}</div>
-                    <div class="stockSlideSymbol">${escapeHtml(stock.short)}</div>
-                  </div>
-                  <div class="genericSubtle">${idx + 1} / ${STOCKS.length}</div>
-                </div>
                 <div class="stockWidgetMount tvWidgetFill" id="tvChart${idx}"></div>
               </div>
             </section>
@@ -812,14 +792,9 @@
 
     if (type === 'news') {
       genericPanel.className = 'genericPanel';
+      genericOverlay.querySelector('.moduleExpandCard')?.classList.add('genericCard--news');
+      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--stocks');
       genericPanel.innerHTML = `
-        <div class="genericTitleRow">
-          <div>
-            <div class="genericTitle">Nyheter</div>
-            <div class="genericSubtle">Top stories</div>
-          </div>
-          <div class="genericSubtle">TradingView</div>
-        </div>
         <div class="newsWidgetCard">
           <div class="newsWidgetMount" id="newsWidgetMount"></div>
         </div>
@@ -829,6 +804,7 @@
     }
 
     if (type === 'power') {
+      genericOverlay.querySelector('.moduleExpandCard')?.classList.remove('genericCard--stocks','genericCard--news');
       genericPanel.className = 'genericPanel';
       const p = state.power;
       genericPanel.innerHTML = `
@@ -900,7 +876,7 @@
           allow_symbol_change: false,
           save_image: false,
           hide_side_toolbar: true,
-          hide_top_toolbar: true,
+          hide_top_toolbar: false,
           hide_legend: false,
           withdateranges: false,
           container_id: `tvChart${idx}`,
