@@ -13,194 +13,44 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
   <div class="app">
-
-    <div class="zenBlob startZen" aria-hidden="true"></div>
-    <div class="ambientBlob" aria-hidden="true"></div>
-
-    <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
-      <div class="timerBar" id="timerBar"></div>
-    </div>
+    <div class="ambient ambient--one" aria-hidden="true"></div>
+    <div class="ambient ambient--two" aria-hidden="true"></div>
 
     <header class="topBar">
-      <div class="clockBlock">
-        <div class="clockDate" id="clockDate">MÅNDAG | 9 MARS</div>
-
-        <div class="clockRow">
-          <div class="clockTime" id="clockTime">22:14</div>
-
-          <button class="timerIconBtn" id="timerIconBtn" type="button" aria-label="Öppna timer">
-            <img src="assets/ui/icon-pomodoro.svg" alt="" draggable="false" />
-          </button>
-        </div>
+      <div class="topMeta">
+        <div class="dayDate" id="dayDate">FREDAG · 13 MARS</div>
       </div>
     </header>
 
-    <div class="clockSeparator"></div>
+    <div class="line line--top" aria-hidden="true"></div>
 
-    <main class="moduleArea" aria-label="Modulyta">
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot1"
-        type="button"
-        aria-label="Öppna modul i slot 1"
-      >
-        <div class="moduleSlotContent" id="moduleSlot1Content"></div>
-      </button>
+    <main class="slots" aria-label="Slotar">
+      <section class="slotSection" id="slotASection" aria-label="Slot A">
+        <button class="sideRail sideRail--left" id="slotALeft" type="button" aria-label="Föregående modul i slot A"></button>
 
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot2"
-        type="button"
-        aria-label="Öppna modul i slot 2"
-      >
-        <div class="moduleSlotContent" id="moduleSlot2Content"></div>
-      </button>
+        <button class="slotButton" id="slotAButton" type="button" aria-label="Öppna modul i slot A">
+          <div class="slotContent" id="slotAContent"></div>
+        </button>
 
-      <!-- Prio expanded -->
-      <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
-        <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
-          <div class="prioPanelScroller">
-            <div class="prioPanelList" id="prioPanelList"></div>
-          </div>
+        <button class="sideRail sideRail--right" id="slotARight" type="button" aria-label="Nästa modul i slot A"></button>
+      </section>
 
-          <div class="prioAddBar">
-            <div class="prioFakeCheck" aria-hidden="true"></div>
-            <input
-              class="prioAddInput"
-              id="prioAddInput"
-              type="text"
-              maxlength="160"
-              placeholder="Skriv ny prio..."
-              autocomplete="off"
-            />
-            <button class="prioAddBtn" id="prioAddBtn" type="button" aria-label="Lägg till prio">+</button>
-          </div>
+      <div class="line line--middle" aria-hidden="true"></div>
 
-          <button class="prioCloseFab" id="prioCloseFab" type="button" aria-label="Stäng prio">✕</button>
-        </div>
-      </div>
+      <section class="slotSection" id="slotBSection" aria-label="Slot B">
+        <button class="sideRail sideRail--left" id="slotBLeft" type="button" aria-label="Föregående modul i slot B"></button>
 
-      <!-- Weather expanded -->
-      <div class="moduleExpandOverlay" id="weatherOverlay" aria-hidden="true">
-        <div class="moduleExpandCard weatherExpandCard" id="weatherCard" role="dialog" aria-modal="false" aria-label="Väder">
-          <div class="weatherPanelScroller">
-            <div class="weatherPanel">
-              <div class="weatherHero">
-                <div class="weatherHeroText">
-                  <div class="weatherHeroTemp" id="weatherHeroTemp">--°</div>
-                  <div class="weatherHeroStatus" id="weatherHeroStatus">—</div>
-                </div>
+        <button class="slotButton" id="slotBButton" type="button" aria-label="Öppna modul i slot B">
+          <div class="slotContent" id="slotBContent"></div>
+        </button>
 
-                <div class="weatherHeroVisual">
-                  <img
-                    class="weatherHeroIcon"
-                    id="weatherHeroIcon"
-                    src="assets/ui/weather/na.svg"
-                    alt=""
-                    draggable="false"
-                  />
-                </div>
-              </div>
-
-              <div class="weatherStats">
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Känns som</div>
-                  <div class="weatherStatValue" id="weatherFeelsLike">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Vind</div>
-                  <div class="weatherStatValue" id="weatherWind">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Nederbörd</div>
-                  <div class="weatherStatValue" id="weatherRain">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Regnrisk</div>
-                  <div class="weatherStatValue" id="weatherRainChance">—</div>
-                </div>
-              </div>
-
-              <div class="weatherHours" id="weatherHours"></div>
-
-              <div class="weatherFoot">
-                <div class="weatherFootLine" id="weatherTodayLine">Idag: —</div>
-                <div class="weatherFootLine" id="weatherTomorrowLine">Imorgon: —</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
-        </div>
-      </div>
-
-      <!-- Free text expanded -->
-      <div class="moduleExpandOverlay" id="freeTextOverlay" aria-hidden="true">
-        <div class="moduleExpandCard freeTextCard" id="freeTextCard" role="dialog" aria-modal="false" aria-label="Fritext">
-          <div class="freeTextScroller">
-            <div class="freeTextPanel">
-              <textarea
-                class="freeTextInput"
-                id="freeTextInput"
-                maxlength="6000"
-                placeholder="Fritext..."
-                autocomplete="off"
-                spellcheck="true"
-              ></textarea>
-            </div>
-          </div>
-
-          <button class="freeTextCloseFab" id="freeTextCloseFab" type="button" aria-label="Stäng fritext">✕</button>
-        </div>
-      </div>
-
-      <!-- Generic modules 5-7 expanded -->
-      <div class="moduleExpandOverlay" id="genericOverlay" aria-hidden="true">
-        <div class="moduleExpandCard genericCard" id="genericCard" role="dialog" aria-modal="false" aria-label="Modul">
-          <div class="genericScroller">
-            <div class="genericPanel">
-              <div class="genericTitle" id="genericTitle">Modul 5</div>
-              <div class="genericBody" id="genericBody">
-                Den här modulen är skapad som placeholder och väntar på innehåll.
-              </div>
-            </div>
-          </div>
-
-          <button class="genericCloseFab" id="genericCloseFab" type="button" aria-label="Stäng modul">✕</button>
-        </div>
-      </div>
+        <button class="sideRail sideRail--right" id="slotBRight" type="button" aria-label="Nästa modul i slot B"></button>
+      </section>
     </main>
-
-    <div class="timerFocus" id="timerFocus" aria-hidden="true">
-      <div class="timerFocusCard">
-        <div class="timerWheelWrap">
-          <div class="timerWheel" id="timerWheel" aria-label="Timerhjul">
-            <img
-              class="timerWheelRing"
-              id="timerWheelRing"
-              src="assets/ui/wheel-ring.svg"
-              alt=""
-              draggable="false"
-            />
-
-            <div class="timerWheelCenter">
-              <div class="timerWheelTop" id="timerWheelTop">TIMER</div>
-              <div class="timerWheelValue" id="timerWheelValue">5</div>
-              <div class="timerWheelBottom" id="timerWheelBottom">MIN</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button class="timerCloseFab" id="timerCloseFab" type="button" aria-label="Stäng timer">✕</button>
-    </div>
 
     <section class="calendarStrip" aria-label="Kalender">
       <div class="calendarFrameWrap">
@@ -211,14 +61,21 @@
           referrerpolicy="strict-origin-when-cross-origin"
           title="Google Kalender"
         ></iframe>
-
-        <div class="calendarShade"></div>
+        <div class="calendarFade" aria-hidden="true"></div>
       </div>
     </section>
 
-    <audio id="alarmAudio" preload="auto"></audio>
+    <div class="overlay" id="moduleOverlay" aria-hidden="true">
+      <div class="overlayInner">
+        <div class="overlayScroll" id="overlayScroll">
+          <div class="overlayContent" id="overlayContent"></div>
+        </div>
+
+        <button class="closeFab" id="closeFab" type="button" aria-label="Stäng modul">✕</button>
+      </div>
+    </div>
   </div>
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>
