@@ -1,33 +1,72 @@
+
 (() => {
   const $ = (id) => document.getElementById(id);
+  const escapeHtml = (s = "") => String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const LS = {
+    prio: "sbdash_prio_v101",
+    freeText: "sbdash_freetext_v101",
+    timer: "sbdash_timer_v101",
+    stocksMini: "sbdash_stocksmini_v101",
+    power: "sbdash_power_v101",
+  };
+
+  const SWIPE_THRESHOLD = 54;
+  const MODULES = [
+    { id: "timer", label: "Timer" },
+    { id: "prio", label: "Prio" },
+    { id: "weather", label: "Väder" },
+    { id: "freeText", label: "Fritext" },
+    { id: "stocks", label: "Aktier" },
+    { id: "news", label: "Nyheter" },
+    { id: "power", label: "Elpris" },
+  ];
+
+  const STOCKS = [
+    { key: "gold", name: "Guld", symbol: "OANDA:XAUUSD", miniSymbol: "XAUUSD", short: "XAU/USD" },
+    { key: "silver", name: "Silver", symbol: "OANDA:XAGUSD", miniSymbol: "XAGUSD", short: "XAG/USD" },
+    { key: "oil", name: "Olja", symbol: "TVC:USOIL", miniSymbol: "USOIL", short: "USOIL" },
+    { key: "us100", name: "US100", symbol: "CAPITALCOM:US100", miniSymbol: "US100", short: "US100" },
+    { key: "eurusd", name: "EUR/USD", symbol: "FX:EURUSD", miniSymbol: "EURUSD", short: "EUR/USD" },
+  ];
+
+  const STOCK_MINI_DEFAULTS = {
+    gold: { value: "--", meta: "Väntar data" },
+    silver: { value: "--", meta: "Väntar data" },
+    oil: { value: "--", meta: "Väntar data" },
+    us100: { value: "--", meta: "Väntar data" },
+    eurusd: { value: "--", meta: "Väntar data" },
+  };
+
+  const state = {
+    slotIndexes: [3, 2],
+    prios: loadJson(LS.prio, [
+      { id: uid(), text: "Hämta bilen på vägen hem", note: "", done: false },
+    ]),
+    freeText: localStorage.getItem(LS.freeText) || "",
+    timer: loadJson(LS.timer, { minutes: 5, running: false, endAt: 0, durationSec: 300 }),
+    weather: null,
+    power: loadJson(LS.power, null),
+    stockMini: { ...STOCK_MINI_DEFAULTS, ...loadJson(LS.stocksMini, {}) },
+  };
 
   const clockDate = $("clockDate");
   const clockTime = $("clockTime");
-
-  const timerIconBtn = $("timerIconBtn");
-  const timerCloseFab = $("timerCloseFab");
-  const timerFocus = $("timerFocus");
-  const timerWheel = $("timerWheel");
-  const timerWheelRing = $("timerWheelRing");
-  const timerWheelValue = $("timerWheelValue");
-
-  const timerBarWrap = $("timerBarWrap");
-  const timerBar = $("timerBar");
-
-  const moduleSlot1 = $("moduleSlot1");
-  const moduleSlot2 = $("moduleSlot2");
-  const moduleSlot1Content = $("moduleSlot1Content");
-  const moduleSlot2Content = $("moduleSlot2Content");
+  const slotEls = [$("moduleSlot1"), $("moduleSlot2")];
+  const slotContentEls = [$("moduleSlot1Content"), $("moduleSlot2Content")];
 
   const prioOverlay = $("prioOverlay");
-  const prioCard = $("prioCard");
   const prioPanelList = $("prioPanelList");
   const prioAddInput = $("prioAddInput");
   const prioAddBtn = $("prioAddBtn");
   const prioCloseFab = $("prioCloseFab");
 
   const weatherOverlay = $("weatherOverlay");
-  const weatherCard = $("weatherCard");
   const weatherHeroTemp = $("weatherHeroTemp");
   const weatherHeroStatus = $("weatherHeroStatus");
   const weatherHeroIcon = $("weatherHeroIcon");
@@ -41,1377 +80,964 @@
   const weatherCloseFab = $("weatherCloseFab");
 
   const freeTextOverlay = $("freeTextOverlay");
-  const freeTextCard = $("freeTextCard");
   const freeTextInput = $("freeTextInput");
   const freeTextCloseFab = $("freeTextCloseFab");
-  
+
   const genericOverlay = $("genericOverlay");
-  const genericCard = $("genericCard");
-  const genericTitle = $("genericTitle");
-  const genericBody = $("genericBody");
+  const genericPanel = $("genericPanel");
   const genericCloseFab = $("genericCloseFab");
 
-  const alarmAudio = $("alarmAudio");
+  const timerIconBtn = $("timerIconBtn");
+  const timerFocus = $("timerFocus");
+  const timerCloseFab = $("timerCloseFab");
+  const timerBarWrap = $("timerBarWrap");
+  const timerBar = $("timerBar");
+  const timerWheel = $("timerWheel");
+  const timerWheelValue = $("timerWheelValue");
 
-  const PRESETS = [1, 5, 10, 15, 30];
-  const STEP = 360 / PRESETS.length;
-
-  const MODULE_COUNT = 7;
-  const SLOT_DEFAULTS = { slot1: 1, slot2: 2 };
-  const SLOT_SWIPE_THRESHOLD = 88;
-  const SLOT_WHEEL_LOCK_MS = 220;
-  const SLOT_ANIM_MS = 340;
-
-  const WEATHER_ICONS = {
-    clear: "assets/ui/weather/clear.svg",
-    cloudy: "assets/ui/weather/cloudy.svg",
-    rain: "assets/ui/weather/rain.svg",
-    snow: "assets/ui/weather/snow.svg",
-    fog: "assets/ui/weather/fog.svg",
-    thunder: "assets/ui/weather/thunder.svg",
-    na: "assets/ui/weather/na.svg",
-  };
-
-  const WEATHER_TEXT = {
-    0: "Klart",
-    1: "Mest klart",
-    2: "Växlande molnighet",
-    3: "Mulet",
-    45: "Dimma",
-    48: "Rimfrostig dimma",
-    51: "Lätt duggregn",
-    53: "Duggregn",
-    55: "Tätt duggregn",
-    56: "Lätt underkylt duggregn",
-    57: "Underkylt duggregn",
-    61: "Lätt regn",
-    63: "Regn",
-    65: "Kraftigt regn",
-    66: "Lätt underkylt regn",
-    67: "Underkylt regn",
-    71: "Lätt snö",
-    73: "Snö",
-    75: "Kraftig snö",
-    77: "Snökorn",
-    80: "Lätta skurar",
-    81: "Skurar",
-    82: "Kraftiga skurar",
-    85: "Lätta snöbyar",
-    86: "Kraftiga snöbyar",
-    95: "Åska",
-    96: "Åska med hagel",
-    99: "Kraftig åska",
-  };
-
-  const DEFAULT_LOC = { name: "Värmdö", lat: 59.319, lon: 18.5 };
-  const PRIO_KEY = "sbdash_prio_v1";
-  const FREE_TEXT_KEY = "sbdash_free_text_v1";
-  const WEATHER_CACHE_KEY = "sbdash_weather_cache_v1";
-  const WEATHER_CACHE_MS = 10 * 60 * 1000;
-
-  const SLOT_STATE = {
-    slot1: SLOT_DEFAULTS.slot1,
-    slot2: SLOT_DEFAULTS.slot2,
-  };
-
-  const TIMER = {
-    presetIndex: 1,
-    total: 0,
-    left: 0,
-    running: false,
-    endAt: 0,
-    intervalId: 0,
-    finished: false,
-  };
-
-  let prios = loadPrios();
-  let prioEditingId = null;
-  let prioLongPressTriggered = false;
-  let weatherData = null;
-    let freeTextValue = loadFreeText();
-  let genericOpenModule = 4;
-
-  const MODULES = {
-    1: {
-      id: 1,
-      title: "Prio",
-      renderPreview: renderPrioPreviewMarkup,
-      open: () => openPrioOverlay(),
-    },
-    2: {
-      id: 2,
-      title: "Väder",
-      renderPreview: renderWeatherPreviewMarkup,
-      open: () => openWeatherOverlay(),
-    },
-    3: {
-      id: 3,
-      title: "Timer",
-      renderPreview: renderTimerPreviewMarkup,
-      open: () => openTimerFocus({ finished: TIMER.finished }),
-    },
-       4: {
-      id: 4,
-      title: "Fritext",
-      renderPreview: renderFreeTextPreviewMarkup,
-      open: () => openFreeTextOverlay(),
-    },
-    5: {
-      id: 5,
-      title: "Modul 5",
-      renderPreview: () => renderPlaceholderPreviewMarkup(5),
-      open: () => openGenericOverlay(5),
-    },
-    6: {
-      id: 6,
-      title: "Modul 6",
-      renderPreview: () => renderPlaceholderPreviewMarkup(6),
-      open: () => openGenericOverlay(6),
-    },
-    7: {
-      id: 7,
-      title: "Modul 7",
-      renderPreview: () => renderPlaceholderPreviewMarkup(7),
-      open: () => openGenericOverlay(7),
-    },
-  };
-
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
+  let activeOverlay = null;
+  let tvScriptPromise = null;
+  let timerTick = null;
 
   function uid() {
-    return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`;
+    return Math.random().toString(36).slice(2, 10);
   }
 
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function wrapModuleIndex(n) {
-    return ((n - 1 + MODULE_COUNT * 1000) % MODULE_COUNT) + 1;
-  }
-
-  function getModule(id) {
-    return MODULES[wrapModuleIndex(id)];
-  }
-
-  function shiftSlot(slotKey, direction) {
-    SLOT_STATE[slotKey] = wrapModuleIndex(SLOT_STATE[slotKey] + direction);
-    renderSlots();
-  }
-
-  function openSlotModule(slotKey) {
-    const mod = getModule(SLOT_STATE[slotKey]);
-    if (!mod) return;
-    mod.open();
-  }
-
-  function defaultPrios() {
-    return [
-      { id: uid(), text: "Köp mjölk", note: "", done: false },
-      { id: uid(), text: "Ring tandläkaren", note: "", done: false },
-      { id: uid(), text: "Maila XX", note: "", done: false },
-    ];
-  }
-
-  function loadPrios() {
+  function loadJson(key, fallback) {
     try {
-      const raw = localStorage.getItem(PRIO_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (!Array.isArray(parsed)) return defaultPrios();
-
-      return parsed
-        .filter((x) => x && typeof x === "object")
-        .map((x) => ({
-          id: x.id || uid(),
-          text: String(x.text || "").trim(),
-          note: String(x.note || ""),
-          done: !!x.done,
-        }))
-        .filter((x) => x.text);
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch {
-      return defaultPrios();
+      return fallback;
     }
   }
 
-  function savePrios() {
-    localStorage.setItem(PRIO_KEY, JSON.stringify(prios));
+  function saveJson(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function persistPrios() {
+    saveJson(LS.prio, state.prios);
+  }
+
+  function persistTimer() {
+    saveJson(LS.timer, state.timer);
+  }
+
+  function formatSvDate(date = new Date()) {
+    const weekday = date.toLocaleDateString("sv-SE", { weekday: "long" }).toUpperCase();
+    const day = date.getDate();
+    const month = date.toLocaleDateString("sv-SE", { month: "long" }).toUpperCase();
+    return `${weekday} | ${day} ${month}`;
+  }
+
+  function formatTime(date = new Date()) {
+    return date.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
   }
 
   function updateClock() {
     const now = new Date();
-
-    const weekday = now.toLocaleDateString("sv-SE", { weekday: "long" }).toUpperCase();
-    const day = now.toLocaleDateString("sv-SE", { day: "numeric" });
-    const month = now.toLocaleDateString("sv-SE", { month: "long" }).toUpperCase();
-
-    const h = pad2(now.getHours());
-    const m = pad2(now.getMinutes());
-
-    if (clockDate) clockDate.textContent = `${weekday} | ${day} ${month}`;
-    if (clockTime) clockTime.textContent = `${h}:${m}`;
+    if (clockDate) clockDate.textContent = formatSvDate(now);
+    if (clockTime) clockTime.textContent = formatTime(now);
   }
 
-  function setTimerDisplayValue() {
-    if (!timerWheelValue) return;
-    timerWheelValue.textContent = String(PRESETS[TIMER.presetIndex]);
+  function clamp(num, min, max) {
+    return Math.min(max, Math.max(min, num));
   }
 
-  function openTimerFocus({ finished = false } = {}) {
-    if (!timerFocus) return;
-    closeAllModuleOverlays();
-
-    TIMER.finished = finished;
-    document.body.classList.toggle("timerFinished", finished);
-    timerFocus.classList.add("open");
-    timerFocus.setAttribute("aria-hidden", "false");
-    setTimerDisplayValue();
+  function weatherIconPath(code) {
+    const map = {
+      0: "sun.svg",
+      1: "sun.svg",
+      2: "partly-cloudy.svg",
+      3: "cloud.svg",
+      45: "fog.svg",
+      48: "fog.svg",
+      51: "drizzle.svg",
+      53: "drizzle.svg",
+      55: "drizzle.svg",
+      56: "sleet.svg",
+      57: "sleet.svg",
+      61: "rain.svg",
+      63: "rain.svg",
+      65: "rain.svg",
+      66: "sleet.svg",
+      67: "sleet.svg",
+      71: "snow.svg",
+      73: "snow.svg",
+      75: "snow.svg",
+      77: "snow.svg",
+      80: "rain.svg",
+      81: "rain.svg",
+      82: "rain.svg",
+      85: "snow.svg",
+      86: "snow.svg",
+      95: "storm.svg",
+      96: "storm.svg",
+      99: "storm.svg",
+    };
+    return `assets/ui/weather/${map[code] || "cloud.svg"}`;
   }
 
-  function closeTimerFocus() {
-    if (!timerFocus) return;
-    TIMER.finished = false;
-    document.body.classList.remove("timerFinished");
-    timerFocus.classList.remove("open");
-    timerFocus.setAttribute("aria-hidden", "true");
+  function weatherLabel(code) {
+    const labels = {
+      0: "Klart",
+      1: "Mest klart",
+      2: "Delvis molnigt",
+      3: "Mulet",
+      45: "Dimma",
+      48: "Dimma",
+      51: "Lätt duggregn",
+      53: "Duggregn",
+      55: "Kraftigt duggregn",
+      56: "Underkylt duggregn",
+      57: "Underkylt duggregn",
+      61: "Lätt regn",
+      63: "Regn",
+      65: "Kraftigt regn",
+      66: "Underkylt regn",
+      67: "Underkylt regn",
+      71: "Lätt snö",
+      73: "Snö",
+      75: "Kraftig snö",
+      77: "Snökorn",
+      80: "Regnskurar",
+      81: "Regnskurar",
+      82: "Kraftiga skurar",
+      85: "Snöbyar",
+      86: "Snöbyar",
+      95: "Åska",
+      96: "Åska/hagel",
+      99: "Åska/hagel",
+    };
+    return labels[code] || "Väder";
   }
 
-  function stopTimerInternal() {
-    TIMER.running = false;
-    if (TIMER.intervalId) clearInterval(TIMER.intervalId);
-    TIMER.intervalId = 0;
-    document.body.classList.remove("timerRunning");
-    timerBarWrap?.setAttribute("aria-hidden", "true");
-    renderSlots();
-  }
-
-  function updateTimerBar() {
-    if (!timerBar) return;
-    const pct = TIMER.total > 0 ? TIMER.left / TIMER.total : 0;
-    timerBar.style.transform = `scaleX(${Math.max(0, Math.min(1, pct))})`;
-  }
-
-  function beepFallback() {
+  async function fetchWeather() {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=59.32&longitude=18.44&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FStockholm&forecast_days=2";
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.08;
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-
-      setTimeout(() => {
-        osc.stop();
-        ctx.close();
-      }, 1000);
-    } catch {}
-  }
-
-  function playAlarm() {
-    if (alarmAudio?.querySelector("source")) {
-      alarmAudio.currentTime = 0;
-      alarmAudio.play().catch(() => beepFallback());
-      return;
-    }
-    beepFallback();
-  }
-
-  function tickTimer() {
-    if (!TIMER.running) return;
-
-    TIMER.left = Math.max(0, Math.ceil((TIMER.endAt - Date.now()) / 1000));
-    updateTimerBar();
-    renderSlots();
-
-    if (TIMER.left <= 0) {
-      stopTimerInternal();
-      updateTimerBar();
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("weather fetch failed");
+      const data = await res.json();
+      state.weather = data;
       renderSlots();
-      playAlarm();
-      openTimerFocus({ finished: true });
+      renderWeatherOverlay();
+    } catch (err) {
+      console.error(err);
     }
   }
 
-  function startTimer(minutes) {
-    const min = Number(minutes);
-    if (!Number.isFinite(min) || min <= 0) return;
-
-    closeTimerFocus();
-    stopTimerInternal();
-
-    TIMER.total = Math.round(min * 60);
-    TIMER.left = TIMER.total;
-    TIMER.endAt = Date.now() + TIMER.total * 1000;
-    TIMER.running = true;
-    TIMER.finished = false;
-
-    document.body.classList.add("timerRunning");
-    document.body.classList.remove("timerFinished");
-
-    timerBarWrap?.setAttribute("aria-hidden", "false");
-    updateTimerBar();
-    renderSlots();
-    tickTimer();
-
-    TIMER.intervalId = setInterval(tickTimer, 250);
-  }
-
-  function resetTimerState() {
-    stopTimerInternal();
-    TIMER.finished = false;
-    TIMER.total = 0;
-    TIMER.left = 0;
-    TIMER.endAt = 0;
-    document.body.classList.remove("timerFinished");
-    timerBarWrap?.setAttribute("aria-hidden", "true");
-    updateTimerBar();
-    setTimerDisplayValue();
-    renderSlots();
-  }
-
-  function sectorFromDeg(deg) {
-    const raw = Math.round(deg / STEP);
-    return ((raw % PRESETS.length) + PRESETS.length) % PRESETS.length;
-  }
-
-  function makeWheelEngine() {
-    if (!timerWheel || !timerWheelRing) return;
-
-    let dragging = false;
-    let startAngle = 0;
-    let rotationDeg = TIMER.presetIndex * STEP;
-    let didMove = false;
-
-    const angle = (cx, cy, x, y) => Math.atan2(y - cy, x - cx) * (180 / Math.PI);
-
-    function apply(deg) {
-      rotationDeg = deg;
-      timerWheelRing.style.transform = `rotate(${deg}deg)`;
-      TIMER.presetIndex = sectorFromDeg(deg);
-      setTimerDisplayValue();
+  function renderWeatherPreview() {
+    const w = state.weather;
+    if (!w || !w.current || !w.hourly) {
+      return `
+        <div class="weatherPreview">
+          <div class="weatherPreviewCard">
+            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
+            <div class="weatherPreviewText">
+              <div class="weatherPreviewTempBig">--°</div>
+              <div class="weatherPreviewStatus">Laddar väder…</div>
+              <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
+            </div>
+          </div>
+        </div>`;
     }
 
-    apply(rotationDeg);
+    const current = w.current;
+    const status = weatherLabel(current.weather_code);
+    const icon = weatherIconPath(current.weather_code);
+    const hours = nextWeatherHours(w, 3);
 
-    timerWheel.addEventListener("pointerdown", (e) => {
-      if (TIMER.running) return;
-
-      dragging = true;
-      didMove = false;
-
-      const r = timerWheel.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-
-      startAngle = angle(cx, cy, e.clientX, e.clientY) - rotationDeg;
-      timerWheel.setPointerCapture?.(e.pointerId);
-    }, { passive: true });
-
-    timerWheel.addEventListener("pointermove", (e) => {
-      if (!dragging || TIMER.running) return;
-
-      const r = timerWheel.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-
-      const deg = angle(cx, cy, e.clientX, e.clientY) - startAngle;
-      if (!didMove) didMove = true;
-      apply(deg);
-      e.preventDefault();
-    }, { passive: false });
-
-    timerWheel.addEventListener("pointerup", () => {
-      if (!dragging || TIMER.running) return;
-      dragging = false;
-
-      const snapped = TIMER.presetIndex * STEP;
-      apply(snapped);
-
-      if (!didMove) startTimer(PRESETS[TIMER.presetIndex]);
-    }, { passive: true });
-
-    timerWheel.addEventListener("pointercancel", () => {
-      dragging = false;
-    }, { passive: true });
-
-    timerWheel.addEventListener("wheel", (e) => {
-      if (!timerFocus.classList.contains("open") || TIMER.running) return;
-
-      e.preventDefault();
-      const dir = e.deltaY > 0 ? 1 : -1;
-      TIMER.presetIndex = (TIMER.presetIndex + dir + PRESETS.length) % PRESETS.length;
-      apply(TIMER.presetIndex * STEP);
-    }, { passive: false });
-
-    timerFocus.addEventListener("click", (e) => {
-      if (e.target === timerFocus && !TIMER.finished) closeTimerFocus();
-    });
+    return `
+      <div class="weatherPreview">
+        <div class="weatherPreviewCard">
+          <div class="weatherPreviewVisual">
+            <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
+          </div>
+          <div class="weatherPreviewText">
+            <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
+            <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
+            <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
+            <div class="weatherPreviewMetaRow">
+              <div class="weatherPreviewChip">Värmdö</div>
+              <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
+              <div class="weatherPreviewChip">Nästa timmar</div>
+            </div>
+          </div>
+          <div class="weatherPreviewHours">
+            ${hours.map((hour) => `
+              <div class="weatherPreviewHour">
+                <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
+                <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
+                <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>`;
   }
 
-  function weatherText(code) {
-    return WEATHER_TEXT[code] || "Väder";
-  }
-
-  function pickWeatherIcon(code) {
-    if (code === 0) return WEATHER_ICONS.clear;
-    if (code >= 1 && code <= 3) return WEATHER_ICONS.cloudy;
-    if (code === 45 || code === 48) return WEATHER_ICONS.fog;
-    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return WEATHER_ICONS.rain;
-    if (code >= 71 && code <= 77) return WEATHER_ICONS.snow;
-    if (code >= 95) return WEATHER_ICONS.thunder;
-    return WEATHER_ICONS.na;
-  }
-
-  function loadWeatherCache() {
-    try {
-      const raw = localStorage.getItem(WEATHER_CACHE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (!parsed || !parsed.ts || !parsed.data) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  function saveWeatherCache(data) {
-    try {
-      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
-        ts: Date.now(),
-        data,
-      }));
-    } catch {}
-  }
-
-  function fmtHour(iso) {
-    const d = new Date(iso);
-    return `${String(d.getHours()).padStart(2, "0")}:00`;
-  }
-
-  function getUpcomingHours(data, count = 4) {
-    const times = data?.hourly?.time || [];
-    const temps = data?.hourly?.temperature_2m || [];
-    const rainChance = data?.hourly?.precipitation_probability || [];
-    const now = new Date();
-
-    let i0 = times.findIndex((ti) => new Date(ti) >= now);
-    if (i0 < 0) i0 = 0;
-
+  function nextWeatherHours(data, count = 4) {
+    const now = Date.now();
+    const times = data.hourly.time || [];
     const out = [];
-    for (let k = 0; k < count; k++) {
-      const i = i0 + k;
-      if (!times[i]) break;
+    for (let i = 0; i < times.length && out.length < count; i += 1) {
+      const ts = new Date(times[i]).getTime();
+      if (ts + 15 * 60 * 1000 < now) continue;
       out.push({
-        time: fmtHour(times[i]),
-        temp: Math.round(temps[i]),
-        rainChance: Number.isFinite(rainChance[i]) ? Math.round(rainChance[i]) : 0,
+        label: new Date(times[i]).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }),
+        temp: data.hourly.temperature_2m?.[i],
+        precipitation_probability: data.hourly.precipitation_probability?.[i] ?? 0,
+        precipitation: data.hourly.precipitation?.[i] ?? 0,
       });
     }
     return out;
   }
 
-  function getWeatherPreviewData() {
-    if (!weatherData?.current) {
-      return {
-        currentTemp: "--",
-        status: "Laddar väder...",
-        feels: "—",
-        wind: "—",
-        icon: WEATHER_ICONS.na,
-      };
-    }
-
-    const currentTemp = Math.round(weatherData.current.temperature_2m ?? 0);
-    const currentCode = weatherData.current.weather_code ?? 0;
-    const feels = Math.round(weatherData.current.apparent_temperature ?? currentTemp);
-    const wind = Math.round(weatherData.current.wind_speed_10m ?? 0);
-
-    return {
-      currentTemp,
-      status: weatherText(currentCode),
-      feels,
-      wind,
-      icon: pickWeatherIcon(currentCode),
-    };
-  }
-  function loadFreeText() {
-    try {
-      return String(localStorage.getItem(FREE_TEXT_KEY) || "");
-    } catch {
-      return "";
-    }
-  }
-
-  function saveFreeText(value) {
-    freeTextValue = String(value || "");
-    try {
-      localStorage.setItem(FREE_TEXT_KEY, freeTextValue);
-    } catch {}
-  }
-
-  function renderFreeTextPreviewMarkup() {
-    const trimmed = String(freeTextValue || "").trim();
-    const text = trimmed || "Fritext...";
-
-    return `
-      <div class="freeTextPreview">
-        <div class="freeTextPreviewCard">
-          <div class="freeTextPreviewText ${trimmed ? "" : "is-empty"}">${escapeHtml(text)}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function openFreeTextOverlay() {
-    if (!freeTextOverlay) return;
-    closeTimerFocus();
-    closePrioOverlay();
-    closeWeatherOverlay();
-    closeGenericOverlay();
-
-    freeTextOverlay.classList.add("open");
-    freeTextOverlay.setAttribute("aria-hidden", "false");
-
-    if (freeTextInput) {
-      freeTextInput.value = freeTextValue || "";
-      requestAnimationFrame(() => {
-        freeTextInput.focus();
-        freeTextInput.setSelectionRange(freeTextInput.value.length, freeTextInput.value.length);
-      });
-    }
-  }
-
-  function closeFreeTextOverlay() {
-    if (!freeTextOverlay) return;
-    freeTextOverlay.classList.remove("open");
-    freeTextOverlay.setAttribute("aria-hidden", "true");
-    renderSlots();
-  }
-  
-function renderPrioPreviewMarkup() {
-  const topFive = prios.slice(0, 5);
-
-  if (!topFive.length) {
-    return `
-      <div class="moduleSlotTrack">
-        <div class="prioPreview">
-          <div class="prioPreviewRow">
-            <span class="prioPreviewDot"></span>
-            <span class="prioPreviewText" style="opacity:.45;">Tryck och lägg till dagens prios</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  const rows = topFive.map((item) => {
-    const notePreview = item.note && item.note.trim()
-      ? `<div class="prioPreviewNote">${escapeHtml(item.note.trim())}</div>`
-      : "";
-
-    return `
-      <div class="prioPreviewRow ${item.done ? "is-done" : ""}">
-        <span class="prioPreviewDot"></span>
-        <div style="min-width:0;">
-          <div class="prioPreviewText">${escapeHtml(item.text)}</div>
-          ${notePreview}
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  const more = prios.length > 5
-    ? `<div class="prioPreviewMore">+${prios.length - 5}</div>`
-    : "";
-
-  return `
-    <div class="moduleSlotTrack">
-      <div class="prioPreview">
-        ${rows}
-        ${more}
-      </div>
-    </div>
-  `;
-}
-
-function renderWeatherPreviewMarkup() {
-  const info = getWeatherPreviewData();
-  const rainChanceNow =
-    weatherData?.hourly?.precipitation_probability?.find((v) => Number.isFinite(v)) ?? 0;
-
-  return `
-    <div class="moduleSlotTrack">
-      <div class="weatherPreview">
-        <div class="weatherPreviewVisual">
-          <img class="weatherPreviewIcon" src="${escapeHtml(info.icon)}" alt="" draggable="false" />
-        </div>
-
-        <div class="weatherPreviewText">
-          <div class="weatherPreviewTempBig">${escapeHtml(info.currentTemp)}°</div>
-          <div class="weatherPreviewStatus">${escapeHtml(info.status)}</div>
-          <div class="weatherPreviewMeta">Känns som ${escapeHtml(info.feels)}° · Vind ${escapeHtml(info.wind)} m/s</div>
-          <div class="weatherPreviewMeta">Regnrisk ${escapeHtml(Math.round(rainChanceNow))}%</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function formatRemainingShort(totalSec) {
-  const safe = Math.max(0, Math.floor(totalSec || 0));
-  const mins = Math.floor(safe / 60);
-  const secs = safe % 60;
-  return `${mins}:${String(secs).padStart(2, "0")}`;
-}
-
-function renderTimerPreviewMarkup() {
-  const showReset = TIMER.running || TIMER.finished || TIMER.total > 0 || TIMER.left > 0;
-  const previewValue = TIMER.running ? formatRemainingShort(TIMER.left) : PRESETS[TIMER.presetIndex];
-  const previewBottom = TIMER.running ? "LEFT" : "MIN";
-
-  return `
-    <div class="timerPreview">
-      <div class="timerPreviewMain">
-        <div class="timerPreviewWheel">
-          <div class="timerPreviewCenter">
-            <div class="timerPreviewTop">TIMER</div>
-            <div class="timerPreviewValue">${escapeHtml(String(previewValue))}</div>
-            <div class="timerPreviewBottom">${previewBottom}</div>
-          </div>
-        </div>
-      </div>
-
-      <span
-        class="timerPreviewReset"
-        role="button"
-        aria-label="Återställ timer"
-        ${showReset ? "" : "hidden"}
-      >Reset</span>
-    </div>
-  `;
-}
-
-function renderPlaceholderPreviewMarkup(n) {
-  return `
-    <div class="modulePlaceholder">
-      <div class="modulePlaceholderBody">
-        <div class="modulePlaceholderTitle">Modul ${n}</div>
-        <div class="modulePlaceholderText">
-          Tom placeholder just nu. Den här modulen är redo att byggas när du vill.
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderSlot(slotKey, el) {
-  if (!el) return;
-  const mod = getModule(SLOT_STATE[slotKey]);
-  el.innerHTML = mod.renderPreview();
-}
-
-function renderSlots() {
-  renderSlot("slot1", moduleSlot1Content);
-  renderSlot("slot2", moduleSlot2Content);
-}
-
-function renderWeather(data) {
-  weatherData = data;
-  renderSlots();
-
-  if (!data?.current) return;
-
-  const currentTemp = Math.round(data.current.temperature_2m ?? 0);
-  const currentCode = data.current.weather_code ?? 0;
-  const feels = Math.round(data.current.apparent_temperature ?? currentTemp);
-  const wind = Math.round(data.current.wind_speed_10m ?? 0);
-  const rain = Number.isFinite(data.current.precipitation) ? data.current.precipitation : 0;
-  const icon = pickWeatherIcon(currentCode);
-  const status = weatherText(currentCode);
-
-  const todayMin = Math.round(data.daily?.temperature_2m_min?.[0] ?? currentTemp);
-  const todayMax = Math.round(data.daily?.temperature_2m_max?.[0] ?? currentTemp);
-  const tomorrowMin = Math.round(data.daily?.temperature_2m_min?.[1] ?? todayMin);
-  const tomorrowMax = Math.round(data.daily?.temperature_2m_max?.[1] ?? todayMax);
-  const tomorrowCode = data.daily?.weather_code?.[1] ?? currentCode;
-
-  const hours = getUpcomingHours(data, 4);
-  const firstRainChance = hours[0]?.rainChance ?? 0;
-
-  if (weatherHeroTemp) weatherHeroTemp.textContent = `${currentTemp}°`;
-  if (weatherHeroStatus) weatherHeroStatus.textContent = status;
-  if (weatherHeroIcon) weatherHeroIcon.src = icon;
-  if (weatherFeelsLike) weatherFeelsLike.textContent = `${feels}°`;
-  if (weatherWind) weatherWind.textContent = `${wind} m/s`;
-  if (weatherRain) weatherRain.textContent = `${rain} mm`;
-  if (weatherRainChance) weatherRainChance.textContent = `${firstRainChance}%`;
-
-  if (weatherHours) {
-    weatherHours.innerHTML = hours.map((h) => `
+  function renderWeatherOverlay() {
+    const w = state.weather;
+    if (!w || !w.current) return;
+    weatherHeroTemp.textContent = `${Math.round(w.current.temperature_2m)}°`;
+    weatherHeroStatus.textContent = weatherLabel(w.current.weather_code);
+    weatherHeroIcon.src = weatherIconPath(w.current.weather_code);
+    weatherFeelsLike.textContent = `${Math.round(w.current.apparent_temperature)}°`;
+    weatherWind.textContent = `${Math.round(w.current.wind_speed_10m)} m/s`;
+    const nextHours = nextWeatherHours(w, 4);
+    const rainMm = nextHours.reduce((sum, item) => sum + (item.precipitation || 0), 0);
+    const rainRisk = Math.max(...nextHours.map((x) => x.precipitation_probability || 0));
+    weatherRain.textContent = `${rainMm.toFixed(1)} mm`;
+    weatherRainChance.textContent = `${Math.round(rainRisk)}%`;
+    weatherHours.innerHTML = nextHours.map((hour) => `
       <div class="weatherHour">
-        <div class="weatherHourTime">${escapeHtml(h.time)}</div>
-        <div class="weatherHourTemp">${h.temp}°</div>
-        <div class="weatherHourRain">${h.rainChance}%</div>
+        <div class="weatherHourTime">${escapeHtml(hour.label)}</div>
+        <div class="weatherHourTemp">${Math.round(hour.temp)}°</div>
+        <div class="weatherHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
+      </div>
+    `).join("");
+
+    const d = w.daily;
+    if (d) {
+      weatherTodayLine.textContent = `Idag: ${Math.round(d.temperature_2m_min[0])}°–${Math.round(d.temperature_2m_max[0])}° · regnrisk ${Math.round(d.precipitation_probability_max[0] || 0)}%`;
+      weatherTomorrowLine.textContent = `Imorgon: ${Math.round(d.temperature_2m_min[1])}°–${Math.round(d.temperature_2m_max[1])}° · regnrisk ${Math.round(d.precipitation_probability_max[1] || 0)}%`;
+    }
+  }
+
+  function renderPrioPreview() {
+    const visible = state.prios.slice(0, 3);
+    const more = state.prios.length - visible.length;
+    return `
+      <div class="prioPreview">
+        <div class="prioPreviewCard">
+          ${visible.map((item) => `
+            <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
+              <div class="prioPreviewDot"></div>
+              <div>
+                <div class="prioPreviewText">${escapeHtml(item.text)}</div>
+                ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 40))}</div>` : ''}
+              </div>
+            </div>
+          `).join("")}
+          ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderPrioList() {
+    prioPanelList.innerHTML = state.prios.map((item) => `
+      <div class="prioItem ${item.done ? 'is-done' : ''}" data-id="${escapeHtml(item.id)}">
+        <div class="prioItemMain">
+          <input class="prioCheck" type="checkbox" ${item.done ? 'checked' : ''} aria-label="Klar">
+          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
+          <button class="prioDeleteBtn" type="button" aria-label="Ta bort">✕</button>
+        </div>
       </div>
     `).join("");
   }
 
-  if (weatherTodayLine) {
-    weatherTodayLine.textContent = `Idag: ${todayMin}° – ${todayMax}° · ${status}`;
-  }
-  if (weatherTomorrowLine) {
-    weatherTomorrowLine.textContent = `Imorgon: ${tomorrowMin}° – ${tomorrowMax}° · ${weatherText(tomorrowCode)}`;
-  }
-}
-
-async function getCoords() {
-  if ("geolocation" in navigator) {
-    try {
-      const pos = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false,
-          timeout: 2500,
-          maximumAge: 60000,
-        })
-      );
-
-      return {
-        name: "Här",
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-      };
-    } catch {}
-  }
-  return DEFAULT_LOC;
-}
-
-async function fetchWeather(lat, lon) {
-  const url =
-    `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${encodeURIComponent(lat)}` +
-    `&longitude=${encodeURIComponent(lon)}` +
-    `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation` +
-    `&hourly=temperature_2m,precipitation_probability` +
-    `&daily=temperature_2m_max,temperature_2m_min,weather_code` +
-    `&timezone=auto`;
-
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Weather fetch failed");
-  return res.json();
-}
-
-async function initWeather() {
-  const cached = loadWeatherCache();
-  if (cached?.data) {
-    renderWeather(cached.data);
-  }
-
-  try {
-    const loc = await getCoords();
-    const staleEnough = !cached || (Date.now() - cached.ts > WEATHER_CACHE_MS);
-
-    if (staleEnough) {
-      const fresh = await fetchWeather(loc.lat, loc.lon);
-      saveWeatherCache(fresh);
-      renderWeather(fresh);
-    } else if (cached?.data) {
-      setTimeout(async () => {
-        try {
-          const fresh = await fetchWeather(loc.lat, loc.lon);
-          saveWeatherCache(fresh);
-          renderWeather(fresh);
-        } catch {}
-      }, 300);
-    }
-  } catch (e) {
-    console.warn("Weather error:", e);
-  }
-
-  setInterval(async () => {
-    try {
-      const loc = await getCoords();
-      const fresh = await fetchWeather(loc.lat, loc.lon);
-      saveWeatherCache(fresh);
-      renderWeather(fresh);
-    } catch {}
-  }, WEATHER_CACHE_MS);
-}
-
-function movePrio(index, dir) {
-  const next = index + dir;
-  if (next < 0 || next >= prios.length) return;
-  const copy = [...prios];
-  [copy[index], copy[next]] = [copy[next], copy[index]];
-  prios = copy;
-  savePrios();
-  renderPrios();
-}
-
-function togglePrioDone(id, done) {
-  const next = prios.map((item) =>
-    item.id === id ? { ...item, done } : item
-  );
-
-  const active = next.filter((item) => !item.done);
-  const completed = next.filter((item) => item.done);
-
-  prios = [...active, ...completed];
-
-  savePrios();
-  renderPrios();
-}
-
-function removePrio(id) {
-  prios = prios.filter((item) => item.id !== id);
-  if (prioEditingId === id) prioEditingId = null;
-  savePrios();
-  renderPrios();
-}
-
-function updatePrioField(id, patch) {
-  prios = prios.map((item) => item.id === id ? { ...item, ...patch } : item);
-  savePrios();
-  renderSlots();
-}
-
-function renderPrioPanel() {
-  if (!prioPanelList) return;
-
-  prioPanelList.innerHTML = "";
-
-  prios.forEach((item, index) => {
-    const isEditing = prioEditingId === item.id;
-
-    const row = document.createElement("div");
-    row.className = `prioItem ${item.done ? "is-done" : ""}`;
-
-    row.innerHTML = `
-      <div class="prioItemMain">
-        <input class="prioCheck" type="checkbox" ${item.done ? "checked" : ""} aria-label="Klar" />
-        <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
-        <div class="prioItemActions">
-          <button class="prioMiniBtn prioMoveUp" type="button" aria-label="Flytta upp" ${index === 0 ? "disabled" : ""}>↑</button>
-          <button class="prioMiniBtn prioMoveDown" type="button" aria-label="Flytta ner" ${index === prios.length - 1 ? "disabled" : ""}>↓</button>
+  function renderFreeTextPreview() {
+    const text = state.freeText.trim();
+    return `
+      <div class="freeTextPreview">
+        <div class="freeTextPreviewCard">
+          <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
         </div>
-      </div>
-    `;
+      </div>`;
+  }
 
-    const check = row.querySelector(".prioCheck");
-    const textBtn = row.querySelector(".prioItemTextBtn");
-    const upBtn = row.querySelector(".prioMoveUp");
-    const downBtn = row.querySelector(".prioMoveDown");
+  function formatRemainingShort(totalSec) {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
 
-    check?.addEventListener("change", (e) => {
-      togglePrioDone(item.id, !!e.target.checked);
+  function timerRemainingSec() {
+    if (!state.timer.running) return state.timer.durationSec || state.timer.minutes * 60;
+    return Math.max(0, Math.round((state.timer.endAt - Date.now()) / 1000));
+  }
+
+  function renderTimerPreview() {
+    const remaining = timerRemainingSec();
+    const center = state.timer.running ? formatRemainingShort(remaining) : state.timer.minutes;
+    const bottom = state.timer.running ? 'KVAR' : 'MIN';
+    const status = state.timer.running ? 'Timer aktiv' : 'Tryck för att välja';
+    return `
+      <div class="timerPreview">
+        <div class="timerPreviewWrap">
+          <div class="timerPreviewMain">
+            <div class="timerPreviewWheel">
+              <div class="timerPreviewCenter">
+                <div class="timerPreviewTop">Timer</div>
+                <div class="timerPreviewValue">${escapeHtml(String(center))}</div>
+                <div class="timerPreviewBottom">${escapeHtml(bottom)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="timerPreviewStatus">${escapeHtml(status)}</div>
+          <div class="timerPreviewPresets">
+            ${[5, 10, 15, 25].map((m) => `<div class="timerPreviewPreset">${m} min</div>`).join("")}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderStocksPreview() {
+    return `
+      <div class="freeTextPreview">
+        <div class="previewGlassCard stocksPreviewCard">
+          <div class="stocksPreviewHead">
+            <div class="previewTitle">Aktier / marknad</div>
+            <div class="previewSideText">TradingView</div>
+          </div>
+          <div class="stocksPreviewGrid">
+            ${STOCKS.map((stock) => `
+              <div class="stockMini">
+                <div class="stockMiniLabel">${escapeHtml(stock.short)}</div>
+                <div class="stockMiniValue">${escapeHtml(state.stockMini[stock.key]?.value || '--')}</div>
+                <div class="stockMiniMeta">${escapeHtml(state.stockMini[stock.key]?.meta || 'Väntar data')}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderNewsPreview() {
+    return `
+      <div class="freeTextPreview">
+        <div class="previewGlassCard">
+          <div class="newsPreviewHead">
+            <div class="previewTitle">Nyheter</div>
+            <div class="previewSideText">TradingView</div>
+          </div>
+          <div class="newsPreviewList">
+            <div class="newsPreviewItem">
+              <div class="newsPreviewItemTitle">Top stories, marknadsrubriker och valutaflöde i en ren mörk vy.</div>
+              <div class="newsPreviewItemMeta">Öppna modulen för live-feed</div>
+            </div>
+            <div class="newsPreviewItem">
+              <div class="newsPreviewItemTitle">Byggd för att passa samma glaskort som vädermodulen.</div>
+              <div class="newsPreviewItemMeta">Swipea vidare mellan moduler</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderPowerPreview() {
+    const p = state.power;
+    const bars = p?.today?.slice(0, 8) || [];
+    const nowPrice = p?.nowPriceText || '--';
+    const low = p?.todayLowText || '--';
+    const avg = p?.todayAvgText || '--';
+    return `
+      <div class="freeTextPreview">
+        <div class="previewGlassCard">
+          <div class="powerPreviewHead">
+            <div class="previewTitle">Elpris Stockholm</div>
+            <div class="previewSideText">SE3</div>
+          </div>
+          <div class="powerPreviewStats">
+            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Nu</div><div class="powerPreviewStatValue">${escapeHtml(nowPrice)}</div></div>
+            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Lägst</div><div class="powerPreviewStatValue">${escapeHtml(low)}</div></div>
+            <div class="powerPreviewStat"><div class="powerPreviewStatLabel">Snitt</div><div class="powerPreviewStatValue">${escapeHtml(avg)}</div></div>
+          </div>
+          <div class="powerPreviewBars">
+            ${bars.map((item) => `<div class="powerPreviewBar" style="height:${Math.max(12, item.ratio * 54)}px"></div>`).join("")}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function trimText(str, len) {
+    return str.length > len ? `${str.slice(0, len - 1)}…` : str;
+  }
+
+  function renderModule(moduleId) {
+    switch (moduleId) {
+      case 'timer': return renderTimerPreview();
+      case 'prio': return renderPrioPreview();
+      case 'weather': return renderWeatherPreview();
+      case 'freeText': return renderFreeTextPreview();
+      case 'stocks': return renderStocksPreview();
+      case 'news': return renderNewsPreview();
+      case 'power': return renderPowerPreview();
+      default: return '<div class="modulePlaceholder"><div class="modulePlaceholderBody"><div class="modulePlaceholderTitle">Modul</div><div class="modulePlaceholderText">Tom modul</div></div></div>';
+    }
+  }
+
+  function renderSlots() {
+    state.slotIndexes.forEach((moduleIndex, slotIndex) => {
+      const module = MODULES[(moduleIndex + MODULES.length) % MODULES.length];
+      slotContentEls[slotIndex].innerHTML = renderModule(module.id);
+      slotEls[slotIndex].dataset.moduleId = module.id;
+    });
+  }
+
+  function stepSlot(slotIndex, delta) {
+    const slot = slotEls[slotIndex];
+    state.slotIndexes[slotIndex] = (state.slotIndexes[slotIndex] + delta + MODULES.length) % MODULES.length;
+    slot.classList.remove('is-animating-left', 'is-animating-right');
+    slot.classList.add(delta > 0 ? 'is-animating-left' : 'is-animating-right');
+    renderSlots();
+    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 360);
+  }
+
+  function attachSlotSwipe(slot, slotIndex) {
+    let startX = 0;
+    let currentX = 0;
+    let dragging = false;
+
+    slot.addEventListener('pointerdown', (e) => {
+      if (activeOverlay) return;
+      dragging = true;
+      startX = e.clientX;
+      currentX = e.clientX;
+      slot.setPointerCapture?.(e.pointerId);
     });
 
-    textBtn?.addEventListener("click", () => {
-      prioEditingId = prioEditingId === item.id ? null : item.id;
-      renderPrioPanel();
+    slot.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      currentX = e.clientX;
+      const dx = currentX - startX;
+      const content = slot.querySelector('.moduleSlotContent');
+      slot.classList.add('is-swiping');
+      slot.classList.toggle('swipe-left', dx < 0);
+      slot.classList.toggle('swipe-right', dx > 0);
+      content.style.setProperty('--swipeX', `${dx * 0.35}px`);
+      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 1200, 0.03)}`);
+      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 320, 0.18)}`);
     });
 
-    upBtn?.addEventListener("click", () => movePrio(index, -1));
-    downBtn?.addEventListener("click", () => movePrio(index, 1));
+    function end(e) {
+      if (!dragging) return;
+      dragging = false;
+      const dx = currentX - startX;
+      const content = slot.querySelector('.moduleSlotContent');
+      slot.classList.remove('is-swiping', 'swipe-left', 'swipe-right');
+      content.style.removeProperty('--swipeX');
+      content.style.removeProperty('--swipeScale');
+      content.style.removeProperty('--swipeOpacity');
+      if (Math.abs(dx) > SWIPE_THRESHOLD) {
+        stepSlot(slotIndex, dx < 0 ? 1 : -1);
+        slot.dataset.swiped = '1';
+        setTimeout(() => { slot.dataset.swiped = ''; }, 200);
+      } else if (e.type === 'pointerup' && !slot.dataset.swiped) {
+        openCurrentModule(slotIndex);
+      }
+    }
 
-    if (isEditing) {
-      const editor = document.createElement("div");
-      editor.className = "prioEditor";
-      editor.innerHTML = `
-        <input class="prioTextInput" type="text" maxlength="160" value="${escapeHtml(item.text)}" />
-        <textarea class="prioNoteInput" maxlength="600" placeholder="Anteckning...">${escapeHtml(item.note || "")}</textarea>
-        <div class="prioEditorActions">
-          <button class="prioDeleteBtn" type="button">Ta bort</button>
+    slot.addEventListener('pointerup', end);
+    slot.addEventListener('pointercancel', end);
+  }
+
+  function openOverlay(overlay) {
+    if (activeOverlay) closeOverlay(activeOverlay);
+    activeOverlay = overlay;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeOverlay(overlay) {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (activeOverlay === overlay) activeOverlay = null;
+  }
+
+  function openCurrentModule(slotIndex) {
+    const module = MODULES[state.slotIndexes[slotIndex]];
+    switch (module.id) {
+      case 'prio':
+        renderPrioList();
+        openOverlay(prioOverlay);
+        break;
+      case 'weather':
+        renderWeatherOverlay();
+        openOverlay(weatherOverlay);
+        break;
+      case 'freeText':
+        freeTextInput.value = state.freeText;
+        openOverlay(freeTextOverlay);
+        setTimeout(() => freeTextInput.focus(), 80);
+        break;
+      case 'stocks':
+      case 'news':
+      case 'power':
+        renderGenericModule(module.id);
+        openOverlay(genericOverlay);
+        break;
+      case 'timer':
+        openTimer();
+        break;
+      default:
+        break;
+    }
+  }
+
+  prioAddBtn?.addEventListener('click', () => {
+    const text = prioAddInput.value.trim();
+    if (!text) return;
+    state.prios.unshift({ id: uid(), text, note: '', done: false });
+    prioAddInput.value = '';
+    persistPrios();
+    renderPrioList();
+    renderSlots();
+  });
+
+  prioAddInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      prioAddBtn.click();
+    }
+  });
+
+  prioPanelList?.addEventListener('click', (e) => {
+    const itemEl = e.target.closest('.prioItem');
+    if (!itemEl) return;
+    const id = itemEl.dataset.id;
+    if (e.target.classList.contains('prioDeleteBtn')) {
+      state.prios = state.prios.filter((item) => item.id !== id);
+    } else if (e.target.classList.contains('prioCheck')) {
+      state.prios = state.prios.map((item) => item.id === id ? { ...item, done: !item.done } : item);
+    }
+    persistPrios();
+    renderPrioList();
+    renderSlots();
+  });
+
+  freeTextInput?.addEventListener('input', () => {
+    state.freeText = freeTextInput.value;
+    localStorage.setItem(LS.freeText, state.freeText);
+    renderSlots();
+  });
+
+  function updateTimerWheelText() {
+    timerWheelValue.textContent = state.timer.running ? formatRemainingShort(timerRemainingSec()) : String(state.timer.minutes);
+    timerBarWrap.setAttribute('aria-hidden', state.timer.running ? 'false' : 'true');
+    timerBarWrap.style.opacity = state.timer.running ? '1' : '0';
+    if (state.timer.running) {
+      const remaining = timerRemainingSec();
+      const duration = state.timer.durationSec || state.timer.minutes * 60;
+      const pct = clamp(remaining / duration, 0, 1);
+      timerBar.style.transform = `scaleY(${pct})`;
+      timerBar.style.transformOrigin = 'bottom center';
+    }
+    renderSlots();
+  }
+
+  function startTimerTick() {
+    stopTimerTick();
+    updateTimerWheelText();
+    timerTick = setInterval(() => {
+      const remaining = timerRemainingSec();
+      if (remaining <= 0) {
+        state.timer.running = false;
+        state.timer.endAt = 0;
+        persistTimer();
+        stopTimerTick();
+      }
+      updateTimerWheelText();
+    }, 250);
+  }
+
+  function stopTimerTick() {
+    if (timerTick) clearInterval(timerTick);
+    timerTick = null;
+  }
+
+  function openTimer() {
+    openOverlay(timerFocus);
+  }
+
+  function closeTimer() {
+    closeOverlay(timerFocus);
+  }
+
+  function setTimerMinutes(mins) {
+    state.timer.minutes = mins;
+    state.timer.durationSec = mins * 60;
+    if (!state.timer.running) {
+      persistTimer();
+      updateTimerWheelText();
+    }
+  }
+
+  function startTimer() {
+    state.timer.durationSec = state.timer.minutes * 60;
+    state.timer.endAt = Date.now() + state.timer.durationSec * 1000;
+    state.timer.running = true;
+    persistTimer();
+    startTimerTick();
+    closeTimer();
+  }
+
+  function resetTimer() {
+    state.timer.running = false;
+    state.timer.endAt = 0;
+    persistTimer();
+    updateTimerWheelText();
+  }
+
+  let wheelStartAngle = null;
+  let currentWheelMinutes = state.timer.minutes;
+  const timerChoices = [5, 10, 15, 20, 25, 30, 45, 60];
+
+  function pointerAngle(evt) {
+    const rect = timerWheel.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return Math.atan2(evt.clientY - cy, evt.clientX - cx);
+  }
+
+  timerWheel?.addEventListener('pointerdown', (e) => {
+    wheelStartAngle = pointerAngle(e);
+    timerWheel.setPointerCapture?.(e.pointerId);
+  });
+
+  timerWheel?.addEventListener('pointermove', (e) => {
+    if (wheelStartAngle == null) return;
+    const angle = pointerAngle(e);
+    const diff = angle - wheelStartAngle;
+    const step = Math.round((diff / (Math.PI * 2)) * timerChoices.length * 1.4);
+    const currentIndex = timerChoices.indexOf(state.timer.minutes);
+    const nextIndex = (currentIndex + step + timerChoices.length * 8) % timerChoices.length;
+    currentWheelMinutes = timerChoices[nextIndex];
+    timerWheelValue.textContent = String(currentWheelMinutes);
+  });
+
+  function finishWheelInteraction() {
+    if (wheelStartAngle == null) return;
+    wheelStartAngle = null;
+    setTimerMinutes(currentWheelMinutes || state.timer.minutes);
+  }
+
+  timerWheel?.addEventListener('pointerup', finishWheelInteraction);
+  timerWheel?.addEventListener('pointercancel', finishWheelInteraction);
+  timerWheel?.addEventListener('dblclick', () => {
+    if (state.timer.running) {
+      resetTimer();
+    } else {
+      startTimer();
+    }
+  });
+
+  timerIconBtn?.addEventListener('click', openTimer);
+  timerCloseFab?.addEventListener('click', closeTimer);
+  prioCloseFab?.addEventListener('click', () => closeOverlay(prioOverlay));
+  weatherCloseFab?.addEventListener('click', () => closeOverlay(weatherOverlay));
+  freeTextCloseFab?.addEventListener('click', () => closeOverlay(freeTextOverlay));
+  genericCloseFab?.addEventListener('click', () => closeOverlay(genericOverlay));
+
+  [prioOverlay, weatherOverlay, freeTextOverlay, genericOverlay, timerFocus].forEach((overlay) => {
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) closeOverlay(overlay);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && activeOverlay) closeOverlay(activeOverlay);
+    if (activeOverlay === timerFocus) {
+      if (e.key === 'Enter') startTimer();
+      if (e.key.toLowerCase() === 'r') resetTimer();
+    }
+  });
+
+  async function ensureTvScript() {
+    if (window.TradingView) return;
+    if (tvScriptPromise) return tvScriptPromise;
+    tvScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    return tvScriptPromise;
+  }
+
+  function renderGenericModule(type) {
+    if (type === 'stocks') {
+      genericPanel.className = 'genericPanel genericPanel--stocks';
+      genericPanel.innerHTML = `
+        <div class="genericTitleRow">
+          <div>
+            <div class="genericTitle">Aktier</div>
+            <div class="genericSubtle">Swipe mellan symbolerna</div>
+          </div>
+          <div class="genericSubtle">TradingView</div>
+        </div>
+        <div class="stocksCarousel" id="stocksCarousel">
+          ${STOCKS.map((stock, idx) => `
+            <section class="stockSlide">
+              <div class="stockSlideCard">
+                <div class="stockSlideHead">
+                  <div>
+                    <div class="stockSlideName">${escapeHtml(stock.name)}</div>
+                    <div class="stockSlideSymbol">${escapeHtml(stock.short)}</div>
+                  </div>
+                  <div class="genericSubtle">${idx + 1} / ${STOCKS.length}</div>
+                </div>
+                <div class="stockWidgetMount tvWidgetFill" id="tvChart${idx}"></div>
+              </div>
+            </section>
+          `).join('')}
+        </div>
+        <div class="stocksPager" id="stocksPager">
+          ${STOCKS.map((_, i) => `<div class="stocksPagerDot ${i === 0 ? 'is-active' : ''}"></div>`).join('')}
         </div>
       `;
-
-      const textInput = editor.querySelector(".prioTextInput");
-      const noteInput = editor.querySelector(".prioNoteInput");
-      const deleteBtn = editor.querySelector(".prioDeleteBtn");
-
-      textInput?.addEventListener("input", (e) => {
-        updatePrioField(item.id, { text: e.target.value });
-      });
-
-      noteInput?.addEventListener("input", (e) => {
-        updatePrioField(item.id, { note: e.target.value });
-      });
-
-      deleteBtn?.addEventListener("click", () => {
-        removePrio(item.id);
-      });
-
-      row.appendChild(editor);
+      mountTradingViewStocks();
+      return;
     }
 
-    prioPanelList.appendChild(row);
-  });
-}
+    if (type === 'news') {
+      genericPanel.className = 'genericPanel';
+      genericPanel.innerHTML = `
+        <div class="genericTitleRow">
+          <div>
+            <div class="genericTitle">Nyheter</div>
+            <div class="genericSubtle">Top stories</div>
+          </div>
+          <div class="genericSubtle">TradingView</div>
+        </div>
+        <div class="newsWidgetCard">
+          <div class="newsWidgetMount" id="newsWidgetMount"></div>
+        </div>
+      `;
+      mountTradingViewNews();
+      return;
+    }
 
-  function renderPrios() {
-    renderSlots();
-    renderPrioPanel();
-  }
-
-  function addPrioFromInput() {
-    const text = (prioAddInput?.value || "").trim();
-    if (!text) return;
-
-    const item = {
-      id: uid(),
-      text,
-      note: "",
-      done: false,
-    };
-
-    prios = [...prios, item];
-    savePrios();
-    prioAddInput.value = "";
-    prioEditingId = item.id;
-    renderPrios();
-
-    requestAnimationFrame(() => {
-      const editor = prioPanelList?.querySelector(".prioItem:last-child .prioNoteInput");
-      editor?.focus();
-    });
-  }
-
-   function closeAllModuleOverlays() {
-    closePrioOverlay();
-    closeWeatherOverlay();
-    closeFreeTextOverlay();
-    closeGenericOverlay();
-  }
-
-   function openPrioOverlay({ focusAdd = false } = {}) {
-    if (!prioOverlay) return;
-    closeTimerFocus();
-    closeWeatherOverlay();
-    closeFreeTextOverlay();
-    closeGenericOverlay();
-
-    prioOverlay.classList.add("open");
-    prioOverlay.setAttribute("aria-hidden", "false");
-    renderPrios();
-
-    if (focusAdd) {
-      requestAnimationFrame(() => prioAddInput?.focus());
+    if (type === 'power') {
+      genericPanel.className = 'genericPanel';
+      const p = state.power;
+      genericPanel.innerHTML = `
+        <div class="genericTitleRow">
+          <div>
+            <div class="genericTitle">Elpris</div>
+            <div class="genericSubtle">Stockholm · SE3</div>
+          </div>
+          <div class="genericSubtle">Timpris</div>
+        </div>
+        <div class="powerPanelCard">
+          <div class="powerHead">
+            <div>
+              <div class="powerHeroTemp">${escapeHtml(p?.nowPriceText || '--')}</div>
+              <div class="powerHeroMeta">Just nu · ${escapeHtml(p?.nowLabel || 'saknas')}</div>
+            </div>
+            <div class="genericSubtle">${escapeHtml(p?.todayDateText || '')}</div>
+          </div>
+          <div class="powerBody">
+            <div class="powerStatsGrid">
+              <div class="powerStatCard"><div class="powerStatCardLabel">Lägst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayLowText || '--')}</div></div>
+              <div class="powerStatCard"><div class="powerStatCardLabel">Högst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayHighText || '--')}</div></div>
+              <div class="powerStatCard"><div class="powerStatCardLabel">Snitt idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayAvgText || '--')}</div></div>
+            </div>
+            <div class="powerBarsBig">
+              ${(p?.today || []).map((item) => `
+                <div class="powerBarCol">
+                  <div class="powerBar" style="height:${Math.max(10, item.ratio * 170)}px"></div>
+                  <div class="powerBarLabel">${escapeHtml(item.hour)}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="powerTomorrowList">
+              <div class="powerTomorrowChip">
+                <div class="powerTomorrowChipLabel">Billigaste nästa fönster</div>
+                <div class="powerTomorrowChipValue">${escapeHtml(p?.bestWindow || '--')}</div>
+              </div>
+              <div class="powerTomorrowChip">
+                <div class="powerTomorrowChipLabel">Imorgon</div>
+                <div class="powerTomorrowChipValue">${escapeHtml(p?.tomorrowText || 'Ingen prognos än')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
     }
   }
 
-  function closePrioOverlay() {
-    if (!prioOverlay) return;
-    prioOverlay.classList.remove("open");
-    prioOverlay.setAttribute("aria-hidden", "true");
-    prioEditingId = null;
-    renderSlots();
-  }
+  async function mountTradingViewStocks() {
+    try {
+      await ensureTvScript();
+      const carousel = $("stocksCarousel");
+      const pager = $("stocksPager");
+      const dots = pager ? [...pager.children] : [];
 
-    function openWeatherOverlay() {
-    if (!weatherOverlay) return;
-    closeTimerFocus();
-    closePrioOverlay();
-    closeFreeTextOverlay();
-    closeGenericOverlay();
-    weatherOverlay.classList.add("open");
-    weatherOverlay.setAttribute("aria-hidden", "false");
-  }
+      STOCKS.forEach((stock, idx) => {
+        const mount = $(`tvChart${idx}`);
+        if (!mount || mount.dataset.mounted === '1') return;
+        mount.dataset.mounted = '1';
+        new window.TradingView.widget({
+          autosize: true,
+          symbol: stock.symbol,
+          interval: '15',
+          timezone: 'Europe/Stockholm',
+          theme: 'dark',
+          style: '1',
+          locale: 'sv_SE',
+          allow_symbol_change: false,
+          save_image: false,
+          hide_side_toolbar: true,
+          hide_top_toolbar: true,
+          hide_legend: false,
+          withdateranges: false,
+          container_id: `tvChart${idx}`,
+          backgroundColor: '#06080d',
+          gridColor: 'rgba(255,255,255,0.05)',
+          studies: [],
+        });
+      });
 
-  function closeWeatherOverlay() {
-    if (!weatherOverlay) return;
-    weatherOverlay.classList.remove("open");
-    weatherOverlay.setAttribute("aria-hidden", "true");
-  }
-
-    function openGenericOverlay(moduleId) {
-    closeTimerFocus();
-    closePrioOverlay();
-    closeWeatherOverlay();
-    closeFreeTextOverlay();
-
-    genericOpenModule = wrapModuleIndex(moduleId);
-    if (genericTitle) genericTitle.textContent = `Modul ${genericOpenModule}`;
-    if (genericBody) {
-      genericBody.textContent = "Den här modulen är skapad som placeholder och väntar på innehåll. När vi bygger vidare ersätter vi den här texten med riktig funktionalitet.";
-    }
-
-    genericOverlay?.classList.add("open");
-    genericOverlay?.setAttribute("aria-hidden", "false");
-  }
-
-  function closeGenericOverlay() {
-    if (!genericOverlay) return;
-    genericOverlay.classList.remove("open");
-    genericOverlay.setAttribute("aria-hidden", "true");
-  }
-
-  function addVerticalSwipeToOverlay(cardEl, overlayEl, closeFn) {
-    if (!cardEl || !overlayEl || !closeFn) return;
-
-    let swipeStartY = null;
-    let swipeActive = false;
-
-    cardEl.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      if (e.target.closest("input, textarea, button, label")) {
-        swipeStartY = null;
-        swipeActive = false;
-        return;
-      }
-
-      swipeStartY = e.clientY;
-      swipeActive = true;
-      cardEl.setPointerCapture?.(e.pointerId);
-    });
-
-    cardEl.addEventListener("pointermove", (e) => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const delta = e.clientY - swipeStartY;
-      if (delta > 0) {
-        cardEl.style.transform = `translateY(${delta}px)`;
-      }
-    });
-
-    const endSwipe = () => {
-      if (!swipeActive || swipeStartY == null) return;
-
-      const match = cardEl.style.transform.match(/translateY\(([-0-9.]+)px\)/);
-      const delta = match ? parseFloat(match[1]) : 0;
-
-      cardEl.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-
-      if (delta > 120) closeFn();
-    };
-
-    cardEl.addEventListener("pointerup", endSwipe);
-    cardEl.addEventListener("pointercancel", () => {
-      cardEl.style.transform = "";
-      swipeStartY = null;
-      swipeActive = false;
-    });
-
-    overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) closeFn();
-    });
-  }
-
-  function setSlotSwipeVisual(slotEl, dx) {
-  const resisted = dx * 0.9;
-  const clamped = Math.max(-160, Math.min(160, resisted));
-  const abs = Math.abs(clamped);
-
-  const scale = 1 - Math.min(abs / 1400, 0.028);
-  const opacity = 1 - Math.min(abs / 900, 0.08);
-  const blur = Math.min(abs / 70, 1.4);
-
-  slotEl.classList.add("is-swiping");
-  slotEl.classList.toggle("swipe-left", clamped < 0);
-  slotEl.classList.toggle("swipe-right", clamped > 0);
-
-  slotEl.style.setProperty("--swipeX", `${clamped}px`);
-  slotEl.style.setProperty("--swipeScale", scale.toFixed(3));
-  slotEl.style.setProperty("--swipeOpacity", opacity.toFixed(3));
-  slotEl.style.setProperty("--swipeFilter", `brightness(1.03) blur(${blur.toFixed(2)}px)`);
-}
-
-  function clearSlotSwipeVisual(slotEl) {
-    slotEl.classList.remove("is-swiping", "swipe-left", "swipe-right");
-    slotEl.style.removeProperty("--swipeX");
-    slotEl.style.removeProperty("--swipeScale");
-    slotEl.style.removeProperty("--swipeOpacity");
-    slotEl.style.removeProperty("--swipeFilter");
-  }
-
-  function bindModuleSlot(slotEl, slotKey) {
-    if (!slotEl) return;
-
-    let pointerId = null;
-    let startX = 0;
-    let startY = 0;
-    let lastDx = 0;
-    let dragging = false;
-    let moved = false;
-    let locked = false;
-    let wheelLocked = false;
-
-    slotEl.addEventListener("click", (e) => {
-      if (e.target.closest(".timerPreviewReset")) {
-        e.preventDefault();
-        e.stopPropagation();
-        resetTimerState();
-        return;
-      }
-
-      if (moved) {
-        moved = false;
-        return;
-      }
-
-      if (slotKey === "slot1" && prioLongPressTriggered) {
-        prioLongPressTriggered = false;
-        return;
-      }
-
-      openSlotModule(slotKey);
-    });
-
-    slotEl.addEventListener("pointerdown", (e) => {
-      if (e.target.closest(".timerPreviewReset")) return;
-
-      dragging = true;
-      moved = false;
-      locked = false;
-      pointerId = e.pointerId;
-      startX = e.clientX;
-      startY = e.clientY;
-      lastDx = 0;
-
-      clearSlotSwipeVisual(slotEl);
-
-      if (slotKey === "slot1") {
-        prioLongPressTriggered = false;
-      }
-
-      slotEl.setPointerCapture?.(e.pointerId);
-    });
-
-    slotEl.addEventListener("pointermove", (e) => {
-      if (!dragging || locked || e.pointerId !== pointerId) return;
-
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      lastDx = dx;
-
-      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {
-        dragging = false;
-        clearSlotSwipeVisual(slotEl);
-        return;
-      }
-
-      if (Math.abs(dx) < 4) return;
-
-      moved = true;
-      setSlotSwipeVisual(slotEl, dx);
-    });
-
-    slotEl.addEventListener("pointerup", (e) => {
-      if (e.pointerId !== pointerId) return;
-
-      dragging = false;
-
-      const dx = lastDx;
-      const shouldCommit = Math.abs(dx) >= SLOT_SWIPE_THRESHOLD;
-
-      clearSlotSwipeVisual(slotEl);
-
-      if (shouldCommit && !locked) {
-        locked = true;
-
-        if (dx < 0) {
-          shiftSlot(slotKey, 1);
-          slotEl.classList.remove("is-animating-right");
-          slotEl.classList.add("is-animating-left");
-        } else {
-          shiftSlot(slotKey, -1);
-          slotEl.classList.remove("is-animating-left");
-          slotEl.classList.add("is-animating-right");
-        }
-
-        window.setTimeout(() => {
-          slotEl.classList.remove("is-animating-left", "is-animating-right");
-          locked = false;
-        }, SLOT_ANIM_MS);
-      } else {
-        requestAnimationFrame(() => {
-          moved = false;
+      if (carousel && !carousel.dataset.bound) {
+        carousel.dataset.bound = '1';
+        carousel.addEventListener('scroll', () => {
+          const width = carousel.clientWidth || 1;
+          const index = Math.round(carousel.scrollLeft / width);
+          dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
         });
       }
-
-      pointerId = null;
-      lastDx = 0;
-
-      requestAnimationFrame(() => {
-        moved = false;
-      });
-    });
-
-    slotEl.addEventListener("pointercancel", (e) => {
-      if (e.pointerId !== pointerId) return;
-
-      dragging = false;
-      locked = false;
-      moved = false;
-      pointerId = null;
-      lastDx = 0;
-      clearSlotSwipeVisual(slotEl);
-      slotEl.classList.remove("is-animating-left", "is-animating-right");
-    });
-
-    slotEl.addEventListener("wheel", (e) => {
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (Math.abs(delta) < 12) return;
-
-      e.preventDefault();
-      if (wheelLocked) return;
-
-      wheelLocked = true;
-
-      if (delta > 0) {
-        shiftSlot(slotKey, 1);
-        slotEl.classList.remove("is-animating-right");
-        slotEl.classList.add("is-animating-left");
-      } else {
-        shiftSlot(slotKey, -1);
-        slotEl.classList.remove("is-animating-left");
-        slotEl.classList.add("is-animating-right");
-      }
-
-      window.setTimeout(() => {
-        slotEl.classList.remove("is-animating-left", "is-animating-right");
-        wheelLocked = false;
-      }, SLOT_WHEEL_LOCK_MS);
-    }, { passive: false });
+    } catch (err) {
+      console.error('TradingView charts kunde inte laddas', err);
+    }
   }
 
-  function bindPrioLongPress() {
-    let pressTimer = 0;
-    let startX = 0;
-    let startY = 0;
+  function mountTradingViewNews() {
+    const mount = $("newsWidgetMount");
+    if (!mount || mount.dataset.mounted === '1') return;
+    mount.dataset.mounted = '1';
+    mount.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-timeline.js';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      feedMode: 'all_symbols',
+      isTransparent: true,
+      displayMode: 'adaptive',
+      width: '100%',
+      height: 420,
+      colorTheme: 'dark',
+      locale: 'sv'
+    });
+    mount.appendChild(script);
+  }
 
-    const cancelLongPress = () => {
-      if (pressTimer) clearTimeout(pressTimer);
-      pressTimer = 0;
+  async function fetchElPrice() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const y2 = tomorrow.getFullYear();
+    const m2 = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const d2 = String(tomorrow.getDate()).padStart(2, '0');
+    const urlToday = `https://www.elprisetjustnu.se/api/v1/prices/${y}/${m}-${d}_SE3.json`;
+    const urlTomorrow = `https://www.elprisetjustnu.se/api/v1/prices/${y2}/${m2}-${d2}_SE3.json`;
+
+    try {
+      const [todayRes, tomorrowRes] = await Promise.all([
+        fetch(urlToday, { cache: 'no-store' }),
+        fetch(urlTomorrow, { cache: 'no-store' }).catch(() => null),
+      ]);
+      if (!todayRes.ok) throw new Error('power fetch failed');
+      const todayData = await todayRes.json();
+      let tomorrowData = [];
+      if (tomorrowRes && tomorrowRes.ok) {
+        tomorrowData = await tomorrowRes.json();
+      }
+      state.power = transformPowerData(todayData, tomorrowData);
+      saveJson(LS.power, state.power);
+      renderSlots();
+      if (activeOverlay === genericOverlay) {
+        const currentModule = MODULES.find((m) => m.id === 'power');
+        if (currentModule) renderGenericModule('power');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function transformPowerData(todayData, tomorrowData) {
+    const prices = todayData.map((item) => ({
+      hour: new Date(item.time_start).toLocaleTimeString('sv-SE', { hour: '2-digit' }),
+      fullHour: new Date(item.time_start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }),
+      price: Number(item.SEK_per_kWh || 0),
+    }));
+    const max = Math.max(...prices.map((x) => x.price), 1);
+    const min = Math.min(...prices.map((x) => x.price), 0);
+    const avg = prices.reduce((sum, p) => sum + p.price, 0) / (prices.length || 1);
+    const currentHour = new Date().getHours();
+    const nowPrice = prices[currentHour] || prices[0];
+    const best = [...prices].sort((a, b) => a.price - b.price)[0];
+    const tomorrowText = tomorrowData.length
+      ? `${new Date(tomorrowData[0].time_start).toLocaleDateString('sv-SE', { weekday: 'long' })}: ${Math.min(...tomorrowData.map(x => x.SEK_per_kWh)).toFixed(2)}–${Math.max(...tomorrowData.map(x => x.SEK_per_kWh)).toFixed(2)} kr`
+      : 'Imorgon ej publicerat ännu';
+    return {
+      today: prices.map((p) => ({ ...p, ratio: (p.price - min) / ((max - min) || 1) })),
+      nowPriceText: `${nowPrice.price.toFixed(2)} kr`,
+      nowLabel: `${nowPrice.fullHour}–${String(Number(nowPrice.hour) + 1).padStart(2, '0')}:00`,
+      todayLowText: `${min.toFixed(2)} kr`,
+      todayHighText: `${max.toFixed(2)} kr`,
+      todayAvgText: `${avg.toFixed(2)} kr`,
+      bestWindow: `${best.fullHour} · ${best.price.toFixed(2)} kr`,
+      tomorrowText,
+      todayDateText: new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }),
     };
-
-    moduleSlot1?.addEventListener("pointerdown", (e) => {
-      if (SLOT_STATE.slot1 !== 1) return;
-
-      startX = e.clientX;
-      startY = e.clientY;
-      prioLongPressTriggered = false;
-
-      pressTimer = window.setTimeout(() => {
-        if (SLOT_STATE.slot1 !== 1) return;
-        prioLongPressTriggered = true;
-        openPrioOverlay({ focusAdd: true });
-      }, 420);
-    });
-
-    moduleSlot1?.addEventListener("pointermove", (e) => {
-      if (!pressTimer) return;
-      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
-        cancelLongPress();
-      }
-    });
-
-    moduleSlot1?.addEventListener("pointerup", cancelLongPress);
-    moduleSlot1?.addEventListener("pointercancel", cancelLongPress);
-    moduleSlot1?.addEventListener("pointerleave", cancelLongPress);
   }
 
-  function bindUI() {
-    timerIconBtn?.addEventListener("click", () => {
-      openTimerFocus({ finished: false });
-    });
-
-    timerCloseFab?.addEventListener("click", () => {
-      closeTimerFocus();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-                if (prioOverlay?.classList.contains("open")) {
-          closePrioOverlay();
-          return;
-        }
-
-        if (weatherOverlay?.classList.contains("open")) {
-          closeWeatherOverlay();
-          return;
-        }
-
-        if (freeTextOverlay?.classList.contains("open")) {
-          closeFreeTextOverlay();
-          return;
-        }
-
-        if (genericOverlay?.classList.contains("open")) {
-          closeGenericOverlay();
-          return;
-        }
-        if (timerFocus?.classList.contains("open") && !TIMER.running) {
-          closeTimerFocus();
-        }
-      }
-    });
-
-    timerWheel?.addEventListener("click", () => {
-      if (TIMER.finished) {
-        document.body.classList.remove("timerFinished");
-      }
-    });
-
-    prioAddBtn?.addEventListener("click", addPrioFromInput);
-    prioAddInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addPrioFromInput();
-      }
-    });
-
-    prioCloseFab?.addEventListener("click", closePrioOverlay);
-    weatherCloseFab?.addEventListener("click", closeWeatherOverlay);
-    genericCloseFab?.addEventListener("click", closeGenericOverlay);
-    freeTextCloseFab?.addEventListener("click", closeFreeTextOverlay);
-
-freeTextInput?.addEventListener("input", (e) => {
-  saveFreeText(e.target.value);
-  renderSlots();
-});
-
-addVerticalSwipeToOverlay(freeTextCard, freeTextOverlay, closeFreeTextOverlay);
-
-    addVerticalSwipeToOverlay(prioCard, prioOverlay, closePrioOverlay);
-    addVerticalSwipeToOverlay(weatherCard, weatherOverlay, closeWeatherOverlay);
-    addVerticalSwipeToOverlay(genericCard, genericOverlay, closeGenericOverlay);
-
-    bindModuleSlot(moduleSlot1, "slot1");
-    bindModuleSlot(moduleSlot2, "slot2");
-    bindPrioLongPress();
+  async function refreshStocksMini() {
+    const nowStamp = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    state.stockMini = {
+      gold: { value: 'XAU/USD', meta: `Live i modul · ${nowStamp}` },
+      silver: { value: 'XAG/USD', meta: `Live i modul · ${nowStamp}` },
+      oil: { value: 'USOIL', meta: `Live i modul · ${nowStamp}` },
+      us100: { value: 'US100', meta: `Live i modul · ${nowStamp}` },
+      eurusd: { value: 'EUR/USD', meta: `Live i modul · ${nowStamp}` },
+    };
+    saveJson(LS.stocksMini, state.stockMini);
+    renderSlots();
   }
 
-  function init() {
+  function boot() {
     updateClock();
     setInterval(updateClock, 1000);
-
-    timerBarWrap?.setAttribute("aria-hidden", "true");
-    updateTimerBar();
-
     renderSlots();
-    renderPrioPanel();
-
-    setTimerDisplayValue();
-    makeWheelEngine();
-    bindUI();
-    initWeather();
+    renderPrioList();
+    updateTimerWheelText();
+    slotEls.forEach((slot, i) => attachSlotSwipe(slot, i));
+    fetchWeather();
+    fetchElPrice();
+    refreshStocksMini();
+    if (state.timer.running && timerRemainingSec() > 0) {
+      startTimerTick();
+    } else {
+      state.timer.running = false;
+      state.timer.endAt = 0;
+      persistTimer();
+    }
   }
 
-  init();
+  boot();
 })();
