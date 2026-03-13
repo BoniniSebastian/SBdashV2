@@ -3,239 +3,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#050b12" />
-
+  <meta name="theme-color" content="#05070c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SB Dash" />
-
-  <link rel="apple-touch-icon" href="assets/icon.png" />
-  <link rel="icon" type="image/png" href="assets/icon.png" />
-
-  <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=10.6" />
+  <meta name="apple-mobile-web-app-title" content="SB Flip" />
+  <title>SB Flip</title>
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
-  <div class="app">
+  <div class="appShell" id="appShell">
+    <div class="appBg"></div>
 
-    <div class="zenBlob startZen" aria-hidden="true"></div>
-    <div class="ambientBlob" aria-hidden="true"></div>
+    <main class="viewport" id="viewport" aria-live="polite">
+      <section class="surfaceLayer" id="surfaceLayer">
+        <div class="surfacePage current" id="currentSurface"></div>
+        <div class="surfacePage incoming" id="incomingSurface" aria-hidden="true"></div>
+      </section>
 
-    <div class="timerBarWrap" id="timerBarWrap" aria-hidden="true">
-      <div class="timerBar" id="timerBar"></div>
-    </div>
-
-    <header class="topBar">
-      <div class="clockBlock">
-        <div class="clockDate" id="clockDate">MÅNDAG | 9 MARS</div>
-
-        <div class="clockRow">
-          <div class="clockTime" id="clockTime">22:14</div>
-
-          <button class="timerIconBtn" id="timerIconBtn" type="button" aria-label="Öppna timer">
-            <img src="assets/ui/icon-pomodoro.svg" alt="" draggable="false" />
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <div class="clockSeparator"></div>
-
-    <main class="moduleArea" aria-label="Modulyta">
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot1"
-        type="button"
-        aria-label="Öppna modul i slot 1"
-      >
-        <div class="moduleSlotContent" id="moduleSlot1Content"></div>
-      </button>
-
-      <button
-        class="moduleSlot moduleSlot--dynamic"
-        id="moduleSlot2"
-        type="button"
-        aria-label="Öppna modul i slot 2"
-      >
-        <div class="moduleSlotContent" id="moduleSlot2Content"></div>
-      </button>
-
-      <!-- Prio expanded -->
-      <div class="moduleExpandOverlay" id="prioOverlay" aria-hidden="true">
-        <div class="moduleExpandCard" id="prioCard" role="dialog" aria-modal="false" aria-label="Prio">
-          <div class="prioPanelScroller">
-            <div class="prioPanelList" id="prioPanelList"></div>
-          </div>
-
-          <div class="prioAddBar">
-            <div class="prioFakeCheck" aria-hidden="true"></div>
-            <input
-              class="prioAddInput"
-              id="prioAddInput"
-              type="text"
-              maxlength="160"
-              placeholder="Skriv ny prio..."
-              autocomplete="off"
-            />
-            <button class="prioAddBtn" id="prioAddBtn" type="button" aria-label="Lägg till prio">+</button>
-          </div>
-
-          <button class="prioCloseFab" id="prioCloseFab" type="button" aria-label="Stäng prio">✕</button>
-        </div>
-      </div>
-
-      <!-- Weather expanded -->
-      <div class="moduleExpandOverlay" id="weatherOverlay" aria-hidden="true">
-        <div class="moduleExpandCard weatherExpandCard" id="weatherCard" role="dialog" aria-modal="false" aria-label="Väder">
-          <div class="weatherPanelScroller">
-            <div class="weatherPanel">
-              <div class="weatherHero">
-                <div class="weatherHeroText">
-                  <div class="weatherHeroTemp" id="weatherHeroTemp">--°</div>
-                  <div class="weatherHeroStatus" id="weatherHeroStatus">—</div>
-                </div>
-
-                <div class="weatherHeroVisual">
-                  <img
-                    class="weatherHeroIcon"
-                    id="weatherHeroIcon"
-                    src="assets/ui/weather/na.svg"
-                    alt=""
-                    draggable="false"
-                  />
-                </div>
-              </div>
-
-              <div class="weatherStats">
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Känns som</div>
-                  <div class="weatherStatValue" id="weatherFeelsLike">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Vind</div>
-                  <div class="weatherStatValue" id="weatherWind">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Nederbörd</div>
-                  <div class="weatherStatValue" id="weatherRain">—</div>
-                </div>
-
-                <div class="weatherStat">
-                  <div class="weatherStatLabel">Regnrisk</div>
-                  <div class="weatherStatValue" id="weatherRainChance">—</div>
-                </div>
-              </div>
-
-              <div class="weatherHours" id="weatherHours"></div>
-
-              <div class="weatherFoot">
-                <div class="weatherFootLine" id="weatherTodayLine">Idag: —</div>
-                <div class="weatherFootLine" id="weatherTomorrowLine">Imorgon: —</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="weatherCloseFab" id="weatherCloseFab" type="button" aria-label="Stäng väder">✕</button>
-        </div>
-      </div>
-
-      <!-- Free text expanded -->
-      <div class="moduleExpandOverlay" id="freeTextOverlay" aria-hidden="true">
-        <div class="moduleExpandCard freeTextCard" id="freeTextCard" role="dialog" aria-modal="false" aria-label="Fritext">
-          <div class="freeTextScroller">
-            <div class="freeTextPanel">
-              <textarea
-                class="freeTextInput"
-                id="freeTextInput"
-                maxlength="6000"
-                placeholder="Fritext..."
-                autocomplete="off"
-                spellcheck="true"
-              ></textarea>
-            </div>
-          </div>
-
-          <button class="freeTextCloseFab" id="freeTextCloseFab" type="button" aria-label="Stäng fritext">✕</button>
-        </div>
-      </div>
-
-      <!-- Generic modules 5-7 expanded -->
-      <div class="moduleExpandOverlay" id="genericOverlay" aria-hidden="true">
-        <div class="moduleExpandCard genericCard" id="genericCard" role="dialog" aria-modal="false" aria-label="Modul">
-          <div class="genericScroller">
-            <div class="genericPanel">
-              <div class="genericTitle" id="genericTitle">Modul 5</div>
-              <div class="genericBody" id="genericBody">
-                Den här modulen är skapad som placeholder och väntar på innehåll.
-              </div>
-            </div>
-          </div>
-
-          <button class="genericCloseFab" id="genericCloseFab" type="button" aria-label="Stäng modul">✕</button>
-        </div>
-      </div>
+      <section class="moduleLayer" id="moduleLayer" aria-hidden="true">
+        <div class="moduleTrack" id="moduleTrack"></div>
+      </section>
     </main>
 
-    <div class="timerFocus" id="timerFocus" aria-hidden="true">
-      <div class="timerFocusCard">
-        <div class="timerWheelWrap">
-          <div class="timerWheel" id="timerWheel" aria-label="Timerhjul">
-            <img
-              class="timerWheelRing"
-              id="timerWheelRing"
-              src="assets/ui/wheel-ring.svg"
-              alt=""
-              draggable="false"
-            />
-
-            <div class="timerWheelCenter">
-              <div class="timerWheelTop" id="timerWheelTop">TIMER</div>
-              <div class="timerWheelValue" id="timerWheelValue">5</div>
-              <div class="timerWheelBottom" id="timerWheelBottom">MIN</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="timerActionDock">
-          <button class="timerActionBtn timerActionBtn--primary" id="timerStartBtn" type="button">Start</button>
-          <button class="timerActionBtn" id="timerResetBtn" type="button">Reset</button>
-        </div>
-
-        <div class="timerPresetRow" id="timerPresetRow">
-          <button class="timerPresetChip" type="button" data-min="1">1</button>
-          <button class="timerPresetChip" type="button" data-min="5">5</button>
-          <button class="timerPresetChip" type="button" data-min="10">10</button>
-          <button class="timerPresetChip" type="button" data-min="15">15</button>
-          <button class="timerPresetChip" type="button" data-min="20">20</button>
-          <button class="timerPresetChip" type="button" data-min="25">25</button>
-          <button class="timerPresetChip" type="button" data-min="30">30</button>
-          <button class="timerPresetChip" type="button" data-min="45">45</button>
-          <button class="timerPresetChip" type="button" data-min="60">60</button>
-        </div>
-      </div>
-
-      <button class="timerCloseFab" id="timerCloseFab" type="button" aria-label="Stäng timer">✕</button>
-    </div>
-
-    <section class="calendarStrip" aria-label="Kalender">
-      <div class="calendarFrameWrap">
-        <iframe
-          id="calendarFrame"
-          src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
-          loading="lazy"
-          referrerpolicy="strict-origin-when-cross-origin"
-          title="Google Kalender"
-        ></iframe>
-
-        <div class="calendarShade"></div>
-      </div>
-    </section>
-
-    <audio id="alarmAudio" preload="auto"></audio>
+    <nav class="bottomRail" id="bottomRail" aria-label="Navigation">
+      <button class="homeBtn" id="homeBtn" type="button" aria-label="Hem">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4.75 10.5 12 4.5l7.25 6v8.75c0 .41-.34.75-.75.75h-4.75v-5.25h-3.5V20H5.5a.75.75 0 0 1-.75-.75V10.5Z"/>
+        </svg>
+      </button>
+      <div class="railText" id="railText">HOME → NOTES</div>
+    </nav>
   </div>
 
-  <script src="app.js?v=10.6"></script>
+  <template id="tplHomeCard">
+    <button class="homeCard" type="button">
+      <div class="homeCardInner"></div>
+    </button>
+  </template>
+
+  <template id="tplPreviewPage">
+    <article class="previewPage">
+      <div class="previewPageInner"></div>
+    </article>
+  </template>
+
+  <script src="app.js?v=1"></script>
 </body>
 </html>
