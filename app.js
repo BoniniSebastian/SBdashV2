@@ -16,7 +16,7 @@
     power: "sbdash_power_v101",
   };
 
-  const SWIPE_THRESHOLD = 36;
+  const SWIPE_THRESHOLD = 26;
   const MODULES = [
     { id: "timer", label: "Timer" },
     { id: "prio", label: "Prio" },
@@ -57,6 +57,7 @@
     weather: null,
     power: loadJson(LS.power, null),
     stockMini: { ...STOCK_MINI_DEFAULTS, ...loadJson(LS.stocksMini, {}) },
+    iss: null,
   };
 
   const clockDate = $("clockDate");
@@ -98,6 +99,11 @@
   const timerBar = $("timerBar");
   const timerWheel = $("timerWheel");
   const timerWheelValue = $("timerWheelValue");
+  const timerWheelTop = $("timerWheelTop");
+  const timerWheelBottom = $("timerWheelBottom");
+  const timerStartBtn = $("timerStartBtn");
+  const timerResetBtn = $("timerResetBtn");
+  const timerPresetRow = $("timerPresetRow");
 
   let activeOverlay = null;
   let tvScriptPromise = null;
@@ -398,18 +404,24 @@
       { key: 'eurusd', color: 'flat' },
     ];
     return `
-      <div class="stocksPreviewCompact">
-        ${rows.map((row, idx) => {
+      <div class="stocksPreviewCompact stocksPreviewCompact--rich">
+        <div class="stocksPreviewHeader">
+          <div class="miniSectionLabel">Aktier / Marknad</div>
+          <div class="stocksPreviewLive">LIVE</div>
+        </div>
+        ${rows.map((row) => {
           const stock = STOCKS.find((s) => s.key === row.key);
           const meta = state.stockMini[row.key] || {};
+          const value = meta.value && meta.value !== '--' ? meta.value : stock.short;
+          const metaText = meta.meta && meta.meta !== 'Väntar data' ? meta.meta : 'Öppna för livechart';
           return `
             <div class="stocksMiniRow">
               <div class="stocksMiniLeft">
                 <div class="stocksMiniSymbol">${escapeHtml(stock.short)}</div>
-                <div class="stocksMiniMeta">${escapeHtml(meta.meta || 'Live i modul')}</div>
+                <div class="stocksMiniMeta">${escapeHtml(metaText)}</div>
               </div>
               <div class="stocksMiniRight">
-                <div class="stocksMiniValue">${escapeHtml(meta.value || stock.short)}</div>
+                <div class="stocksMiniValue">${escapeHtml(value)}</div>
                 <div class="stocksMiniSpark stocksMiniSpark--${row.color}">
                   <span></span><span></span><span></span><span></span>
                 </div>
@@ -417,21 +429,27 @@
             </div>`;
         }).join("")}
       </div>`;
+  }).join("")}
+      </div>`;
   }
 
   function renderNewsPreview() {
-    const headlines = [
-      'Marknadsnyheter och top stories',
-      'Valutor, index och råvaror live',
-      'Öppna modulen för hela feeden',
+    const lines = [
+      { tag: 'LIVE', text: 'Marknad, FX och råvaror' },
+      { tag: 'TV', text: 'Top stories från TradingView' },
+      { tag: 'ÖPPNA', text: 'Feed i full modulvy' },
     ];
     return `
-      <div class="newsPreviewCompact">
+      <div class="newsPreviewCompact newsPreviewCompact--rich">
         <div class="miniSectionLabel">Nyheter</div>
-        ${headlines.map((h, i) => `
+        <div class="newsPreviewHero">
+          <div class="newsPreviewHeroBadge">LIVE</div>
+          <div class="newsPreviewHeroBars"><span></span><span></span><span></span></div>
+        </div>
+        ${lines.map((item) => `
           <div class="newsPreviewCompactItem">
             <div class="newsPreviewCompactDot"></div>
-            <div class="newsPreviewCompactText">${escapeHtml(h)}</div>
+            <div class="newsPreviewCompactText"><strong>${escapeHtml(item.tag)}</strong> · ${escapeHtml(item.text)}</div>
           </div>
         `).join("")}
       </div>`;
@@ -444,15 +462,19 @@
     const next = today[new Date().getHours() + 1]?.price;
     const nextText = Number.isFinite(next) ? `${next.toFixed(2)} kr` : '—';
     return `
-      <div class="powerPreviewCompact">
+      <div class="powerPreviewCompact powerPreviewCompact--rich">
         <div class="miniSectionLabel">Elpris · SE3</div>
+        <div class="powerPreviewHero">
+          <div class="powerPreviewNow">${escapeHtml(now)}</div>
+          <div class="powerPreviewMeta">${escapeHtml(p?.nowLabel || 'Just nu')}</div>
+        </div>
         <div class="powerPreviewCompactStats">
           <div><span>Nu</span><strong>${escapeHtml(now)}</strong></div>
           <div><span>Nästa</span><strong>${escapeHtml(nextText)}</strong></div>
           <div><span>Billigast</span><strong>${escapeHtml(p?.bestWindow || '--')}</strong></div>
         </div>
         <div class="powerPreviewCompactBars">
-          ${today.slice(0, 12).map((item) => `<div class="powerPreviewCompactBar" style="height:${Math.max(10, item.ratio * 42)}px"></div>`).join('')}
+          ${today.slice(0, 12).map((item) => `<div class="powerPreviewCompactBar" title="${escapeHtml(item.hour)}" style="height:${Math.max(10, item.ratio * 42)}px"></div>`).join('')}
         </div>
       </div>`;
   }
@@ -470,19 +492,29 @@
       case 'stocks': return renderStocksPreview();
       case 'news': return renderNewsPreview();
       case 'power': return renderPowerPreview();
-      case 'iss': return renderSimplePreview('ISS', 'Live position · öppna för karta');
-      case 'lightning': return renderSimplePreview('Lightning', 'Åska live · öppna för karta');
-      case 'solar': return renderSimplePreview('Solar', 'Solaktivitet · öppna monitor');
-      case 'flights': return renderSimplePreview('Flights', 'Flyg live · öppna radar');
+      case 'iss': return renderSimplePreview('ISS', 'Live position och bana');
+      case 'lightning': return renderSimplePreview('Lightning', 'Åskkarta live');
+      case 'solar': return renderSimplePreview('Solar', 'Kp-index och solvind');
+      case 'flights': return renderSimplePreview('Flights', 'Live flygradar');
       default: return '<div class="modulePlaceholder"><div class="modulePlaceholderBody"><div class="modulePlaceholderTitle">Modul</div><div class="modulePlaceholderText">Tom modul</div></div></div>';
     }
   }
 
   function renderSimplePreview(title, meta) {
+    const badges = {
+      ISS: ['Live', 'Position'],
+      Lightning: ['Live', 'Storm'],
+      Solar: ['Kp', 'Sun'],
+      Flights: ['Radar', 'Air']
+    };
+    const chips = badges[title] || ['Live'];
     return `
-      <div class="simplePreviewCompact">
+      <div class="simplePreviewCompact simplePreviewCompact--rich">
         <div class="miniSectionLabel">${escapeHtml(title)}</div>
-        <div class="simplePreviewCompactMeta">${escapeHtml(meta)}</div>
+        <div class="simplePreviewCompactMeta">${escapeHtml(title === 'ISS' && state.iss ? `Lat ${state.iss.lat} · Lon ${state.iss.lon}` : meta)}</div>
+        <div class="simplePreviewChips">
+          ${chips.map((chip) => `<span class="simplePreviewChip">${escapeHtml(chip)}</span>`).join("")}
+        </div>
       </div>`;
   }
 
@@ -541,14 +573,17 @@
       if (Math.abs(dx) > SWIPE_THRESHOLD) {
         stepSlot(slotIndex, dx < 0 ? 1 : -1);
         slot.dataset.swiped = '1';
-        setTimeout(() => { slot.dataset.swiped = ''; }, 200);
-      } else if (e.type === 'pointerup' && !slot.dataset.swiped) {
-        openCurrentModule(slotIndex);
+        setTimeout(() => { slot.dataset.swiped = ''; }, 220);
       }
     }
 
     slot.addEventListener('pointerup', end);
     slot.addEventListener('pointercancel', end);
+    slot.addEventListener('click', () => {
+      if (activeOverlay) return;
+      if (slot.dataset.swiped === '1') return;
+      openCurrentModule(slotIndex);
+    });
   }
 
   function openOverlay(overlay) {
@@ -647,6 +682,15 @@
 
   function updateTimerWheelText() {
     timerWheelValue.textContent = state.timer.running ? formatRemainingShort(timerRemainingSec()) : String(state.timer.minutes);
+    if (timerWheelTop) timerWheelTop.textContent = state.timer.running ? 'TIMER' : 'TIMER';
+    if (timerWheelBottom) timerWheelBottom.textContent = state.timer.running ? 'KVAR' : 'MIN';
+    if (timerStartBtn) timerStartBtn.textContent = state.timer.running ? 'Starta om' : 'Start';
+    if (timerResetBtn) timerResetBtn.disabled = !state.timer.running && state.timer.minutes === 1;
+    if (timerPresetRow) {
+      [...timerPresetRow.querySelectorAll('[data-min]')].forEach((btn) => {
+        btn.classList.toggle('is-active', Number(btn.dataset.min) === state.timer.minutes);
+      });
+    }
     timerBarWrap.setAttribute('aria-hidden', state.timer.running ? 'false' : 'true');
     timerBarWrap.style.opacity = state.timer.running ? '1' : '0';
     if (state.timer.running) {
@@ -702,7 +746,6 @@
     state.timer.running = true;
     persistTimer();
     startTimerTick();
-    closeTimer();
   }
 
   function resetTimer() {
@@ -714,7 +757,7 @@
 
   let wheelStartAngle = null;
   let currentWheelMinutes = state.timer.minutes;
-  const timerChoices = [5, 10, 15, 20, 25, 30, 45, 60];
+  const timerChoices = [1, 5, 10, 15, 20, 25, 30, 45, 60];
 
   function pointerAngle(evt) {
     const rect = timerWheel.getBoundingClientRect();
@@ -755,6 +798,19 @@
     }
   });
 
+  timerStartBtn?.addEventListener('click', () => {
+    if (state.timer.running) {
+      startTimer();
+    } else {
+      startTimer();
+    }
+  });
+  timerResetBtn?.addEventListener('click', resetTimer);
+  timerPresetRow?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-min]');
+    if (!btn) return;
+    setTimerMinutes(Number(btn.dataset.min));
+  });
   timerIconBtn?.addEventListener('click', openTimer);
   timerCloseFab?.addEventListener('click', closeTimer);
   prioCloseFab?.addEventListener('click', () => closeOverlay(prioOverlay));
@@ -862,10 +918,21 @@
     };
 
     if (iframeMap[type]) {
+      const labels = {
+        iss: 'ISS Tracker',
+        lightning: 'Lightning Map',
+        solar: 'Solar Activity',
+        flights: 'Flight Radar'
+      };
       genericPanel.className = 'genericPanel genericPanel--edge';
       genericPanel.innerHTML = `
         <div class="embedFrameCard">
+          <div class="embedFrameHead">
+            <div class="embedFrameTitle">${labels[type]}</div>
+            <div class="embedFrameMeta">Live widget</div>
+          </div>
           <iframe class="embedFrame" src="${iframeMap[type]}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <a class="embedFrameOpenLink" href="${iframeMap[type]}" target="_blank" rel="noopener noreferrer">Öppna externt</a>
         </div>
       `;
       return;
@@ -1004,14 +1071,59 @@
   async function refreshStocksMini() {
     const nowStamp = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
     state.stockMini = {
-      gold: { value: 'Guld live', meta: `TradingView · ${nowStamp}` },
-      silver: { value: 'Silver live', meta: `TradingView · ${nowStamp}` },
-      oil: { value: 'Olja live', meta: `TradingView · ${nowStamp}` },
-      us100: { value: 'US100 live', meta: `TradingView · ${nowStamp}` },
-      eurusd: { value: 'EUR/USD live', meta: `TradingView · ${nowStamp}` },
+      gold: { value: 'XAU/USD', meta: `Öppna livechart · ${nowStamp}` },
+      silver: { value: 'XAG/USD', meta: `Öppna livechart · ${nowStamp}` },
+      oil: { value: 'USOIL', meta: `Öppna livechart · ${nowStamp}` },
+      us100: { value: 'US100', meta: `Öppna livechart · ${nowStamp}` },
+      eurusd: { value: 'EUR/USD', meta: `Öppna livechart · ${nowStamp}` },
     };
     saveJson(LS.stocksMini, state.stockMini);
     renderSlots();
+
+    try {
+      const target = 'https://stooq.com/q/l/?s=xauusd,xagusd,cl.f,%5Endx,eurusd&i=d';
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
+      const res = await fetch(proxyUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error('quote fetch failed');
+      const text = await res.text();
+      const lines = text.trim().split(/
+?
+/).filter(Boolean);
+      const map = {};
+      lines.forEach((line) => {
+        const parts = line.split(',');
+        if (parts.length >= 7) {
+          map[parts[0].toLowerCase()] = { close: parts[6], date: parts[1], time: parts[2] };
+        }
+      });
+      state.stockMini = {
+        gold: { value: map['xauusd']?.close || 'XAU/USD', meta: `Spot · ${nowStamp}` },
+        silver: { value: map['xagusd']?.close || 'XAG/USD', meta: `Spot · ${nowStamp}` },
+        oil: { value: map['cl.f']?.close || 'USOIL', meta: `Olja · ${nowStamp}` },
+        us100: { value: map['^ndx']?.close || 'US100', meta: `Nasdaq 100 · ${nowStamp}` },
+        eurusd: { value: map['eurusd']?.close || 'EUR/USD', meta: `FX · ${nowStamp}` },
+      };
+      saveJson(LS.stocksMini, state.stockMini);
+      renderSlots();
+    } catch (err) {
+      console.warn('Kunde inte hämta mini-kurser', err);
+    }
+  }
+
+  async function fetchIssPosition() {
+    try {
+      const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { cache: 'no-store' });
+      if (!res.ok) throw new Error('iss fetch failed');
+      const data = await res.json();
+      state.iss = {
+        lat: Number(data.latitude).toFixed(1),
+        lon: Number(data.longitude).toFixed(1),
+        velocity: Math.round(Number(data.velocity || 0)),
+      };
+      renderSlots();
+    } catch (err) {
+      console.warn('Kunde inte hämta ISS-data', err);
+    }
   }
 
   function boot() {
@@ -1024,6 +1136,7 @@
     fetchWeather();
     fetchElPrice();
     refreshStocksMini();
+    fetchIssPosition();
     if (state.timer.running && timerRemainingSec() > 0) {
       startTimerTick();
     } else {
