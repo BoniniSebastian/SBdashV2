@@ -1,1150 +1,1549 @@
-
 (() => {
   const $ = (id) => document.getElementById(id);
-  const escapeHtml = (s = "") => String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 
-  const LS = {
-    prio: "sbdash_prio_v101",
-    freeText: "sbdash_freetext_v101",
-    timer: "sbdash_timer_v101",
-    stocksMini: "sbdash_stocksmini_v101",
-    power: "sbdash_power_v101",
+  /* =========================
+     CONFIG
+  ========================= */
+  const APP = {
+    location: {
+      label: "Värmdö",
+      lat: 59.313,
+      lon: 18.417,
+      timezone: "Europe/Stockholm"
+    },
+    calendarEmbedUrl: "",
+    newsSiteEmbedUrl: "",
+    lightningEmbedUrl: "https://www.lightningmaps.org/#m=oss;t=3;s=0;o=0;b=;ts=0;z=5;y=59.313;x=18.417;d=2;dl=2;dc=0;",
+    favorites: [
+      { label: "Gold", symbol: "OANDA:XAUUSD" },
+      { label: "Silver", symbol: "OANDA:XAGUSD" },
+      { label: "Oil", symbol: "TVC:USOIL" },
+      { label: "ETH", symbol: "BINANCE:ETHUSDT" },
+      { label: "France", symbol: "TVC:CAC40" },
+      { label: "Japan", symbol: "TVC:NI225" },
+      { label: "EUR/USD", symbol: "FX:EURUSD" }
+    ]
   };
 
-  const SWIPE_THRESHOLD = 26;
-  const MODULES = [
-    { id: "timer", label: "Timer" },
-    { id: "prio", label: "Prio" },
-    { id: "weather", label: "Väder" },
-    { id: "freeText", label: "Fritext" },
-    { id: "stocks", label: "Aktier" },
-    { id: "news", label: "Nyheter" },
-    { id: "power", label: "Elpris" },
-    { id: "iss", label: "ISS" },
-    { id: "lightning", label: "Lightning" },
-    { id: "solar", label: "Solar" },
-    { id: "flights", label: "Flight Radar" },
-  ];
-
-  const STOCKS = [
-    { key: "gold", name: "Guld", symbol: "OANDA:XAUUSD", miniSymbol: "XAUUSD", short: "XAU/USD" },
-    { key: "silver", name: "Silver", symbol: "OANDA:XAGUSD", miniSymbol: "XAGUSD", short: "XAG/USD" },
-    { key: "oil", name: "Olja", symbol: "TVC:USOIL", miniSymbol: "USOIL", short: "USOIL" },
-    { key: "us100", name: "US100", symbol: "CAPITALCOM:US100", miniSymbol: "US100", short: "US100" },
-    { key: "eurusd", name: "EUR/USD", symbol: "FX:EURUSD", miniSymbol: "EURUSD", short: "EUR/USD" },
-  ];
-
-  const STOCK_MINI_DEFAULTS = {
-    gold: { value: "--", meta: "Väntar data" },
-    silver: { value: "--", meta: "Väntar data" },
-    oil: { value: "--", meta: "Väntar data" },
-    us100: { value: "--", meta: "Väntar data" },
-    eurusd: { value: "--", meta: "Väntar data" },
+  const STORAGE = {
+    tasks: "sbflip_tasks_v1",
+    notes: "sbflip_notes_v1"
   };
 
+  const previewOrder = [
+    { id: "notes", label: "Notes", moduleId: "notesModule" },
+    { id: "news", label: "News", moduleId: "newsModule" },
+    { id: "markets", label: "Markets", moduleId: "marketsModule" },
+    { id: "weather", label: "Weather", moduleId: "weatherModule" },
+    { id: "earth", label: "Earth", moduleId: "earthModule" },
+    { id: "iss", label: "ISS", moduleId: "issModule" },
+    { id: "newssite", label: "Site", moduleId: "newsSiteModule" },
+    { id: "lightning", label: "Lightning", moduleId: "lightningModule" },
+    { id: "solar", label: "Solar", moduleId: "solarModule" }
+  ];
+
+  const homeCards = [
+    { id: "weatherHome", moduleId: "weatherModule", type: "weather", className: "weatherCard", area: "a" },
+    { id: "tasksHome", moduleId: "tasksModule", type: "tasks", className: "tasksCard", area: "b" },
+    { id: "calendarHome", moduleId: "calendarModule", type: "calendar", className: "calendarCard", area: "c" }
+  ];
+
+  const moduleDefs = {
+    tasksModule: {
+      id: "tasksModule",
+      type: "tasks",
+      theme: "dark",
+      pages: [{ id: "tasksAll", type: "tasks" }]
+    },
+    calendarModule: {
+      id: "calendarModule",
+      type: "calendar",
+      theme: "light",
+      pages: [{ id: "calendarFull", type: "calendar" }]
+    },
+    weatherModule: {
+      id: "weatherModule",
+      type: "weather",
+      theme: "gradient",
+      pages: [
+        { id: "weatherNow", type: "weather-now" },
+        { id: "weatherHours", type: "weather-hours" },
+        { id: "weatherDays", type: "weather-days" }
+      ]
+    },
+    notesModule: {
+      id: "notesModule",
+      type: "notes",
+      theme: "dark",
+      pages: [{ id: "notesEdit", type: "notes" }]
+    },
+    newsModule: {
+      id: "newsModule",
+      type: "news",
+      theme: "dark",
+      pages: [{ id: "newsTv", type: "tv-timeline" }]
+    },
+    marketsModule: {
+      id: "marketsModule",
+      type: "markets",
+      theme: "dark",
+      pages: [
+        { id: "marketsOverview", type: "tv-symbol-overview" },
+        { id: "marketsChart", type: "tv-advanced-chart" }
+      ]
+    },
+    earthModule: {
+      id: "earthModule",
+      type: "earth",
+      theme: "dark",
+      pages: [{ id: "earthFull", type: "earth" }]
+    },
+    issModule: {
+      id: "issModule",
+      type: "iss",
+      theme: "dark",
+      pages: [
+        { id: "issNow", type: "iss" },
+        { id: "issMap", type: "iss-map" }
+      ]
+    },
+    newsSiteModule: {
+      id: "newsSiteModule",
+      type: "newssite",
+      theme: "light",
+      pages: [{ id: "newsSiteFrame", type: "news-site" }]
+    },
+    lightningModule: {
+      id: "lightningModule",
+      type: "lightning",
+      theme: "dark",
+      pages: [{ id: "lightningFrame", type: "lightning" }]
+    },
+    solarModule: {
+      id: "solarModule",
+      type: "solar",
+      theme: "dark",
+      pages: [
+        { id: "solarNow", type: "solar" },
+        { id: "solarChart", type: "solar-chart" }
+      ]
+    }
+  };
+
+  /* =========================
+     STATE
+  ========================= */
   const state = {
-    slotIndexes: [1, 2],
-    prios: loadJson(LS.prio, [
-      { id: uid(), text: "Hämta bilen på vägen hem", note: "", done: false },
-    ]),
-    freeText: localStorage.getItem(LS.freeText) || "",
-    timer: loadJson(LS.timer, { minutes: 5, running: false, endAt: 0, durationSec: 300 }),
+    surface: { kind: "home", previewIndex: null },
+    verticalGesture: null,
+    module: { open: false, id: null, pageIndex: 0, origin: "home" },
+    moduleGesture: null,
+    notes: loadNotes(),
+    tasks: loadTasks(),
     weather: null,
-    power: loadJson(LS.power, null),
-    stockMini: { ...STOCK_MINI_DEFAULTS, ...loadJson(LS.stocksMini, {}) },
+    solar: null,
     iss: null,
+    earth: null,
+    tvReady: false,
+    tvInitQueue: new Set()
   };
 
-  const clockDate = $("clockDate");
-  const clockTime = $("clockTime");
-  const slotEls = [$("moduleSlot1"), $("moduleSlot2")];
-  const slotContentEls = [$("moduleSlot1Content"), $("moduleSlot2Content")];
+  const els = {
+    currentSurface: $("currentSurface"),
+    incomingSurface: $("incomingSurface"),
+    moduleLayer: $("moduleLayer"),
+    moduleTrack: $("moduleTrack"),
+    bottomRail: $("bottomRail"),
+    railText: $("railText"),
+    homeBtn: $("homeBtn")
+  };
 
-  const prioOverlay = $("prioOverlay");
-  const prioPanelList = $("prioPanelList");
-  const prioAddInput = $("prioAddInput");
-  const prioAddBtn = $("prioAddBtn");
-  const prioCloseFab = $("prioCloseFab");
+  init();
 
-  const weatherOverlay = $("weatherOverlay");
-  const weatherHeroTemp = $("weatherHeroTemp");
-  const weatherHeroStatus = $("weatherHeroStatus");
-  const weatherHeroIcon = $("weatherHeroIcon");
-  const weatherFeelsLike = $("weatherFeelsLike");
-  const weatherWind = $("weatherWind");
-  const weatherRain = $("weatherRain");
-  const weatherRainChance = $("weatherRainChance");
-  const weatherHours = $("weatherHours");
-  const weatherTodayLine = $("weatherTodayLine");
-  const weatherTomorrowLine = $("weatherTomorrowLine");
-  const weatherCloseFab = $("weatherCloseFab");
+  function init() {
+    renderSurface();
+    updateRail();
+    bindSurfaceGestures();
+    bindHomeButton();
+    bindGlobalKeys();
+    bootData();
+    ensureTradingView();
+  }
 
-  const freeTextOverlay = $("freeTextOverlay");
-  const freeTextInput = $("freeTextInput");
-  const freeTextCloseFab = $("freeTextCloseFab");
+  async function bootData() {
+    await Promise.allSettled([
+      fetchWeather(),
+      fetchSolar(),
+      fetchISS(),
+      fetchEarth()
+    ]);
+    rerenderAll();
+    setInterval(fetchWeather, 10 * 60 * 1000);
+    setInterval(fetchSolar, 5 * 60 * 1000);
+    setInterval(fetchISS, 30 * 1000);
+    setInterval(fetchEarth, 30 * 60 * 1000);
+  }
 
-  const genericOverlay = $("genericOverlay");
-  const genericPanel = $("genericPanel");
-  const genericCloseFab = $("genericCloseFab");
+  function rerenderAll() {
+    renderSurface();
+    if (state.module.open) {
+      const active = els.moduleTrack.querySelector(`.moduleShell[data-module="${state.module.id}"]`);
+      if (active) populateModule(active, moduleDefs[state.module.id]);
+    }
+  }
 
-  const timerIconBtn = $("timerIconBtn");
-  const timerFocus = $("timerFocus");
-  const timerCloseFab = $("timerCloseFab");
-  const timerBarWrap = $("timerBarWrap");
-  const timerBar = $("timerBar");
-  const timerWheel = $("timerWheel");
-  const timerWheelValue = $("timerWheelValue");
-  const timerWheelTop = $("timerWheelTop");
-  const timerWheelBottom = $("timerWheelBottom");
-  const timerStartBtn = $("timerStartBtn");
-  const timerResetBtn = $("timerResetBtn");
-  const timerPresetRow = $("timerPresetRow");
+  /* =========================
+     SURFACE / HOME / PREVIEWS
+  ========================= */
+  function renderSurface() {
+    els.currentSurface.innerHTML = "";
+    const scroller = document.createElement("div");
+    scroller.className = "pageScroller";
+    const content = document.createElement("div");
+    content.className = "pageContent";
+    scroller.appendChild(content);
+    els.currentSurface.appendChild(scroller);
 
-  let activeOverlay = null;
-  let tvScriptPromise = null;
-  let timerTick = null;
+    const shadow = document.createElement("div");
+    shadow.className = "currentSurfaceShadow";
+    els.currentSurface.appendChild(shadow);
+
+    if (state.surface.kind === "home") {
+      content.appendChild(renderHomePage());
+    } else {
+      content.appendChild(renderPreviewPage(previewOrder[state.surface.previewIndex]));
+    }
+    updateRail();
+  }
+
+  function renderHomePage() {
+    const wrap = document.createElement("div");
+    wrap.className = "homeGrid";
+
+    const weatherCard = renderHomeWeatherCard();
+    const tasksCard = renderHomeTasksCard();
+    const calendarCard = renderHomeCalendarCard();
+
+    wrap.appendChild(weatherCard);
+    wrap.appendChild(tasksCard);
+    wrap.appendChild(calendarCard);
+    return wrap;
+  }
+
+  function renderHomeWeatherCard() {
+    const btn = buildHomeCardBase("weatherCard");
+    btn.dataset.module = "weatherModule";
+
+    const weather = state.weather?.current;
+    const icon = weatherEmoji(weather?.weathercode);
+    const temp = weather ? `${Math.round(weather.temperature_2m)}°` : "--°";
+    const feels = weather ? `${Math.round(weather.apparent_temperature)}°` : "--°";
+    const humidity = weather ? `${Math.round(weather.relative_humidity_2m)}%` : "--%";
+    const wind = weather ? `${Math.round(weather.windspeed_10m)} m/s` : "--";
+
+    btn.querySelector(".homeCardInner").innerHTML = `
+      <div class="dataStack">
+        <div class="homeIconLine">
+          <div class="homeIconBubble">${weatherSvg(icon)}</div>
+          <div class="miniStats"><span>${APP.location.label}</span></div>
+        </div>
+        <div class="homeValue">${temp}</div>
+        <div class="miniStats">
+          <span>känns ${feels}</span>
+          <span>fukt ${humidity}</span>
+          <span>vind ${wind}</span>
+        </div>
+      </div>
+    `;
+    btn.addEventListener("click", () => openModule("weatherModule", "home"));
+    return btn;
+  }
+
+  function renderHomeTasksCard() {
+    const btn = buildHomeCardBase("tasksCard");
+    btn.dataset.module = "tasksModule";
+
+    const items = [...state.tasks].sort(sortTasksPreview).slice(0, 5);
+    const listMarkup = items.length ? items.map((task) => `
+      <div class="taskPreviewItem ${task.done ? "done" : ""}">
+        <div class="taskPreviewDot"></div>
+        <div class="taskPreviewMain">
+          <div class="taskPreviewTitle">${escapeHtml(task.title)}</div>
+          <div class="taskPreviewNote">${escapeHtml(task.note || subtaskSummary(task))}</div>
+        </div>
+      </div>
+    `).join("") : `<div class="taskPreviewNote">lägg första tasken i modulen</div>`;
+
+    btn.querySelector(".homeCardInner").innerHTML = `
+      <div class="tasksPreview">
+        <div class="miniStats"><span>${state.tasks.filter(t => !t.done).length} kvar</span><span>${state.tasks.length} totalt</span></div>
+        <div class="taskListPreview">${listMarkup}</div>
+      </div>
+    `;
+    btn.addEventListener("click", () => openModule("tasksModule", "home"));
+    return btn;
+  }
+
+  function renderHomeCalendarCard() {
+    const btn = buildHomeCardBase("calendarCard");
+    btn.dataset.module = "calendarModule";
+    btn.querySelector(".homeCardInner").innerHTML = `
+      <div class="calendarPreview" id="calendarPreviewBox">
+        ${renderCalendarPreviewMarkup()}
+      </div>
+    `;
+    btn.addEventListener("click", () => openModule("calendarModule", "home"));
+    return btn;
+  }
+
+  function renderPreviewPage(item) {
+    const tpl = $("tplPreviewPage").content.firstElementChild.cloneNode(true);
+    tpl.dataset.preview = item.id;
+    tpl.addEventListener("click", () => openModule(item.moduleId, "preview"));
+    const inner = tpl.querySelector(".previewPageInner");
+    inner.innerHTML = previewMarkup(item.id);
+    return tpl;
+  }
+
+  function previewMarkup(id) {
+    switch (id) {
+      case "notes": return notesPreviewMarkup();
+      case "news": return newsPreviewMarkup();
+      case "markets": return marketsPreviewMarkup();
+      case "weather": return weatherPreviewMarkup();
+      case "earth": return earthPreviewMarkup();
+      case "iss": return issPreviewMarkup();
+      case "newssite": return newsSitePreviewMarkup();
+      case "lightning": return lightningPreviewMarkup();
+      case "solar": return solarPreviewMarkup();
+      default: return `<div class="previewShell"></div>`;
+    }
+  }
+
+  function notesPreviewMarkup() {
+    const preview = state.notes.trim() || "tryck för att börja skriva";
+    return `
+      <section class="notesShell">
+        <div class="notesCard">
+          <div class="smallMuted">senast sparat</div>
+          <div style="height:10px"></div>
+          <div style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.88);white-space:pre-wrap">${escapeHtml(preview.slice(0, 580))}</div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "notes"))}
+      </section>
+    `;
+  }
+
+  function newsPreviewMarkup() {
+    return `
+      <section class="embedShell">
+        <div class="embedCard" style="height:66vh">
+          <div class="tvWidget" data-tv="news-preview"></div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "news"))}
+      </section>
+    `;
+  }
+
+  function marketsPreviewMarkup() {
+    const rows = APP.favorites.map((fav) => `<div class="compactRow"><span class="label">${fav.label}</span><span class="value">${symbolToMini(fav.symbol)}</span></div>`).join("");
+    return `
+      <section class="previewShell">
+        <div class="metricCard">
+          <div class="compactList">${rows}</div>
+        </div>
+        <div class="embedCard" style="height:44vh">
+          <div class="tvWidget" data-tv="market-preview"></div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "markets"))}
+      </section>
+    `;
+  }
+
+  function weatherPreviewMarkup() {
+    const current = state.weather?.current;
+    const daily = state.weather?.daily;
+    const icon = weatherEmoji(current?.weathercode);
+    const hero = current ? `${Math.round(current.temperature_2m)}°` : "--°";
+    const feels = current ? `${Math.round(current.apparent_temperature)}°` : "--°";
+    const humidity = current ? `${Math.round(current.relative_humidity_2m)}%` : "--%";
+    const wind = current ? `${Math.round(current.windspeed_10m)} m/s` : "--";
+    const hi = daily ? `${Math.round(daily.temperature_2m_max[0])}°` : "--°";
+    const lo = daily ? `${Math.round(daily.temperature_2m_min[0])}°` : "--°";
+    return `
+      <section class="weatherShell">
+        <div class="previewHero">
+          <div class="previewHeroContent">
+            <div class="previewEyebrow">${APP.location.label}</div>
+            <div class="previewMetric">${hero}</div>
+            <div class="previewSub"><span>${icon}</span><span>känns ${feels}</span><span>fukt ${humidity}</span><span>vind ${wind}</span><span>${hi} / ${lo}</span></div>
+          </div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "weather"))}
+      </section>
+    `;
+  }
+
+  function earthPreviewMarkup() {
+    const bg = state.earth?.image ? `style="background-image:url('${state.earth.image}')"` : "";
+    const ts = state.earth?.date ? formatDateTimeShort(state.earth.date) : "hämtar";
+    return `
+      <section class="previewShell">
+        <div class="previewHero earthHero" ${bg}>
+          <div class="previewHeroContent">
+            <div class="previewEyebrow">NASA EPIC</div>
+            <div class="previewMetric" style="font-size:34px">Earth</div>
+            <div class="previewSub"><span>${ts}</span></div>
+          </div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "earth"))}
+      </section>
+    `;
+  }
+
+  function issPreviewMarkup() {
+    const iss = state.iss;
+    return `
+      <section class="issShell">
+        <div class="metricCard">
+          <div class="metricsGrid">
+            ${metricCell("Lat", iss ? round(iss.latitude, 2) : "--")}
+            ${metricCell("Lon", iss ? round(iss.longitude, 2) : "--")}
+            ${metricCell("km/h", iss ? Math.round(iss.velocity) : "--")}
+            ${metricCell("Altitude", iss ? `${Math.round(iss.altitude)} km` : "--")}
+          </div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "iss"))}
+      </section>
+    `;
+  }
+
+  function newsSitePreviewMarkup() {
+    return `
+      <section class="embedShell">
+        <div class="embedCard light" style="height:66vh">
+          ${APP.newsSiteEmbedUrl
+            ? `<iframe src="${escapeAttr(APP.newsSiteEmbedUrl)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`
+            : `<div class="fallbackFill">lägg din nyhetssajt-url i <strong>app.js</strong><br>newsSiteEmbedUrl</div>`}
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "newssite"))}
+      </section>
+    `;
+  }
+
+  function lightningPreviewMarkup() {
+    return `
+      <section class="embedShell">
+        <div class="embedCard" style="height:66vh">
+          <iframe src="${escapeAttr(APP.lightningEmbedUrl)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "lightning"))}
+      </section>
+    `;
+  }
+
+  function solarPreviewMarkup() {
+    const s = state.solar;
+    return `
+      <section class="solarShell">
+        <div class="solarCard">
+          <div class="metricsGrid">
+            ${metricCell("Wind", s?.speed ? `${Math.round(s.speed)} km/s` : "--")}
+            ${metricCell("Density", s?.density ? round(s.density, 1) : "--")}
+            ${metricCell("Bt", s?.bt ? round(s.bt, 1) : "--")}
+            ${metricCell("Bz", s?.bz ? round(s.bz, 1) : "--")}
+          </div>
+        </div>
+        ${dotHint(previewOrder.findIndex(x => x.id === "solar"))}
+      </section>
+    `;
+  }
+
+  function bindSurfaceGestures() {
+    const host = els.currentSurface;
+    let active = null;
+
+    const onPointerDown = (e) => {
+      if (state.module.open) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      active = {
+        id: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        currentX: e.clientX,
+        currentY: e.clientY,
+        mode: null,
+        target: null
+      };
+      host.setPointerCapture(e.pointerId);
+    };
+
+    const onPointerMove = (e) => {
+      if (!active || e.pointerId !== active.id) return;
+      active.currentX = e.clientX;
+      active.currentY = e.clientY;
+      const dx = active.currentX - active.startX;
+      const dy = active.currentY - active.startY;
+
+      if (!active.mode) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 1.1) {
+          active.mode = "vertical";
+          active.target = verticalTarget(dy < 0 ? "up" : "down");
+          prepareIncomingSurface(active.target);
+        } else if (Math.abs(dx) > 10) {
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (active.mode === "vertical") {
+        e.preventDefault();
+        applyVerticalDrag(dy, active.target);
+      }
+    };
+
+    const onPointerEnd = (e) => {
+      if (!active || e.pointerId !== active.id) return;
+      const dy = active.currentY - active.startY;
+      const velocityOk = Math.abs(dy) > 44;
+      const threshold = Math.abs(dy) > window.innerHeight * 0.15;
+      const commit = active.mode === "vertical" && (threshold || velocityOk);
+      finalizeVertical(commit, active.target, dy);
+      active = null;
+      try { host.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+
+    host.addEventListener("pointerdown", onPointerDown, { passive: true });
+    host.addEventListener("pointermove", onPointerMove, { passive: false });
+    host.addEventListener("pointerup", onPointerEnd, { passive: true });
+    host.addEventListener("pointercancel", onPointerEnd, { passive: true });
+  }
+
+  function verticalTarget(direction) {
+    if (state.surface.kind === "home") {
+      return direction === "up"
+        ? { kind: "preview", previewIndex: 0 }
+        : { kind: "preview", previewIndex: previewOrder.length - 1 };
+    }
+    if (direction === "up") {
+      return state.surface.previewIndex === previewOrder.length - 1
+        ? { kind: "home", previewIndex: null }
+        : { kind: "preview", previewIndex: state.surface.previewIndex + 1 };
+    }
+    return state.surface.previewIndex === 0
+      ? { kind: "home", previewIndex: null }
+      : { kind: "preview", previewIndex: state.surface.previewIndex - 1 };
+  }
+
+  function prepareIncomingSurface(target) {
+    els.incomingSurface.innerHTML = "";
+    const scroller = document.createElement("div");
+    scroller.className = "pageScroller";
+    const content = document.createElement("div");
+    content.className = "pageContent";
+    scroller.appendChild(content);
+    els.incomingSurface.appendChild(scroller);
+    const shade = document.createElement("div");
+    shade.className = "pageFlipShade";
+    els.incomingSurface.appendChild(shade);
+
+    if (target.kind === "home") content.appendChild(renderHomePage());
+    else content.appendChild(renderPreviewPage(previewOrder[target.previewIndex]));
+    els.incomingSurface.classList.add("ready");
+  }
+
+  function applyVerticalDrag(dy, target) {
+    const h = window.innerHeight || 1;
+    const progress = clamp(Math.abs(dy) / (h * 0.72), 0, 1);
+    const direction = dy < 0 ? "up" : "down";
+    const originCurrent = direction === "up" ? "top center" : "bottom center";
+    const originIncoming = direction === "up" ? "bottom center" : "top center";
+    const currentRotate = direction === "up" ? -progress * 22 : progress * 22;
+    const incomingRotate = direction === "up" ? (1 - progress) * 88 : -(1 - progress) * 88;
+    const incomingTranslate = direction === "up" ? (1 - progress) * 52 : -(1 - progress) * 52;
+    const currentTranslate = dy * 0.08;
+
+    els.currentSurface.style.transformOrigin = originCurrent;
+    els.incomingSurface.style.transformOrigin = originIncoming;
+    els.currentSurface.style.transform = `translate3d(0, ${currentTranslate}px, 0) rotateX(${currentRotate}deg) scale(${1 - progress * 0.035})`;
+    els.incomingSurface.style.transform = `translate3d(0, ${incomingTranslate}px, 0) rotateX(${incomingRotate}deg) scale(${0.965 + progress * 0.035})`;
+    els.incomingSurface.style.opacity = String(0.12 + progress * 0.88);
+
+    const currentShade = els.currentSurface.querySelector(".currentSurfaceShadow");
+    const incomingShade = els.incomingSurface.querySelector(".pageFlipShade");
+    if (currentShade) currentShade.style.opacity = String(progress * 0.48);
+    if (incomingShade) incomingShade.style.opacity = String((1 - progress) * 0.54);
+  }
+
+  function finalizeVertical(commit, target, dy = 0) {
+    const direction = dy < 0 ? "up" : "down";
+    if (commit && target) {
+      const outgoing = els.currentSurface;
+      const incoming = els.incomingSurface;
+      outgoing.style.transition = `transform var(--anim), opacity var(--anim)`;
+      incoming.style.transition = `transform var(--anim), opacity var(--anim)`;
+      outgoing.style.transformOrigin = direction === "up" ? "top center" : "bottom center";
+      incoming.style.transformOrigin = direction === "up" ? "bottom center" : "top center";
+      outgoing.style.transform = `rotateX(${direction === "up" ? -92 : 92}deg) translate3d(0, ${direction === "up" ? -24 : 24}px, 0)`;
+      outgoing.style.opacity = "0.04";
+      incoming.style.transform = "translate3d(0,0,0) rotateX(0deg) scale(1)";
+      incoming.style.opacity = "1";
+
+      window.setTimeout(() => {
+        state.surface = target;
+        resetSurfaceTransforms();
+        renderSurface();
+      }, 360);
+      return;
+    }
+
+    els.currentSurface.style.transition = `transform var(--anim), opacity var(--anim)`;
+    els.incomingSurface.style.transition = `transform var(--anim), opacity var(--anim)`;
+    els.currentSurface.style.transform = "translate3d(0,0,0) rotateX(0deg) scale(1)";
+    els.currentSurface.style.opacity = "1";
+    els.incomingSurface.style.transform = `translate3d(0, ${direction === "up" ? 52 : -52}px, 0) rotateX(${direction === "up" ? 88 : -88}deg)`;
+    els.incomingSurface.style.opacity = "0";
+    const currentShade = els.currentSurface.querySelector(".currentSurfaceShadow");
+    const incomingShade = els.incomingSurface.querySelector(".pageFlipShade");
+    if (currentShade) currentShade.style.opacity = "0";
+    if (incomingShade) incomingShade.style.opacity = "0";
+
+    window.setTimeout(() => {
+      resetSurfaceTransforms();
+    }, 360);
+  }
+
+  function resetSurfaceTransforms() {
+    [els.currentSurface, els.incomingSurface].forEach((el) => {
+      el.style.transition = "";
+      el.style.transform = "";
+      el.style.transformOrigin = "";
+      el.style.opacity = "";
+    });
+    const shade = els.incomingSurface.querySelector(".pageFlipShade");
+    const currentShade = els.currentSurface.querySelector(".currentSurfaceShadow");
+    if (shade) shade.style.opacity = "0";
+    if (currentShade) currentShade.style.opacity = "0";
+    els.incomingSurface.innerHTML = "";
+    els.incomingSurface.classList.remove("ready");
+  }
+
+  function bindHomeButton() {
+    els.homeBtn.addEventListener("click", () => {
+      if (state.module.open) return;
+      if (state.surface.kind === "home") return;
+      prepareIncomingSurface({ kind: "home", previewIndex: null });
+      applyVerticalDrag(220, { kind: "home", previewIndex: null });
+      finalizeVertical(true, { kind: "home", previewIndex: null }, 220);
+    });
+  }
+
+  function updateRail() {
+    if (state.module.open) {
+      els.bottomRail.classList.add("hidden");
+      return;
+    }
+    els.bottomRail.classList.remove("hidden");
+    if (state.surface.kind === "home") {
+      els.railText.textContent = `HOME → ${previewOrder[0].label.toUpperCase()}`;
+      return;
+    }
+    const current = previewOrder[state.surface.previewIndex].label.toUpperCase();
+    const next = state.surface.previewIndex === previewOrder.length - 1
+      ? "HOME"
+      : previewOrder[state.surface.previewIndex + 1].label.toUpperCase();
+    els.railText.textContent = `${current} → ${next}`;
+  }
+
+  /* =========================
+     MODULES
+  ========================= */
+  function openModule(moduleId, origin = "preview") {
+    const def = moduleDefs[moduleId];
+    if (!def) return;
+    closeModule(false);
+
+    const shell = document.createElement("section");
+    shell.className = `moduleShell ${themeClass(def.theme)}`;
+    shell.dataset.module = moduleId;
+    shell.innerHTML = `
+      <div class="moduleBody">
+        <div class="modulePages"></div>
+      </div>
+      <div class="moduleShade"></div>
+    `;
+    els.moduleTrack.innerHTML = "";
+    els.moduleTrack.appendChild(shell);
+    state.module = { open: true, id: moduleId, pageIndex: 0, origin };
+    els.moduleLayer.classList.add("open");
+    els.moduleLayer.setAttribute("aria-hidden", "false");
+    populateModule(shell, def);
+    bindModuleGestures(shell, def);
+    requestAnimationFrame(() => shell.classList.add("active"));
+    updateRail();
+  }
+
+  function populateModule(shell, def) {
+    const pagesEl = shell.querySelector(".modulePages");
+    pagesEl.innerHTML = "";
+    def.pages.forEach((page) => {
+      const node = document.createElement("section");
+      node.className = `modulePage ${pageTheme(page.type, def.theme)}`;
+      node.dataset.page = page.id;
+      node.innerHTML = `<div class="modulePageInner">${modulePageMarkup(page.type)}</div>`;
+      pagesEl.appendChild(node);
+    });
+    syncModulePage(shell);
+    initWidgets(shell, def);
+    wireModuleInputs(shell, def);
+  }
+
+  function pageTheme(type, theme) {
+    if (type === "calendar" || type === "news-site") return "pageLight";
+    if (theme === "gradient") return "pageGradient";
+    if (type === "lightning") return "pageDark";
+    return theme === "light" ? "pageLight" : "pageDark";
+  }
+
+  function modulePageMarkup(type) {
+    switch (type) {
+      case "tasks": return tasksModuleMarkup();
+      case "calendar": return calendarModuleMarkup();
+      case "weather-now": return weatherNowMarkup();
+      case "weather-hours": return weatherHoursMarkup();
+      case "weather-days": return weatherDaysMarkup();
+      case "notes": return notesModuleMarkup();
+      case "tv-timeline": return `<div class="embedCard" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 56px)"><div class="tvWidget" data-tv="news-module"></div></div>`;
+      case "tv-symbol-overview": return `<div class="embedCard" style="height:42vh"><div class="tvWidget" data-tv="market-module-overview"></div></div><div class="modulePageDots">${pageDots(moduleDefs.marketsModule.pages.length)}</div>`;
+      case "tv-advanced-chart": return `<div class="embedCard" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 72px)"><div class="tvWidget" data-tv="market-module-chart"></div></div><div class="modulePageDots">${pageDots(moduleDefs.marketsModule.pages.length, 1)}</div>`;
+      case "earth": return earthModuleMarkup();
+      case "iss": return issModuleMarkup();
+      case "iss-map": return issMapMarkup();
+      case "news-site": return newsSiteModuleMarkup();
+      case "lightning": return lightningModuleMarkup();
+      case "solar": return solarModuleMarkup();
+      case "solar-chart": return solarChartMarkup();
+      default: return "";
+    }
+  }
+
+  function tasksModuleMarkup() {
+    return `
+      <section class="tasksPanel">
+        <div class="tasksComposer">
+          <input class="tasksInput" id="taskTitleInput" maxlength="120" placeholder="ny task" />
+          <textarea class="tasksTextarea" id="taskNoteInput" rows="3" placeholder="anteckning · delmål separeras med ny rad"></textarea>
+          <div class="tasksActions"><button class="primaryBtn" id="addTaskBtn" type="button">lägg till</button></div>
+        </div>
+      </section>
+      <section class="taskCards" id="taskCards">${renderTaskCardsMarkup()}</section>
+    `;
+  }
+
+  function calendarModuleMarkup() {
+    return APP.calendarEmbedUrl
+      ? `<div class="embedCard light" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)"><iframe src="${escapeAttr(APP.calendarEmbedUrl)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+      : `<div class="embedCard light" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)"><div class="fallbackFill">lägg in din publika google calendar-embed-url i <strong>app.js</strong><br>calendarEmbedUrl</div></div>`;
+  }
+
+  function weatherNowMarkup() {
+    const c = state.weather?.current;
+    const d = state.weather?.daily;
+    const temp = c ? `${Math.round(c.temperature_2m)}°` : "--°";
+    const feels = c ? `${Math.round(c.apparent_temperature)}°` : "--°";
+    const humidity = c ? `${Math.round(c.relative_humidity_2m)}%` : "--%";
+    const wind = c ? `${Math.round(c.windspeed_10m)} m/s` : "--";
+    const precip = c ? `${round(c.precipitation, 1)} mm` : "--";
+    const hi = d ? `${Math.round(d.temperature_2m_max[0])}°` : "--°";
+    const lo = d ? `${Math.round(d.temperature_2m_min[0])}°` : "--°";
+    return `
+      <section class="weatherCard">
+        <div class="weatherNowGrid">
+          <div class="weatherLarge">
+            <div class="smallMuted">${APP.location.label}</div>
+            <div class="weatherBig">${temp}</div>
+            <div class="smallMuted">känns ${feels}</div>
+          </div>
+          <div class="weatherLarge weatherDetails">
+            <div class="weatherDetailRow"><span>fukt</span><span>${humidity}</span></div>
+            <div class="weatherDetailRow"><span>vind</span><span>${wind}</span></div>
+            <div class="weatherDetailRow"><span>regn</span><span>${precip}</span></div>
+            <div class="weatherDetailRow"><span>idag</span><span>${hi} / ${lo}</span></div>
+          </div>
+        </div>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.weatherModule.pages.length)}</div>
+    `;
+  }
+
+  function weatherHoursMarkup() {
+    const hourly = state.weather?.hourly;
+    const markup = hourly ? buildHourlyRows(hourly) : "<div class='smallMuted'>hämtar timdata</div>";
+    return `
+      <section class="weatherCard">
+        <div class="hourlyStrip">${markup}</div>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.weatherModule.pages.length, 1)}</div>
+    `;
+  }
+
+  function weatherDaysMarkup() {
+    const daily = state.weather?.daily;
+    const markup = daily ? buildDailyRows(daily) : "<div class='smallMuted'>hämtar prognos</div>";
+    return `
+      <section class="weatherCard">
+        <div class="dailyList">${markup}</div>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.weatherModule.pages.length, 2)}</div>
+    `;
+  }
+
+  function notesModuleMarkup() {
+    return `
+      <section class="notesCard notesCardGrow">
+        <textarea class="notesTextarea" id="notesTextarea" placeholder="skriv fritt">${escapeHtml(state.notes)}</textarea>
+      </section>
+    `;
+  }
+
+  function earthModuleMarkup() {
+    const bg = state.earth?.image ? `style="background-image:url('${state.earth.image}')"` : "";
+    return `
+      <div class="earthImage" ${bg}></div>
+      <div class="earthMeta">
+        <div class="compactRow"><span class="label">källa</span><span class="value">NASA EPIC</span></div>
+        <div class="compactRow"><span class="label">tid</span><span class="value">${state.earth?.date ? formatDateTimeShort(state.earth.date) : "hämtar"}</span></div>
+      </div>
+    `;
+  }
+
+  function issModuleMarkup() {
+    const i = state.iss;
+    return `
+      <section class="issCard">
+        <div class="metricsGrid">
+          ${metricCell("Lat", i ? round(i.latitude, 2) : "--")}
+          ${metricCell("Lon", i ? round(i.longitude, 2) : "--")}
+          ${metricCell("km/h", i ? Math.round(i.velocity) : "--")}
+          ${metricCell("Altitude", i ? `${Math.round(i.altitude)} km` : "--")}
+        </div>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.issModule.pages.length)}</div>
+    `;
+  }
+
+  function issMapMarkup() {
+    return `
+      <section class="mapBox">
+        <canvas class="mapCanvas" id="issMapCanvas"></canvas>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.issModule.pages.length, 1)}</div>
+    `;
+  }
+
+  function newsSiteModuleMarkup() {
+    return APP.newsSiteEmbedUrl
+      ? `<div class="embedCard light" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)"><iframe src="${escapeAttr(APP.newsSiteEmbedUrl)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+      : `<div class="embedCard light" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)"><div class="fallbackFill">lägg in valfri nyhetssajt i <strong>app.js</strong><br>newsSiteEmbedUrl</div></div>`;
+  }
+
+  function lightningModuleMarkup() {
+    return `<div class="embedCard" style="height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)"><iframe src="${escapeAttr(APP.lightningEmbedUrl)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+  }
+
+  function solarModuleMarkup() {
+    const s = state.solar;
+    return `
+      <section class="solarCard">
+        <div class="metricsGrid">
+          ${metricCell("Wind", s?.speed ? `${Math.round(s.speed)} km/s` : "--")}
+          ${metricCell("Density", s?.density ? round(s.density, 1) : "--")}
+          ${metricCell("Bt", s?.bt ? round(s.bt, 1) : "--")}
+          ${metricCell("Bz", s?.bz ? round(s.bz, 1) : "--")}
+        </div>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.solarModule.pages.length)}</div>
+    `;
+  }
+
+  function solarChartMarkup() {
+    return `
+      <section class="solarCard">
+        <svg class="sparkline" id="solarSpark"></svg>
+      </section>
+      <div class="modulePageDots">${pageDots(moduleDefs.solarModule.pages.length, 1)}</div>
+    `;
+  }
+
+  function bindModuleGestures(shell, def) {
+    let gesture = null;
+    shell.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      gesture = {
+        id: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        currentX: e.clientX,
+        currentY: e.clientY,
+        mode: null,
+        fromEdge: e.clientX <= 28
+      };
+      shell.setPointerCapture(e.pointerId);
+    }, { passive: true });
+
+    shell.addEventListener("pointermove", (e) => {
+      if (!gesture || e.pointerId !== gesture.id) return;
+      gesture.currentX = e.clientX;
+      gesture.currentY = e.clientY;
+      const dx = gesture.currentX - gesture.startX;
+      const dy = gesture.currentY - gesture.startY;
+
+      if (!gesture.mode) {
+        if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.1) {
+          gesture.mode = gesture.fromEdge && dx > 0 ? "back" : "pages";
+        } else {
+          return;
+        }
+      }
+
+      if (gesture.mode === "back") {
+        e.preventDefault();
+        applyModuleBackDrag(shell, dx);
+      }
+
+      if (gesture.mode === "pages") {
+        e.preventDefault();
+        applyModulePageDrag(shell, dx);
+      }
+    }, { passive: false });
+
+    const end = (e) => {
+      if (!gesture || e.pointerId !== gesture.id) return;
+      const dx = gesture.currentX - gesture.startX;
+      if (gesture.mode === "back") {
+        if (dx > window.innerWidth * 0.20 || dx > 72) closeModule(true);
+        else resetModuleBackDrag(shell);
+      }
+      if (gesture.mode === "pages") finalizeModulePageDrag(shell, def, dx);
+      gesture = null;
+      try { shell.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+
+    shell.addEventListener("pointerup", end, { passive: true });
+    shell.addEventListener("pointercancel", end, { passive: true });
+  }
+
+  function applyModuleBackDrag(shell, dx) {
+    const amount = clamp(dx, 0, window.innerWidth);
+    shell.style.transition = "none";
+    shell.style.transform = `translate3d(${amount}px,0,0)`;
+    const shade = shell.querySelector(".moduleShade");
+    if (shade) shade.style.opacity = String(clamp(amount / window.innerWidth, 0, 1) * 0.28);
+  }
+
+  function resetModuleBackDrag(shell) {
+    shell.style.transition = "transform var(--anim)";
+    shell.style.transform = "translate3d(0,0,0)";
+    const shade = shell.querySelector(".moduleShade");
+    if (shade) shade.style.opacity = "0";
+  }
+
+  function applyModulePageDrag(shell, dx) {
+    const pages = shell.querySelector(".modulePages");
+    if (!pages) return;
+    const base = -state.module.pageIndex * shell.clientWidth;
+    const extra = dx * 0.38;
+    pages.style.transition = "none";
+    pages.style.transform = `translate3d(${base + extra}px,0,0)`;
+  }
+
+  function finalizeModulePageDrag(shell, def, dx) {
+    const width = shell.clientWidth || window.innerWidth;
+    let nextIndex = state.module.pageIndex;
+    if (dx < -width * 0.16 && state.module.pageIndex < def.pages.length - 1) nextIndex += 1;
+    if (dx > width * 0.16 && state.module.pageIndex > 0) nextIndex -= 1;
+    state.module.pageIndex = nextIndex;
+    syncModulePage(shell);
+  }
+
+  function syncModulePage(shell) {
+    const pages = shell.querySelector(".modulePages");
+    if (!pages) return;
+    pages.style.transition = "transform var(--anim)";
+    pages.style.transform = `translate3d(${-state.module.pageIndex * 100}%,0,0)`;
+    const dots = shell.querySelectorAll(".modulePageDots");
+    dots.forEach((wrap) => {
+      [...wrap.children].forEach((dot, i) => dot.classList.toggle("active", i === state.module.pageIndex));
+    });
+    requestAnimationFrame(() => {
+      drawSolarSpark(shell);
+      drawIssMap(shell);
+    });
+  }
+
+  function closeModule(animated = true) {
+    const shell = els.moduleTrack.querySelector(".moduleShell");
+    if (!shell) {
+      state.module = { open: false, id: null, pageIndex: 0, origin: "home" };
+      els.moduleLayer.classList.remove("open");
+      updateRail();
+      return;
+    }
+
+    const finish = () => {
+      els.moduleTrack.innerHTML = "";
+      els.moduleLayer.classList.remove("open");
+      els.moduleLayer.setAttribute("aria-hidden", "true");
+      state.module = { open: false, id: null, pageIndex: 0, origin: "home" };
+      updateRail();
+    };
+
+    if (!animated) return finish();
+    shell.classList.remove("active");
+    shell.classList.add("closing");
+    window.setTimeout(finish, 360);
+  }
+
+  /* =========================
+     WIDGETS
+  ========================= */
+  function ensureTradingView() {
+    if (window.TradingView) {
+      state.tvReady = true;
+      initQueuedTradingView();
+      return;
+    }
+    if (document.querySelector('script[data-tv-loader="1"]')) return;
+    const s = document.createElement("script");
+    s.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+    s.async = true;
+    s.dataset.tvLoader = "1";
+    s.onload = () => {
+      state.tvReady = true;
+      initQueuedTradingView();
+    };
+    document.head.appendChild(s);
+  }
+
+  function initWidgets(scope, def) {
+    if (!scope) return;
+    const nodes = scope.querySelectorAll(".tvWidget");
+    nodes.forEach((node) => {
+      const kind = node.dataset.tv;
+      state.tvInitQueue.add({ node, kind });
+    });
+    initQueuedTradingView();
+  }
+
+  function initQueuedTradingView() {
+    const items = [...state.tvInitQueue];
+    state.tvInitQueue.clear();
+    items.forEach(({ node, kind }) => {
+      if (!document.body.contains(node)) return;
+      initTradingViewNode(node, kind);
+    });
+  }
+
+  function initTradingViewNode(node, kind) {
+    node.innerHTML = "";
+    const wrap = document.createElement("div");
+    wrap.className = "tradingview-widget-container";
+    wrap.style.width = "100%";
+    wrap.style.height = "100%";
+    const slot = document.createElement("div");
+    slot.className = "tradingview-widget-container__widget";
+    slot.style.width = "100%";
+    slot.style.height = "100%";
+    wrap.appendChild(slot);
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.async = true;
+
+    let config;
+    if (kind === "news-preview") {
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+      config = {
+        feedMode: "market",
+        market: "forex",
+        colorTheme: "dark",
+        isTransparent: true,
+        displayMode: "compact",
+        width: "100%",
+        height: "100%",
+        locale: "sv_SE"
+      };
+    } else if (kind === "news-module") {
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+      config = {
+        feedMode: "market",
+        market: "forex",
+        colorTheme: "dark",
+        isTransparent: true,
+        displayMode: "regular",
+        width: "100%",
+        height: "100%",
+        locale: "sv_SE"
+      };
+    } else if (kind === "market-preview") {
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+      config = {
+        symbols: APP.favorites.map((fav) => ({ proName: fav.symbol, title: fav.label })),
+        colorTheme: "dark",
+        isTransparent: true,
+        displayMode: "compact",
+        locale: "sv_SE"
+      };
+    } else if (kind === "market-module-overview") {
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js";
+      config = {
+        symbols: [APP.favorites.map((fav) => `${fav.symbol}|1D`)],
+        chartOnly: false,
+        width: "100%",
+        height: "100%",
+        locale: "sv_SE",
+        colorTheme: "dark",
+        autosize: true,
+        showVolume: false,
+        showMA: false,
+        hideDateRanges: false,
+        hideMarketStatus: false,
+        hideSymbolLogo: false,
+        scalePosition: "right",
+        scaleMode: "Normal",
+        fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif",
+        fontSize: "11",
+        noTimeScale: false,
+        valuesTracking: "1",
+        changeMode: "price-and-percent",
+        chartType: "area",
+        lineWidth: 2,
+        lineType: 0
+      };
+    } else if (kind === "market-module-chart") {
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+      config = {
+        autosize: true,
+        symbol: APP.favorites[0].symbol,
+        interval: "60",
+        timezone: APP.location.timezone,
+        theme: "dark",
+        style: "1",
+        locale: "sv_SE",
+        backgroundColor: "#05070c",
+        enable_publishing: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        details: false,
+        hotlist: false,
+        calendar: false,
+        support_host: "https://www.tradingview.com"
+      };
+    } else {
+      node.innerHTML = `<div class="fallbackFill">widget saknas</div>`;
+      return;
+    }
+
+    script.text = JSON.stringify(config);
+    wrap.appendChild(script);
+    node.appendChild(wrap);
+  }
+
+  /* =========================
+     MODULE INPUTS
+  ========================= */
+  function wireModuleInputs(scope, def) {
+    if (def.id === "tasksModule") {
+      const addBtn = scope.querySelector("#addTaskBtn");
+      const titleEl = scope.querySelector("#taskTitleInput");
+      const noteEl = scope.querySelector("#taskNoteInput");
+      addBtn?.addEventListener("click", () => {
+        const title = titleEl.value.trim();
+        const note = noteEl.value.trim();
+        if (!title) return;
+        const subtasks = note.split("\n").map((row) => row.trim()).filter(Boolean).map((text) => ({ id: uid(), text, done: false }));
+        state.tasks.unshift({ id: uid(), title, note, done: false, subtasks, createdAt: Date.now() });
+        saveTasks();
+        populateModule(scope, def);
+        renderSurface();
+      });
+
+      scope.querySelectorAll("[data-action='toggle-task']").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const task = state.tasks.find((t) => t.id === btn.dataset.id);
+          if (!task) return;
+          task.done = !task.done;
+          saveTasks();
+          populateModule(scope, def);
+          renderSurface();
+        });
+      });
+
+      scope.querySelectorAll("[data-action='delete-task']").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.tasks = state.tasks.filter((t) => t.id !== btn.dataset.id);
+          saveTasks();
+          populateModule(scope, def);
+          renderSurface();
+        });
+      });
+
+      scope.querySelectorAll("[data-action='toggle-subtask']").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const task = state.tasks.find((t) => t.id === btn.dataset.task);
+          const sub = task?.subtasks.find((s) => s.id === btn.dataset.subtask);
+          if (!sub) return;
+          sub.done = !sub.done;
+          saveTasks();
+          populateModule(scope, def);
+          renderSurface();
+        });
+      });
+    }
+
+    if (def.id === "notesModule") {
+      const textarea = scope.querySelector("#notesTextarea");
+      textarea?.addEventListener("input", () => {
+        state.notes = textarea.value;
+        saveNotes();
+        renderSurface();
+      });
+    }
+  }
+
+  function renderTaskCardsMarkup() {
+    if (!state.tasks.length) return `<div class="smallMuted">tomt än</div>`;
+    return [...state.tasks].sort(sortTasksPreview).map((task) => `
+      <article class="taskCard ${task.done ? "done" : ""}">
+        <div class="taskHead">
+          <button class="taskCheck" data-action="toggle-task" data-id="${task.id}" type="button">${task.done ? "✓" : ""}</button>
+          <div class="taskTitleWrap">
+            <div class="taskTitle">${escapeHtml(task.title)}</div>
+            ${task.note ? `<div class="taskNote">${escapeHtml(task.note)}</div>` : ""}
+          </div>
+          <button class="taskDel" data-action="delete-task" data-id="${task.id}" type="button">ta bort</button>
+        </div>
+        ${task.subtasks?.length ? `<div class="subtaskList">${task.subtasks.map((sub) => `
+          <button class="subtaskItem ${sub.done ? "done" : ""}" data-action="toggle-subtask" data-task="${task.id}" data-subtask="${sub.id}" type="button">
+            <span class="subtaskDot"></span>
+            <span>${escapeHtml(sub.text)}</span>
+          </button>
+        `).join("")}</div>` : ""}
+      </article>
+    `).join("");
+  }
+
+  /* =========================
+     DATA FETCH
+  ========================= */
+  async function fetchWeather() {
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", APP.location.lat);
+    url.searchParams.set("longitude", APP.location.lon);
+    url.searchParams.set("current", "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weathercode,windspeed_10m");
+    url.searchParams.set("hourly", "temperature_2m,weathercode");
+    url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,weathercode");
+    url.searchParams.set("forecast_days", "7");
+    url.searchParams.set("timezone", APP.location.timezone);
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error("weather");
+    state.weather = await res.json();
+  }
+
+  async function fetchSolar() {
+    const [plasmaRes, magRes] = await Promise.all([
+      fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json"),
+      fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json")
+    ]);
+    if (!plasmaRes.ok || !magRes.ok) throw new Error("solar");
+    const plasma = await plasmaRes.json();
+    const mag = await magRes.json();
+    const plasmaLast = plasma[plasma.length - 1];
+    const magLast = mag[mag.length - 1];
+    state.solar = {
+      speed: Number(plasmaLast?.[2] || 0),
+      density: Number(plasmaLast?.[1] || 0),
+      bt: Number(magLast?.[1] || 0),
+      bz: Number(magLast?.[3] || 0),
+      sparkSource: mag.slice(Math.max(1, mag.length - 32)).map((row) => Number(row[3] || 0))
+    };
+  }
+
+  async function fetchISS() {
+    const res = await fetch("https://api.wheretheiss.at/v1/satellites/25544");
+    if (!res.ok) throw new Error("iss");
+    state.iss = await res.json();
+  }
+
+  async function fetchEarth() {
+    const today = new Date().toISOString().slice(0, 10);
+    const url = `https://api.nasa.gov/EPIC/api/natural/date/${today}?api_key=DEMO_KEY`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("earth");
+    const data = await res.json();
+    const item = data?.[0];
+    if (!item) return;
+    const date = new Date(item.date);
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    state.earth = {
+      date: item.date,
+      image: `https://epic.gsfc.nasa.gov/archive/natural/${y}/${m}/${d}/png/${item.image}.png`
+    };
+  }
+
+  /* =========================
+     DRAW HELPERS
+  ========================= */
+  function drawSolarSpark(scope) {
+    const svg = scope.querySelector("#solarSpark");
+    if (!svg || !state.solar?.sparkSource?.length) return;
+    const values = state.solar.sparkSource;
+    const rect = svg.getBoundingClientRect();
+    const w = rect.width || 320;
+    const h = rect.height || 90;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = Math.max(max - min, 1);
+    const points = values.map((v, i) => {
+      const x = (i / Math.max(values.length - 1, 1)) * w;
+      const y = h - ((v - min) / range) * (h - 18) - 9;
+      return `${x},${y}`;
+    }).join(" ");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,255,255,.28)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+      <polyline fill="none" stroke="rgba(255,255,255,.72)" stroke-width="2.4" points="${points}" />
+    `;
+  }
+
+  function drawIssMap(scope) {
+    const canvas = scope.querySelector("#issMapCanvas");
+    if (!canvas || !state.iss) return;
+    const box = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(box.width * dpr));
+    canvas.height = Math.max(1, Math.round(box.height * dpr));
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    const w = box.width;
+    const h = box.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#09111d");
+    g.addColorStop(1, "#05070c");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = "rgba(255,255,255,.07)";
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 6; i++) {
+      const y = (h / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    for (let i = 1; i < 6; i++) {
+      const x = (w / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+
+    const x = ((state.iss.longitude + 180) / 360) * w;
+    const y = ((90 - state.iss.latitude) / 180) * h;
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* =========================
+     STORAGE
+  ========================= */
+  function loadTasks() {
+    try {
+      const raw = localStorage.getItem(STORAGE.tasks);
+      if (!raw) return seedTasks();
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : seedTasks();
+    } catch {
+      return seedTasks();
+    }
+  }
+
+  function saveTasks() {
+    localStorage.setItem(STORAGE.tasks, JSON.stringify(state.tasks));
+  }
+
+  function loadNotes() {
+    try {
+      return localStorage.getItem(STORAGE.notes) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function saveNotes() {
+    localStorage.setItem(STORAGE.notes, state.notes);
+  }
+
+  function seedTasks() {
+    return [
+      { id: uid(), title: "Bygg grunden", note: "få navigationen på plats", done: false, subtasks: [{ id: uid(), text: "home + previews", done: false }, { id: uid(), text: "moduler från höger", done: false }], createdAt: Date.now() - 2 },
+      { id: uid(), title: "Koppla kalender-url", note: "publik google embed", done: false, subtasks: [], createdAt: Date.now() - 1 },
+      { id: uid(), title: "Välj nyhetssajt", note: "något som känns rent", done: false, subtasks: [], createdAt: Date.now() }
+    ];
+  }
+
+  /* =========================
+     MISC HELPERS
+  ========================= */
+  function bindGlobalKeys() {
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && state.module.open) closeModule(true);
+    });
+  }
+
+  function renderCalendarPreviewMarkup() {
+    if (!APP.calendarEmbedUrl) {
+      return `<div class="calendarEmpty">lägg in calendarEmbedUrl i app.js</div>`;
+    }
+    return `
+      <div class="calendarItem"><div class="calendarTime">08:00</div><div class="calendarText"><div>kalender preview kopplas när din url är inlagd</div></div></div>
+      <div class="calendarItem"><div class="calendarTime">13:00</div><div class="calendarText"><div>visar fler händelser i fullvy</div></div></div>
+      <div class="calendarItem"><div class="calendarTime">18:30</div><div class="calendarText"><div>vit modul för att smälta ihop</div></div></div>
+    `;
+  }
+
+  function buildHourlyRows(hourly) {
+    return hourly.time.slice(0, 12).map((time, i) => `
+      <div class="hourlyItem">
+        <span>${hourLabel(time)}</span>
+        <span>${weatherEmoji(hourly.weathercode[i])}</span>
+        <span>${Math.round(hourly.temperature_2m[i])}°</span>
+      </div>
+    `).join("");
+  }
+
+  function buildDailyRows(daily) {
+    return daily.time.map((time, i) => `
+      <div class="dailyItem">
+        <span>${weekdayShort(time)}</span>
+        <span>${Math.round(daily.temperature_2m_max[i])}°</span>
+        <span>${Math.round(daily.temperature_2m_min[i])}°</span>
+      </div>
+    `).join("");
+  }
+
+  function metricCell(label, value, sub = "") {
+    return `<div class="metricCell"><div class="mLabel">${escapeHtml(label)}</div><div class="mValue">${escapeHtml(String(value))}</div>${sub ? `<div class="mSub">${escapeHtml(sub)}</div>` : ""}</div>`;
+  }
+
+  function dotHint(index) {
+    return `<div class="previewOpenHint">${previewOrder.map((_, i) => `<span class="${i === index ? "active" : ""}"></span>`).join("")}</div>`;
+  }
+
+  function pageDots(total, active = 0) {
+    return Array.from({ length: total }, (_, i) => `<span class="${i === active ? "active" : ""}"></span>`).join("");
+  }
+
+  function weatherEmoji(code) {
+    if (code == null) return "•";
+    if ([0].includes(code)) return "☀️";
+    if ([1, 2].includes(code)) return "⛅️";
+    if ([3].includes(code)) return "☁️";
+    if ([45, 48].includes(code)) return "🌫️";
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "🌧️";
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️";
+    if ([95, 96, 99].includes(code)) return "⛈️";
+    return "☁️";
+  }
+
+  function weatherSvg(icon) {
+    const map = {
+      "☀️": `<svg viewBox="0 0 24 24"><path d="M12 4.2a.85.85 0 0 1 .85.85v1.6a.85.85 0 1 1-1.7 0v-1.6A.85.85 0 0 1 12 4.2Zm0 12.3a3.65 3.65 0 1 0 0-7.3 3.65 3.65 0 0 0 0 7.3Zm6.95-4.3a.85.85 0 0 1 .85.85.85.85 0 0 1-.85.85h-1.6a.85.85 0 1 1 0-1.7h1.6ZM7.25 13.9a.85.85 0 1 1 0-1.7h-1.6a.85.85 0 1 0 0 1.7h1.6Zm8.06-5.52a.85.85 0 0 1 1.2 0l1.14 1.13a.85.85 0 0 1-1.2 1.2l-1.14-1.13a.85.85 0 0 1 0-1.2Zm-8.1 8.1a.85.85 0 0 1 1.2 0l1.14 1.13a.85.85 0 0 1-1.2 1.2l-1.14-1.13a.85.85 0 0 1 0-1.2Zm9.24 1.13 1.14-1.13a.85.85 0 0 1 1.2 1.2l-1.14 1.13a.85.85 0 0 1-1.2-1.2ZM8.41 8.38a.85.85 0 0 1 0 1.2L7.27 10.7a.85.85 0 1 1-1.2-1.2l1.14-1.13a.85.85 0 0 1 1.2 0Z"/></svg>`,
+      "⛅️": `<svg viewBox="0 0 24 24"><path d="M8.3 18.8h8.1a3.8 3.8 0 0 0 .47-7.57A5.4 5.4 0 0 0 6.6 9.9a3.8 3.8 0 0 0 1.7 8.9Zm6.3-9.2a2.35 2.35 0 1 0-2.35-2.35A2.35 2.35 0 0 0 14.6 9.6Z"/></svg>`,
+      "☁️": `<svg viewBox="0 0 24 24"><path d="M7.5 18.9h9.3a4.2 4.2 0 0 0 .41-8.38A5.7 5.7 0 0 0 6.44 9.6 4.2 4.2 0 0 0 7.5 18.9Z"/></svg>`,
+      "🌧️": `<svg viewBox="0 0 24 24"><path d="M7.5 14.9h9.3a4.2 4.2 0 0 0 .41-8.38A5.7 5.7 0 0 0 6.44 5.6 4.2 4.2 0 0 0 7.5 14.9Zm1.2 4.7a.9.9 0 0 0 .9-.9v-.9a.9.9 0 1 0-1.8 0v.9a.9.9 0 0 0 .9.9Zm5.2 0a.9.9 0 0 0 .9-.9v-.9a.9.9 0 1 0-1.8 0v.9a.9.9 0 0 0 .9.9Z"/></svg>`,
+      "❄️": `<svg viewBox="0 0 24 24"><path d="M12 4.3a.8.8 0 0 1 .8.8v4.1l3.55-2.04a.8.8 0 1 1 .8 1.38L13.6 10.6l3.55 2.05a.8.8 0 1 1-.8 1.38L12.8 12v4.1a.8.8 0 1 1-1.6 0V12l-3.55 2.03a.8.8 0 0 1-.8-1.38l3.55-2.05L6.85 8.56a.8.8 0 0 1 .8-1.38L11.2 9.2V5.1a.8.8 0 0 1 .8-.8Z"/></svg>`,
+      "⛈️": `<svg viewBox="0 0 24 24"><path d="M7.5 14.1h9.3a4.2 4.2 0 0 0 .41-8.38A5.7 5.7 0 0 0 6.44 4.8 4.2 4.2 0 0 0 7.5 14.1Zm4.28 6.1.92-2.85H11.2l1.1-3.4 2.4.03-1.05 2.62h1.72l-3.57 3.6Z"/></svg>`
+    };
+    return map[icon] || map["☁️"];
+  }
+
+  function themeClass(theme) {
+    if (theme === "light") return "lightModule";
+    return "";
+  }
+
+  function sortTasksPreview(a, b) {
+    if (a.done !== b.done) return Number(a.done) - Number(b.done);
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  }
+
+  function subtaskSummary(task) {
+    const left = task.subtasks?.filter((s) => !s.done).length || 0;
+    return left ? `${left} delmål kvar` : "";
+  }
+
+  function hourLabel(iso) {
+    return new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function weekdayShort(iso) {
+    return new Date(iso).toLocaleDateString("sv-SE", { weekday: "short" });
+  }
+
+  function formatDateTimeShort(value) {
+    return new Date(value).toLocaleString("sv-SE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function symbolToMini(symbol) {
+    return symbol.split(":").pop();
+  }
+
+  function buildHomeCardBase(className) {
+    const tpl = $("tplHomeCard").content.firstElementChild.cloneNode(true);
+    tpl.classList.add(className);
+    return tpl;
+  }
 
   function uid() {
     return Math.random().toString(36).slice(2, 10);
   }
 
-  function loadJson(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
   }
 
-  function saveJson(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
+  function round(v, n = 0) {
+    return Number(v).toFixed(n);
   }
 
-  function persistPrios() {
-    saveJson(LS.prio, state.prios);
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  function persistTimer() {
-    saveJson(LS.timer, state.timer);
+  function escapeAttr(str) {
+    return escapeHtml(str);
   }
-
-  function formatSvDate(date = new Date()) {
-    const weekday = date.toLocaleDateString("sv-SE", { weekday: "long" }).toUpperCase();
-    const day = date.getDate();
-    const month = date.toLocaleDateString("sv-SE", { month: "long" }).toUpperCase();
-    return `${weekday} | ${day} ${month}`;
-  }
-
-  function formatTime(date = new Date()) {
-    return date.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function updateClock() {
-    const now = new Date();
-    if (clockDate) clockDate.textContent = formatSvDate(now);
-    if (clockTime) clockTime.textContent = formatTime(now);
-  }
-
-  function clamp(num, min, max) {
-    return Math.min(max, Math.max(min, num));
-  }
-
-  function weatherEmoji(code) {
-    if ([0, 1].includes(code)) return '☀️';
-    if ([2].includes(code)) return '⛅';
-    if ([3, 45, 48].includes(code)) return '☁️';
-    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
-    if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
-    if ([95, 96, 99].includes(code)) return '⛈️';
-    return '☁️';
-  }
-
-  function weatherIconPath(code) {
-    const emoji = weatherEmoji(code);
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-        <defs>
-          <radialGradient id="g" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
-            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-          </radialGradient>
-        </defs>
-        <circle cx="64" cy="64" r="56" fill="url(#g)"/>
-        <text x="64" y="78" text-anchor="middle" font-size="62">${emoji}</text>
-      </svg>`;
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-  }
-
-  function weatherLabel(code) {
-    const labels = {
-      0: "Klart",
-      1: "Mest klart",
-      2: "Delvis molnigt",
-      3: "Mulet",
-      45: "Dimma",
-      48: "Dimma",
-      51: "Lätt duggregn",
-      53: "Duggregn",
-      55: "Kraftigt duggregn",
-      56: "Underkylt duggregn",
-      57: "Underkylt duggregn",
-      61: "Lätt regn",
-      63: "Regn",
-      65: "Kraftigt regn",
-      66: "Underkylt regn",
-      67: "Underkylt regn",
-      71: "Lätt snö",
-      73: "Snö",
-      75: "Kraftig snö",
-      77: "Snökorn",
-      80: "Regnskurar",
-      81: "Regnskurar",
-      82: "Kraftiga skurar",
-      85: "Snöbyar",
-      86: "Snöbyar",
-      95: "Åska",
-      96: "Åska/hagel",
-      99: "Åska/hagel",
-    };
-    return labels[code] || "Väder";
-  }
-
-  async function fetchWeather() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=59.32&longitude=18.44&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FStockholm&forecast_days=2";
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error("weather fetch failed");
-      const data = await res.json();
-      state.weather = data;
-      renderSlots();
-      renderWeatherOverlay();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  function renderWeatherPreview() {
-    const w = state.weather;
-    if (!w || !w.current || !w.hourly) {
-      return `
-        <div class="weatherPreview">
-          <div class="weatherPreviewCard">
-            <div class="weatherPreviewVisual"><img class="weatherPreviewIcon" src="assets/ui/weather/cloud.svg" alt="" draggable="false"></div>
-            <div class="weatherPreviewText">
-              <div class="weatherPreviewTempBig">--°</div>
-              <div class="weatherPreviewStatus">Laddar väder…</div>
-              <div class="weatherPreviewMeta">Värmdö / Stockholm</div>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    const current = w.current;
-    const status = weatherLabel(current.weather_code);
-    const icon = weatherIconPath(current.weather_code);
-    const hours = nextWeatherHours(w, 3);
-
-    return `
-      <div class="weatherPreview">
-        <div class="weatherPreviewCard">
-          <div class="weatherPreviewVisual">
-            <img class="weatherPreviewIcon" src="${escapeHtml(icon)}" alt="" draggable="false">
-          </div>
-          <div class="weatherPreviewText">
-            <div class="weatherPreviewTempBig">${Math.round(current.temperature_2m)}°</div>
-            <div class="weatherPreviewStatus">${escapeHtml(status)}</div>
-            <div class="weatherPreviewMeta">Känns som ${Math.round(current.apparent_temperature)}° · Vind ${Math.round(current.wind_speed_10m)} m/s</div>
-            <div class="weatherPreviewMetaRow">
-              <div class="weatherPreviewChip">Värmdö</div>
-              <div class="weatherPreviewChip">Regnrisk ${Math.round(hours[0]?.precipitation_probability ?? 0)}%</div>
-              <div class="weatherPreviewChip">Nästa timmar</div>
-            </div>
-          </div>
-          <div class="weatherPreviewHours">
-            ${hours.map((hour) => `
-              <div class="weatherPreviewHour">
-                <div class="weatherPreviewHourTime">${escapeHtml(hour.label)}</div>
-                <div class="weatherPreviewHourTemp">${Math.round(hour.temp)}°</div>
-                <div class="weatherPreviewHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  function nextWeatherHours(data, count = 4) {
-    const now = Date.now();
-    const times = data.hourly.time || [];
-    const out = [];
-    for (let i = 0; i < times.length && out.length < count; i += 1) {
-      const ts = new Date(times[i]).getTime();
-      if (ts + 15 * 60 * 1000 < now) continue;
-      out.push({
-        label: new Date(times[i]).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }),
-        temp: data.hourly.temperature_2m?.[i],
-        precipitation_probability: data.hourly.precipitation_probability?.[i] ?? 0,
-        precipitation: data.hourly.precipitation?.[i] ?? 0,
-      });
-    }
-    return out;
-  }
-
-  function renderWeatherOverlay() {
-    const w = state.weather;
-    if (!w || !w.current) return;
-    weatherHeroTemp.textContent = `${Math.round(w.current.temperature_2m)}°`;
-    weatherHeroStatus.textContent = weatherLabel(w.current.weather_code);
-    weatherHeroIcon.src = weatherIconPath(w.current.weather_code);
-    weatherFeelsLike.textContent = `${Math.round(w.current.apparent_temperature)}°`;
-    weatherWind.textContent = `${Math.round(w.current.wind_speed_10m)} m/s`;
-    const nextHours = nextWeatherHours(w, 4);
-    const rainMm = nextHours.reduce((sum, item) => sum + (item.precipitation || 0), 0);
-    const rainRisk = Math.max(...nextHours.map((x) => x.precipitation_probability || 0));
-    weatherRain.textContent = `${rainMm.toFixed(1)} mm`;
-    weatherRainChance.textContent = `${Math.round(rainRisk)}%`;
-    weatherHours.innerHTML = nextHours.map((hour) => `
-      <div class="weatherHour">
-        <div class="weatherHourTime">${escapeHtml(hour.label)}</div>
-        <div class="weatherHourTemp">${Math.round(hour.temp)}°</div>
-        <div class="weatherHourRain">${Math.round(hour.precipitation_probability || 0)}%</div>
-      </div>
-    `).join("");
-
-    const d = w.daily;
-    if (d) {
-      weatherTodayLine.textContent = `Idag: ${Math.round(d.temperature_2m_min[0])}°–${Math.round(d.temperature_2m_max[0])}° · regnrisk ${Math.round(d.precipitation_probability_max[0] || 0)}%`;
-      weatherTomorrowLine.textContent = `Imorgon: ${Math.round(d.temperature_2m_min[1])}°–${Math.round(d.temperature_2m_max[1])}° · regnrisk ${Math.round(d.precipitation_probability_max[1] || 0)}%`;
-    }
-  }
-
-  function renderPrioPreview() {
-    const visible = state.prios.slice(0, 3);
-    const more = state.prios.length - visible.length;
-    return `
-      <div class="prioPreview prioPreview--compact">
-        <div class="miniSectionLabel">Prio</div>
-        ${visible.map((item) => `
-          <div class="prioPreviewRow ${item.done ? 'is-done' : ''}">
-            <div class="prioPreviewDot"></div>
-            <div>
-              <div class="prioPreviewText">${escapeHtml(trimText(item.text, 34))}</div>
-              ${item.note ? `<div class="prioPreviewNote">${escapeHtml(trimText(item.note, 26))}</div>` : ''}
-            </div>
-          </div>
-        `).join("")}
-        ${more > 0 ? `<div class="prioPreviewMore">+ ${more} till</div>` : ''}
-      </div>`;
-  }
-
-  function renderPrioList() {
-    prioPanelList.innerHTML = state.prios.map((item) => `
-      <div class="prioItem ${item.done ? 'is-done' : ''}" data-id="${escapeHtml(item.id)}">
-        <div class="prioItemMain">
-          <input class="prioCheck" type="checkbox" ${item.done ? 'checked' : ''} aria-label="Klar">
-          <button class="prioItemTextBtn" type="button">${escapeHtml(item.text)}</button>
-          <button class="prioDeleteBtn" type="button" aria-label="Ta bort">✕</button>
-        </div>
-        <textarea class="prioNoteInput" placeholder="Anteckning...">${escapeHtml(item.note || '')}</textarea>
-      </div>
-    `).join("");
-  }
-
-  function renderFreeTextPreview() {
-    const text = state.freeText.trim();
-    return `
-      <div class="freeTextPreview freeTextPreview--compact">
-        <div class="miniSectionLabel">Fritext</div>
-        <div class="freeTextPreviewText ${text ? '' : 'is-empty'}">${escapeHtml(text || 'Skriv något du vill komma ihåg…')}</div>
-      </div>`;
-  }
-
-  function formatRemainingShort(totalSec) {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  }
-
-  function timerRemainingSec() {
-    if (!state.timer.running) return state.timer.durationSec || state.timer.minutes * 60;
-    return Math.max(0, Math.round((state.timer.endAt - Date.now()) / 1000));
-  }
-
-  function renderTimerPreview() {
-    const remaining = timerRemainingSec();
-    const center = state.timer.running ? formatRemainingShort(remaining) : state.timer.minutes;
-    const bottom = state.timer.running ? 'KVAR' : 'MIN';
-    return `
-      <div class="timerPreview">
-        <div class="timerPreviewMain">
-          <div class="timerPreviewWheel">
-            <div class="timerPreviewCenter">
-              <div class="timerPreviewTop">Timer</div>
-              <div class="timerPreviewValue">${escapeHtml(String(center))}</div>
-              <div class="timerPreviewBottom">${escapeHtml(bottom)}</div>
-            </div>
-          </div>
-        </div>
-        <div class="timerPreviewReset" ${state.timer.running ? '' : 'hidden'}>Reset</div>
-      </div>`;
-  }
-
-  function renderStocksPreview() {
-    const rows = [
-      { key: 'gold', color: 'up' },
-      { key: 'silver', color: 'down' },
-      { key: 'oil', color: 'up' },
-      { key: 'us100', color: 'down' },
-      { key: 'eurusd', color: 'flat' },
-    ];
-    return `
-      <div class="stocksPreviewCompact stocksPreviewCompact--rich">
-        <div class="stocksPreviewHeader">
-          <div class="miniSectionLabel">Aktier / Marknad</div>
-          <div class="stocksPreviewLive">LIVE</div>
-        </div>
-        ${rows.map((row) => {
-          const stock = STOCKS.find((s) => s.key === row.key);
-          const meta = state.stockMini[row.key] || {};
-          const value = meta.value && meta.value !== '--' ? meta.value : stock.short;
-          const metaText = meta.meta && meta.meta !== 'Väntar data' ? meta.meta : 'Öppna för livechart';
-          return `
-            <div class="stocksMiniRow">
-              <div class="stocksMiniLeft">
-                <div class="stocksMiniSymbol">${escapeHtml(stock.short)}</div>
-                <div class="stocksMiniMeta">${escapeHtml(metaText)}</div>
-              </div>
-              <div class="stocksMiniRight">
-                <div class="stocksMiniValue">${escapeHtml(value)}</div>
-                <div class="stocksMiniSpark stocksMiniSpark--${row.color}">
-                  <span></span><span></span><span></span><span></span>
-                </div>
-              </div>
-            </div>`;
-        }).join("")}
-      </div>`;
-  }).join("")}
-      </div>`;
-  }
-
-  function renderNewsPreview() {
-    const lines = [
-      { tag: 'LIVE', text: 'Marknad, FX och råvaror' },
-      { tag: 'TV', text: 'Top stories från TradingView' },
-      { tag: 'ÖPPNA', text: 'Feed i full modulvy' },
-    ];
-    return `
-      <div class="newsPreviewCompact newsPreviewCompact--rich">
-        <div class="miniSectionLabel">Nyheter</div>
-        <div class="newsPreviewHero">
-          <div class="newsPreviewHeroBadge">LIVE</div>
-          <div class="newsPreviewHeroBars"><span></span><span></span><span></span></div>
-        </div>
-        ${lines.map((item) => `
-          <div class="newsPreviewCompactItem">
-            <div class="newsPreviewCompactDot"></div>
-            <div class="newsPreviewCompactText"><strong>${escapeHtml(item.tag)}</strong> · ${escapeHtml(item.text)}</div>
-          </div>
-        `).join("")}
-      </div>`;
-  }
-
-  function renderPowerPreview() {
-    const p = state.power;
-    const today = p?.today || [];
-    const now = p?.nowPriceText || '--';
-    const next = today[new Date().getHours() + 1]?.price;
-    const nextText = Number.isFinite(next) ? `${next.toFixed(2)} kr` : '—';
-    return `
-      <div class="powerPreviewCompact powerPreviewCompact--rich">
-        <div class="miniSectionLabel">Elpris · SE3</div>
-        <div class="powerPreviewHero">
-          <div class="powerPreviewNow">${escapeHtml(now)}</div>
-          <div class="powerPreviewMeta">${escapeHtml(p?.nowLabel || 'Just nu')}</div>
-        </div>
-        <div class="powerPreviewCompactStats">
-          <div><span>Nu</span><strong>${escapeHtml(now)}</strong></div>
-          <div><span>Nästa</span><strong>${escapeHtml(nextText)}</strong></div>
-          <div><span>Billigast</span><strong>${escapeHtml(p?.bestWindow || '--')}</strong></div>
-        </div>
-        <div class="powerPreviewCompactBars">
-          ${today.slice(0, 12).map((item) => `<div class="powerPreviewCompactBar" title="${escapeHtml(item.hour)}" style="height:${Math.max(10, item.ratio * 42)}px"></div>`).join('')}
-        </div>
-      </div>`;
-  }
-
-  function trimText(str, len) {
-    return str.length > len ? `${str.slice(0, len - 1)}…` : str;
-  }
-
-  function renderModule(moduleId) {
-    switch (moduleId) {
-      case 'timer': return renderTimerPreview();
-      case 'prio': return renderPrioPreview();
-      case 'weather': return renderWeatherPreview();
-      case 'freeText': return renderFreeTextPreview();
-      case 'stocks': return renderStocksPreview();
-      case 'news': return renderNewsPreview();
-      case 'power': return renderPowerPreview();
-      case 'iss': return renderSimplePreview('ISS', 'Live position och bana');
-      case 'lightning': return renderSimplePreview('Lightning', 'Åskkarta live');
-      case 'solar': return renderSimplePreview('Solar', 'Kp-index och solvind');
-      case 'flights': return renderSimplePreview('Flights', 'Live flygradar');
-      default: return '<div class="modulePlaceholder"><div class="modulePlaceholderBody"><div class="modulePlaceholderTitle">Modul</div><div class="modulePlaceholderText">Tom modul</div></div></div>';
-    }
-  }
-
-  function renderSimplePreview(title, meta) {
-    const badges = {
-      ISS: ['Live', 'Position'],
-      Lightning: ['Live', 'Storm'],
-      Solar: ['Kp', 'Sun'],
-      Flights: ['Radar', 'Air']
-    };
-    const chips = badges[title] || ['Live'];
-    return `
-      <div class="simplePreviewCompact simplePreviewCompact--rich">
-        <div class="miniSectionLabel">${escapeHtml(title)}</div>
-        <div class="simplePreviewCompactMeta">${escapeHtml(title === 'ISS' && state.iss ? `Lat ${state.iss.lat} · Lon ${state.iss.lon}` : meta)}</div>
-        <div class="simplePreviewChips">
-          ${chips.map((chip) => `<span class="simplePreviewChip">${escapeHtml(chip)}</span>`).join("")}
-        </div>
-      </div>`;
-  }
-
-  function renderSlots() {
-    state.slotIndexes.forEach((moduleIndex, slotIndex) => {
-      const module = MODULES[(moduleIndex + MODULES.length) % MODULES.length];
-      slotContentEls[slotIndex].innerHTML = renderModule(module.id);
-      slotEls[slotIndex].dataset.moduleId = module.id;
-    });
-  }
-
-  function stepSlot(slotIndex, delta) {
-    const slot = slotEls[slotIndex];
-    state.slotIndexes[slotIndex] = (state.slotIndexes[slotIndex] + delta + MODULES.length) % MODULES.length;
-    slot.classList.remove('is-animating-left', 'is-animating-right');
-    slot.classList.add(delta > 0 ? 'is-animating-left' : 'is-animating-right');
-    renderSlots();
-    setTimeout(() => slot.classList.remove('is-animating-left', 'is-animating-right'), 360);
-  }
-
-  function attachSlotSwipe(slot, slotIndex) {
-    let startX = 0;
-    let currentX = 0;
-    let dragging = false;
-
-    slot.addEventListener('pointerdown', (e) => {
-      if (activeOverlay) return;
-      dragging = true;
-      startX = e.clientX;
-      currentX = e.clientX;
-      slot.setPointerCapture?.(e.pointerId);
-    });
-
-    slot.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      currentX = e.clientX;
-      const dx = currentX - startX;
-      const content = slot.querySelector('.moduleSlotContent');
-      slot.classList.add('is-swiping');
-      slot.classList.toggle('swipe-left', dx < 0);
-      slot.classList.toggle('swipe-right', dx > 0);
-      content.style.setProperty('--swipeX', `${dx * 0.46}px`);
-      content.style.setProperty('--swipeScale', `${1 - Math.min(Math.abs(dx) / 2200, 0.018)}`);
-      content.style.setProperty('--swipeOpacity', `${1 - Math.min(Math.abs(dx) / 520, 0.10)}`);
-    });
-
-    function end(e) {
-      if (!dragging) return;
-      dragging = false;
-      const dx = currentX - startX;
-      const content = slot.querySelector('.moduleSlotContent');
-      slot.classList.remove('is-swiping', 'swipe-left', 'swipe-right');
-      content.style.removeProperty('--swipeX');
-      content.style.removeProperty('--swipeScale');
-      content.style.removeProperty('--swipeOpacity');
-      if (Math.abs(dx) > SWIPE_THRESHOLD) {
-        stepSlot(slotIndex, dx < 0 ? 1 : -1);
-        slot.dataset.swiped = '1';
-        setTimeout(() => { slot.dataset.swiped = ''; }, 220);
-      }
-    }
-
-    slot.addEventListener('pointerup', end);
-    slot.addEventListener('pointercancel', end);
-    slot.addEventListener('click', () => {
-      if (activeOverlay) return;
-      if (slot.dataset.swiped === '1') return;
-      openCurrentModule(slotIndex);
-    });
-  }
-
-  function openOverlay(overlay) {
-    if (activeOverlay) closeOverlay(activeOverlay);
-    activeOverlay = overlay;
-    overlay.classList.add('open');
-    overlay.setAttribute('aria-hidden', 'false');
-  }
-
-  function closeOverlay(overlay) {
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
-    if (activeOverlay === overlay) activeOverlay = null;
-  }
-
-  function openCurrentModule(slotIndex) {
-    const module = MODULES[state.slotIndexes[slotIndex]];
-    switch (module.id) {
-      case 'prio':
-        renderPrioList();
-        openOverlay(prioOverlay);
-        break;
-      case 'weather':
-        renderWeatherOverlay();
-        openOverlay(weatherOverlay);
-        break;
-      case 'freeText':
-        freeTextInput.value = state.freeText;
-        openOverlay(freeTextOverlay);
-        setTimeout(() => freeTextInput.focus(), 80);
-        break;
-      case 'stocks':
-      case 'news':
-      case 'power':
-      case 'iss':
-      case 'lightning':
-      case 'solar':
-      case 'flights':
-        renderGenericModule(module.id);
-        openOverlay(genericOverlay);
-        break;
-      case 'timer':
-        openTimer();
-        break;
-      default:
-        break;
-    }
-  }
-
-  prioAddBtn?.addEventListener('click', () => {
-    const text = prioAddInput.value.trim();
-    if (!text) return;
-    state.prios.unshift({ id: uid(), text, note: '', done: false });
-    prioAddInput.value = '';
-    persistPrios();
-    renderPrioList();
-    renderSlots();
-  });
-
-  prioAddInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      prioAddBtn.click();
-    }
-  });
-
-  prioPanelList?.addEventListener('click', (e) => {
-    const itemEl = e.target.closest('.prioItem');
-    if (!itemEl) return;
-    const id = itemEl.dataset.id;
-    if (e.target.classList.contains('prioDeleteBtn')) {
-      state.prios = state.prios.filter((item) => item.id !== id);
-    } else if (e.target.classList.contains('prioCheck')) {
-      state.prios = state.prios.map((item) => item.id === id ? { ...item, done: !item.done } : item);
-    }
-    persistPrios();
-    renderPrioList();
-    renderSlots();
-  });
-
-  prioPanelList?.addEventListener('input', (e) => {
-    if (!e.target.classList.contains('prioNoteInput')) return;
-    const itemEl = e.target.closest('.prioItem');
-    if (!itemEl) return;
-    const id = itemEl.dataset.id;
-    state.prios = state.prios.map((item) => item.id === id ? { ...item, note: e.target.value } : item);
-    persistPrios();
-    renderSlots();
-  });
-
-  freeTextInput?.addEventListener('input', () => {
-    state.freeText = freeTextInput.value;
-    localStorage.setItem(LS.freeText, state.freeText);
-    renderSlots();
-  });
-
-  function updateTimerWheelText() {
-    timerWheelValue.textContent = state.timer.running ? formatRemainingShort(timerRemainingSec()) : String(state.timer.minutes);
-    if (timerWheelTop) timerWheelTop.textContent = state.timer.running ? 'TIMER' : 'TIMER';
-    if (timerWheelBottom) timerWheelBottom.textContent = state.timer.running ? 'KVAR' : 'MIN';
-    if (timerStartBtn) timerStartBtn.textContent = state.timer.running ? 'Starta om' : 'Start';
-    if (timerResetBtn) timerResetBtn.disabled = !state.timer.running && state.timer.minutes === 1;
-    if (timerPresetRow) {
-      [...timerPresetRow.querySelectorAll('[data-min]')].forEach((btn) => {
-        btn.classList.toggle('is-active', Number(btn.dataset.min) === state.timer.minutes);
-      });
-    }
-    timerBarWrap.setAttribute('aria-hidden', state.timer.running ? 'false' : 'true');
-    timerBarWrap.style.opacity = state.timer.running ? '1' : '0';
-    if (state.timer.running) {
-      const remaining = timerRemainingSec();
-      const duration = state.timer.durationSec || state.timer.minutes * 60;
-      const pct = clamp(remaining / duration, 0, 1);
-      timerBar.style.transform = `scaleY(${pct})`;
-      timerBar.style.transformOrigin = 'bottom center';
-    }
-    renderSlots();
-  }
-
-  function startTimerTick() {
-    stopTimerTick();
-    updateTimerWheelText();
-    timerTick = setInterval(() => {
-      const remaining = timerRemainingSec();
-      if (remaining <= 0) {
-        state.timer.running = false;
-        state.timer.endAt = 0;
-        persistTimer();
-        stopTimerTick();
-      }
-      updateTimerWheelText();
-    }, 250);
-  }
-
-  function stopTimerTick() {
-    if (timerTick) clearInterval(timerTick);
-    timerTick = null;
-  }
-
-  function openTimer() {
-    openOverlay(timerFocus);
-  }
-
-  function closeTimer() {
-    closeOverlay(timerFocus);
-  }
-
-  function setTimerMinutes(mins) {
-    state.timer.minutes = mins;
-    state.timer.durationSec = mins * 60;
-    if (!state.timer.running) {
-      persistTimer();
-      updateTimerWheelText();
-    }
-  }
-
-  function startTimer() {
-    state.timer.durationSec = state.timer.minutes * 60;
-    state.timer.endAt = Date.now() + state.timer.durationSec * 1000;
-    state.timer.running = true;
-    persistTimer();
-    startTimerTick();
-  }
-
-  function resetTimer() {
-    state.timer.running = false;
-    state.timer.endAt = 0;
-    persistTimer();
-    updateTimerWheelText();
-  }
-
-  let wheelStartAngle = null;
-  let currentWheelMinutes = state.timer.minutes;
-  const timerChoices = [1, 5, 10, 15, 20, 25, 30, 45, 60];
-
-  function pointerAngle(evt) {
-    const rect = timerWheel.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    return Math.atan2(evt.clientY - cy, evt.clientX - cx);
-  }
-
-  timerWheel?.addEventListener('pointerdown', (e) => {
-    wheelStartAngle = pointerAngle(e);
-    timerWheel.setPointerCapture?.(e.pointerId);
-  });
-
-  timerWheel?.addEventListener('pointermove', (e) => {
-    if (wheelStartAngle == null) return;
-    const angle = pointerAngle(e);
-    const diff = angle - wheelStartAngle;
-    const step = Math.round((diff / (Math.PI * 2)) * timerChoices.length * 1.4);
-    const currentIndex = timerChoices.indexOf(state.timer.minutes);
-    const nextIndex = (currentIndex + step + timerChoices.length * 8) % timerChoices.length;
-    currentWheelMinutes = timerChoices[nextIndex];
-    timerWheelValue.textContent = String(currentWheelMinutes);
-  });
-
-  function finishWheelInteraction() {
-    if (wheelStartAngle == null) return;
-    wheelStartAngle = null;
-    setTimerMinutes(currentWheelMinutes || state.timer.minutes);
-  }
-
-  timerWheel?.addEventListener('pointerup', finishWheelInteraction);
-  timerWheel?.addEventListener('pointercancel', finishWheelInteraction);
-  timerWheel?.addEventListener('dblclick', () => {
-    if (state.timer.running) {
-      resetTimer();
-    } else {
-      startTimer();
-    }
-  });
-
-  timerStartBtn?.addEventListener('click', () => {
-    if (state.timer.running) {
-      startTimer();
-    } else {
-      startTimer();
-    }
-  });
-  timerResetBtn?.addEventListener('click', resetTimer);
-  timerPresetRow?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-min]');
-    if (!btn) return;
-    setTimerMinutes(Number(btn.dataset.min));
-  });
-  timerIconBtn?.addEventListener('click', openTimer);
-  timerCloseFab?.addEventListener('click', closeTimer);
-  prioCloseFab?.addEventListener('click', () => closeOverlay(prioOverlay));
-  weatherCloseFab?.addEventListener('click', () => closeOverlay(weatherOverlay));
-  freeTextCloseFab?.addEventListener('click', () => closeOverlay(freeTextOverlay));
-  genericCloseFab?.addEventListener('click', () => closeOverlay(genericOverlay));
-
-  [prioOverlay, weatherOverlay, freeTextOverlay, genericOverlay, timerFocus].forEach((overlay) => {
-    overlay?.addEventListener('click', (e) => {
-      if (e.target === overlay) closeOverlay(overlay);
-    });
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && activeOverlay) closeOverlay(activeOverlay);
-    if (activeOverlay === timerFocus) {
-      if (e.key === 'Enter') startTimer();
-      if (e.key.toLowerCase() === 'r') resetTimer();
-    }
-  });
-
-  async function ensureTvScript() {
-    if (window.TradingView) return;
-    if (tvScriptPromise) return tvScriptPromise;
-    tvScriptPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-    return tvScriptPromise;
-  }
-
-  function renderGenericModule(type) {
-    if (type === 'stocks') {
-      genericPanel.className = 'genericPanel genericPanel--stocks genericPanel--edge';
-      genericPanel.innerHTML = `
-        <div class="stocksCarousel" id="stocksCarousel">
-          ${STOCKS.map((stock, idx) => `
-            <section class="stockSlide">
-              <div class="stockSlideCard stockSlideCard--edge">
-                <div class="stockWidgetMount tvWidgetFill" id="tvChart${idx}"></div>
-              </div>
-            </section>
-          `).join('')}
-        </div>
-        <div class="stocksPager" id="stocksPager">
-          ${STOCKS.map((_, i) => `<div class="stocksPagerDot ${i === 0 ? 'is-active' : ''}"></div>`).join('')}
-        </div>
-      `;
-      mountTradingViewStocks();
-      return;
-    }
-
-    if (type === 'news') {
-      genericPanel.className = 'genericPanel genericPanel--edge';
-      genericPanel.innerHTML = `
-        <div class="newsWidgetCard newsWidgetCard--edge">
-          <div class="newsWidgetMount" id="newsWidgetMount"></div>
-        </div>
-      `;
-      mountTradingViewNews();
-      return;
-    }
-
-    if (type === 'power') {
-      genericPanel.className = 'genericPanel genericPanel--edge';
-      const p = state.power;
-      genericPanel.innerHTML = `
-        <div class="powerPanelCard powerPanelCard--edge">
-          <div class="powerHead">
-            <div>
-              <div class="powerHeroTemp">${escapeHtml(p?.nowPriceText || '--')}</div>
-              <div class="powerHeroMeta">Just nu · ${escapeHtml(p?.nowLabel || 'saknas')}</div>
-            </div>
-            <div class="genericSubtle">${escapeHtml(p?.todayDateText || '')}</div>
-          </div>
-          <div class="powerBody">
-            <div class="powerStatsGrid">
-              <div class="powerStatCard"><div class="powerStatCardLabel">Lägst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayLowText || '--')}</div></div>
-              <div class="powerStatCard"><div class="powerStatCardLabel">Högst idag</div><div class="powerStatCardValue">${escapeHtml(p?.todayHighText || '--')}</div></div>
-              <div class="powerStatCard"><div class="powerStatCardLabel">Billigast</div><div class="powerStatCardValue">${escapeHtml(p?.bestWindow || '--')}</div></div>
-            </div>
-            <div class="powerBarsBig">
-              ${(p?.today || []).map((item) => `
-                <div class="powerBarCol">
-                  <div class="powerBar" style="height:${Math.max(10, item.ratio * 170)}px"></div>
-                  <div class="powerBarLabel">${escapeHtml(item.hour)}</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    const iframeMap = {
-      iss: 'https://isstracker.spaceflight.esa.int/',
-      lightning: 'https://www.lightningmaps.org/?lang=sv#m=oss;t=3;s=0;o=0;b=0.00;ts=0;',
-      solar: 'https://www.spaceweatherlive.com/en/solar-activity.html',
-      flights: 'https://www.flightradar24.com/'
-    };
-
-    if (iframeMap[type]) {
-      const labels = {
-        iss: 'ISS Tracker',
-        lightning: 'Lightning Map',
-        solar: 'Solar Activity',
-        flights: 'Flight Radar'
-      };
-      genericPanel.className = 'genericPanel genericPanel--edge';
-      genericPanel.innerHTML = `
-        <div class="embedFrameCard">
-          <div class="embedFrameHead">
-            <div class="embedFrameTitle">${labels[type]}</div>
-            <div class="embedFrameMeta">Live widget</div>
-          </div>
-          <iframe class="embedFrame" src="${iframeMap[type]}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <a class="embedFrameOpenLink" href="${iframeMap[type]}" target="_blank" rel="noopener noreferrer">Öppna externt</a>
-        </div>
-      `;
-      return;
-    }
-  }
-
-  async function mountTradingViewStocks() {
-    try {
-      await ensureTvScript();
-      const carousel = $("stocksCarousel");
-      const pager = $("stocksPager");
-      const dots = pager ? [...pager.children] : [];
-
-      STOCKS.forEach((stock, idx) => {
-        const mount = $(`tvChart${idx}`);
-        if (!mount || mount.dataset.mounted === '1') return;
-        mount.dataset.mounted = '1';
-        new window.TradingView.widget({
-          autosize: true,
-          symbol: stock.symbol,
-          interval: '15',
-          timezone: 'Europe/Stockholm',
-          theme: 'dark',
-          style: '1',
-          locale: 'sv_SE',
-          allow_symbol_change: false,
-          save_image: false,
-          hide_side_toolbar: true,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          withdateranges: false,
-          container_id: `tvChart${idx}`,
-          backgroundColor: '#06080d',
-          gridColor: 'rgba(255,255,255,0.05)',
-          studies: [],
-        });
-      });
-
-      if (carousel && !carousel.dataset.bound) {
-        carousel.dataset.bound = '1';
-        carousel.addEventListener('scroll', () => {
-          const width = carousel.clientWidth || 1;
-          const index = Math.round(carousel.scrollLeft / width);
-          dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
-        });
-      }
-    } catch (err) {
-      console.error('TradingView charts kunde inte laddas', err);
-    }
-  }
-
-  function mountTradingViewNews() {
-    const mount = $("newsWidgetMount");
-    if (!mount || mount.dataset.mounted === '1') return;
-    mount.dataset.mounted = '1';
-    mount.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-timeline.js';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      feedMode: 'all_symbols',
-      isTransparent: true,
-      displayMode: 'adaptive',
-      width: '100%',
-      height: 560,
-      colorTheme: 'dark',
-      locale: 'sv'
-    });
-    mount.appendChild(script);
-  }
-
-  async function fetchElPrice() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    const y2 = tomorrow.getFullYear();
-    const m2 = String(tomorrow.getMonth() + 1).padStart(2, '0');
-    const d2 = String(tomorrow.getDate()).padStart(2, '0');
-    const urlToday = `https://www.elprisetjustnu.se/api/v1/prices/${y}/${m}-${d}_SE3.json`;
-    const urlTomorrow = `https://www.elprisetjustnu.se/api/v1/prices/${y2}/${m2}-${d2}_SE3.json`;
-
-    try {
-      const [todayRes, tomorrowRes] = await Promise.all([
-        fetch(urlToday, { cache: 'no-store' }),
-        fetch(urlTomorrow, { cache: 'no-store' }).catch(() => null),
-      ]);
-      if (!todayRes.ok) throw new Error('power fetch failed');
-      const todayData = await todayRes.json();
-      let tomorrowData = [];
-      if (tomorrowRes && tomorrowRes.ok) {
-        tomorrowData = await tomorrowRes.json();
-      }
-      state.power = transformPowerData(todayData, tomorrowData);
-      saveJson(LS.power, state.power);
-      renderSlots();
-      if (activeOverlay === genericOverlay) {
-        const currentModule = MODULES.find((m) => m.id === 'power');
-        if (currentModule) renderGenericModule('power');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  function transformPowerData(todayData, tomorrowData) {
-    const prices = todayData.map((item) => ({
-      hour: new Date(item.time_start).toLocaleTimeString('sv-SE', { hour: '2-digit' }),
-      fullHour: new Date(item.time_start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }),
-      price: Number(item.SEK_per_kWh || 0),
-    }));
-    const max = Math.max(...prices.map((x) => x.price), 1);
-    const min = Math.min(...prices.map((x) => x.price), 0);
-    const avg = prices.reduce((sum, p) => sum + p.price, 0) / (prices.length || 1);
-    const currentHour = new Date().getHours();
-    const nowPrice = prices[currentHour] || prices[0];
-    const best = [...prices].sort((a, b) => a.price - b.price)[0];
-    const tomorrowText = tomorrowData.length
-      ? `${new Date(tomorrowData[0].time_start).toLocaleDateString('sv-SE', { weekday: 'long' })}: ${Math.min(...tomorrowData.map(x => x.SEK_per_kWh)).toFixed(2)}–${Math.max(...tomorrowData.map(x => x.SEK_per_kWh)).toFixed(2)} kr`
-      : 'Imorgon ej publicerat ännu';
-    return {
-      today: prices.map((p) => ({ ...p, ratio: (p.price - min) / ((max - min) || 1) })),
-      nowPriceText: `${nowPrice.price.toFixed(2)} kr`,
-      nowLabel: `${nowPrice.fullHour}–${String((Number(nowPrice.hour) || currentHour) + 1).padStart(2, '0')}:00`,
-      todayLowText: `${min.toFixed(2)} kr`,
-      todayHighText: `${max.toFixed(2)} kr`,
-      todayAvgText: `${avg.toFixed(2)} kr`,
-      bestWindow: `${best.fullHour} · ${best.price.toFixed(2)} kr`,
-      tomorrowText,
-      todayDateText: new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }),
-    };
-  }
-
-  async function refreshStocksMini() {
-    const nowStamp = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-    state.stockMini = {
-      gold: { value: 'XAU/USD', meta: `Öppna livechart · ${nowStamp}` },
-      silver: { value: 'XAG/USD', meta: `Öppna livechart · ${nowStamp}` },
-      oil: { value: 'USOIL', meta: `Öppna livechart · ${nowStamp}` },
-      us100: { value: 'US100', meta: `Öppna livechart · ${nowStamp}` },
-      eurusd: { value: 'EUR/USD', meta: `Öppna livechart · ${nowStamp}` },
-    };
-    saveJson(LS.stocksMini, state.stockMini);
-    renderSlots();
-
-    try {
-      const target = 'https://stooq.com/q/l/?s=xauusd,xagusd,cl.f,%5Endx,eurusd&i=d';
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
-      const res = await fetch(proxyUrl, { cache: 'no-store' });
-      if (!res.ok) throw new Error('quote fetch failed');
-      const text = await res.text();
-      const lines = text.trim().split(/
-?
-/).filter(Boolean);
-      const map = {};
-      lines.forEach((line) => {
-        const parts = line.split(',');
-        if (parts.length >= 7) {
-          map[parts[0].toLowerCase()] = { close: parts[6], date: parts[1], time: parts[2] };
-        }
-      });
-      state.stockMini = {
-        gold: { value: map['xauusd']?.close || 'XAU/USD', meta: `Spot · ${nowStamp}` },
-        silver: { value: map['xagusd']?.close || 'XAG/USD', meta: `Spot · ${nowStamp}` },
-        oil: { value: map['cl.f']?.close || 'USOIL', meta: `Olja · ${nowStamp}` },
-        us100: { value: map['^ndx']?.close || 'US100', meta: `Nasdaq 100 · ${nowStamp}` },
-        eurusd: { value: map['eurusd']?.close || 'EUR/USD', meta: `FX · ${nowStamp}` },
-      };
-      saveJson(LS.stocksMini, state.stockMini);
-      renderSlots();
-    } catch (err) {
-      console.warn('Kunde inte hämta mini-kurser', err);
-    }
-  }
-
-  async function fetchIssPosition() {
-    try {
-      const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544', { cache: 'no-store' });
-      if (!res.ok) throw new Error('iss fetch failed');
-      const data = await res.json();
-      state.iss = {
-        lat: Number(data.latitude).toFixed(1),
-        lon: Number(data.longitude).toFixed(1),
-        velocity: Math.round(Number(data.velocity || 0)),
-      };
-      renderSlots();
-    } catch (err) {
-      console.warn('Kunde inte hämta ISS-data', err);
-    }
-  }
-
-  function boot() {
-    updateClock();
-    setInterval(updateClock, 1000);
-    renderSlots();
-    renderPrioList();
-    updateTimerWheelText();
-    slotEls.forEach((slot, i) => attachSlotSwipe(slot, i));
-    fetchWeather();
-    fetchElPrice();
-    refreshStocksMini();
-    fetchIssPosition();
-    if (state.timer.running && timerRemainingSec() > 0) {
-      startTimerTick();
-    } else {
-      state.timer.running = false;
-      state.timer.endAt = 0;
-      persistTimer();
-    }
-  }
-
-  boot();
 })();
