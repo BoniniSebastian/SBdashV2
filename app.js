@@ -76,7 +76,18 @@
     startX: 0,
     startY: 0,
     startOffsetX: 0,
-    startOffsetY: 0
+    startOffsetY: 0,
+    baseWidth: 0,
+    baseHeight: 0,
+    minScale: 1,
+    lastTap: 0,
+    velocityX: 0,
+    velocityY: 0,
+    lastMoveTime: 0,
+    pointers: new Map(),
+    pinchStartDistance: 0,
+    pinchStartScale: 1,
+    inertiaRaf: null
   };
 
   const slotGroups = {
@@ -349,9 +360,6 @@
                     : `<div class="b3PreviewCamera">${cameraIconMarkup()}</div>`
                 }
               </div>
-              <div class="b3PreviewNote ${card.note.trim() ? "" : "is-empty"}">${
-                hasImage ? escapeHtml(card.note.trim() || " ") : " "
-              }</div>
             </div>
           `;
         }).join("")}
@@ -407,6 +415,8 @@
   }
 
   function closeModule() {
+    cancelCropInertia();
+    resetCropPointers();
     cropState.open = false;
     cropState.index = -1;
     overlay.classList.remove("open");
@@ -529,12 +539,34 @@
       rerenderTasksModule();
     }
 
+    function addSubtask(taskId) {
+      const task = tasks.find((item) => item.id === taskId);
+      const input = $(`sub_${taskId}`);
+      const val = input?.value.trim();
+      if (!task || !val) return;
+
+      task.subtasks = task.subtasks || [];
+      task.subtasks.push(val);
+      saveTasks();
+      rerenderTasksModule();
+    }
+
     tasksAddBtn.addEventListener("click", addTask);
 
     tasksInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         addTask();
+      }
+    });
+
+    tasksModuleList.addEventListener("keydown", (e) => {
+      const subInput = e.target.closest(".taskSubInput");
+      if (!subInput) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addSubtask(subInput.id.replace("sub_", ""));
       }
     });
 
@@ -545,29 +577,25 @@
       const action = btn.dataset.action;
       const taskId = btn.dataset.taskId;
       const task = tasks.find((item) => item.id === taskId);
-      if (!task) return;
 
       if (action === "delete-task") {
         tasks = tasks.filter((item) => item.id !== taskId);
+        saveTasks();
+        rerenderTasksModule();
+        return;
       }
 
+      if (!task) return;
+
       if (action === "add-sub") {
-        const input = $(`sub_${taskId}`);
-        const val = input?.value.trim();
-        if (val) {
-          task.subtasks = task.subtasks || [];
-          task.subtasks.push(val);
-        }
+        addSubtask(taskId);
+        return;
       }
 
       if (action === "focus-sub") {
         const input = $(`sub_${taskId}`);
         input?.focus();
-        return;
       }
-
-      saveTasks();
-      rerenderTasksModule();
     });
 
     tasksModuleList.addEventListener("change", (e) => {
@@ -803,7 +831,6 @@
 
               <textarea
                 class="b3NoteInput"
-                data-action="note-input"
                 data-index="${index}"
                 placeholder="Skriv anteckning..."
               >${escapeHtml(card.note)}</textarea>
@@ -835,8 +862,8 @@
             id="b3CropImage"
             src="${card.src}"
             alt=""
-            style="transform: translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale});"
           >
+          <div class="b3CropMask"></div>
         </div>
 
         <div class="b3CropControls">
@@ -846,13 +873,89 @@
             id="b3CropZoom"
             type="range"
             min="1"
-            max="3"
+            max="4"
             step="0.01"
             value="${cropState.scale}"
           >
         </div>
       </div>
     `;
+  }
+
+  function cancelCropInertia() {
+    if (cropState.inertiaRaf) {
+      cancelAnimationFrame(cropState.inertiaRaf);
+      cropState.inertiaRaf = null;
+    }
+  }
+
+  function resetCropPointers() {
+    cropState.pointers.clear();
+    cropState.pinchStartDistance = 0;
+  }
+
+  function applyCropTransform() {
+    const cropImage = $("b3CropImage");
+    if (!cropImage) return;
+
+    cropImage.style.width = `${cropState.baseWidth}px`;
+    cropImage.style.height = `${cropState.baseHeight}px`;
+    cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+  }
+
+  function fitCropImageNatural(imgEl) {
+    const viewport = $("b3CropViewport");
+    if (!viewport || !imgEl.naturalWidth || !imgEl.naturalHeight) return;
+
+    cropState.baseWidth = imgEl.naturalWidth;
+    cropState.baseHeight = imgEl.naturalHeight;
+
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+
+    const fitScale = Math.max(vw / cropState.baseWidth, vh / cropState.baseHeight);
+
+    cropState.minScale = fitScale;
+    cropState.scale = Math.max(cropState.scale || fitScale, fitScale);
+    cropState.x = 0;
+    cropState.y = 0;
+
+    const zoom = $("b3CropZoom");
+    if (zoom) {
+      zoom.min = String(fitScale);
+      zoom.value = String(cropState.scale);
+    }
+
+    applyCropTransform();
+  }
+
+  function getPointerDistance() {
+    const pts = Array.from(cropState.pointers.values());
+    if (pts.length < 2) return 0;
+    const dx = pts[0].x - pts[1].x;
+    const dy = pts[0].y - pts[1].y;
+    return Math.hypot(dx, dy);
+  }
+
+  function startCropInertia() {
+    cancelCropInertia();
+
+    const step = () => {
+      cropState.velocityX *= 0.92;
+      cropState.velocityY *= 0.92;
+
+      if (Math.abs(cropState.velocityX) < 0.1 && Math.abs(cropState.velocityY) < 0.1) {
+        cropState.inertiaRaf = null;
+        return;
+      }
+
+      cropState.x += cropState.velocityX;
+      cropState.y += cropState.velocityY;
+      applyCropTransform();
+      cropState.inertiaRaf = requestAnimationFrame(step);
+    };
+
+    cropState.inertiaRaf = requestAnimationFrame(step);
   }
 
   function bindImagesModule() {
@@ -862,9 +965,8 @@
     root.querySelectorAll(".b3NoteInput").forEach((input) => {
       input.addEventListener("input", () => {
         const index = Number(input.dataset.index);
-        imageCards[index].note = input.value
-                saveImageCards();
-        renderSlots();
+        imageCards[index].note = input.value;
+        saveImageCards();
       });
     });
 
@@ -874,7 +976,7 @@
         const index = Number(input.dataset.index);
         if (!file) return;
 
-        const src = await fileToDataUrlResized(file, 1400);
+        const src = await fileToDataUrlResized(file, 1600);
         imageCards[index].src = src;
         imageCards[index].scale = 1;
         imageCards[index].x = 0;
@@ -883,9 +985,17 @@
 
         cropState.open = true;
         cropState.index = index;
-        cropState.scale = imageCards[index].scale;
-        cropState.x = imageCards[index].x;
-        cropState.y = imageCards[index].y;
+        cropState.scale = 1;
+        cropState.x = 0;
+        cropState.y = 0;
+        cropState.baseWidth = 0;
+        cropState.baseHeight = 0;
+        cropState.minScale = 1;
+        cropState.lastTap = 0;
+        cropState.velocityX = 0;
+        cropState.velocityY = 0;
+        cropState.lastMoveTime = 0;
+        resetCropPointers();
 
         overlayContent.innerHTML = renderImagesModule();
         bindImagesModule();
@@ -914,6 +1024,14 @@
         cropState.scale = card.scale || 1;
         cropState.x = card.x || 0;
         cropState.y = card.y || 0;
+        cropState.baseWidth = 0;
+        cropState.baseHeight = 0;
+        cropState.minScale = 1;
+        cropState.lastTap = 0;
+        cropState.velocityX = 0;
+        cropState.velocityY = 0;
+        cropState.lastMoveTime = 0;
+        resetCropPointers();
 
         overlayContent.innerHTML = renderImagesModule();
         bindImagesModule();
@@ -934,6 +1052,8 @@
       }
 
       if (action === "crop-cancel") {
+        cancelCropInertia();
+        resetCropPointers();
         cropState.open = false;
         cropState.index = -1;
         overlayContent.innerHTML = renderImagesModule();
@@ -950,6 +1070,8 @@
           renderSlots();
         }
 
+        cancelCropInertia();
+        resetCropPointers();
         cropState.open = false;
         cropState.index = -1;
         overlayContent.innerHTML = renderImagesModule();
@@ -962,31 +1084,105 @@
     const cropZoom = $("b3CropZoom");
 
     if (cropViewport && cropImage && cropZoom) {
+      const onImageReady = () => {
+        if (!cropState.baseWidth || !cropState.baseHeight) {
+          fitCropImageNatural(cropImage);
+        } else {
+          applyCropTransform();
+        }
+      };
+
+      if (cropImage.complete && cropImage.naturalWidth) {
+        onImageReady();
+      } else {
+        cropImage.addEventListener("load", onImageReady, { once: true });
+      }
+
       cropZoom.addEventListener("input", () => {
-        cropState.scale = Number(cropZoom.value);
-        cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+        cropState.scale = Math.max(Number(cropZoom.value), cropState.minScale || 1);
+        applyCropTransform();
       });
 
       cropViewport.addEventListener("pointerdown", (e) => {
+        cancelCropInertia();
+
+        const now = Date.now();
+        if (now - cropState.lastTap < 260 && cropState.pointers.size === 0) {
+          cropState.scale = cropState.scale > (cropState.minScale * 1.4)
+            ? cropState.minScale
+            : Math.min(cropState.minScale * 1.8, 4);
+          cropZoom.value = String(cropState.scale);
+          applyCropTransform();
+        }
+        cropState.lastTap = now;
+
         cropState.dragging = true;
         cropState.startX = e.clientX;
         cropState.startY = e.clientY;
         cropState.startOffsetX = cropState.x;
         cropState.startOffsetY = cropState.y;
+        cropState.velocityX = 0;
+        cropState.velocityY = 0;
+        cropState.lastMoveTime = performance.now();
+        cropState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (cropState.pointers.size === 2) {
+          cropState.pinchStartDistance = getPointerDistance();
+          cropState.pinchStartScale = cropState.scale;
+        }
+
         cropViewport.setPointerCapture?.(e.pointerId);
       });
 
       cropViewport.addEventListener("pointermove", (e) => {
         if (!cropState.dragging) return;
+
+        if (cropState.pointers.has(e.pointerId)) {
+          cropState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        if (cropState.pointers.size >= 2) {
+          const dist = getPointerDistance();
+          if (cropState.pinchStartDistance > 0 && dist > 0) {
+            cropState.scale = Math.max(
+              cropState.minScale || 1,
+              Math.min(4, cropState.pinchStartScale * (dist / cropState.pinchStartDistance))
+            );
+            cropZoom.value = String(cropState.scale);
+            applyCropTransform();
+          }
+          return;
+        }
+
+        const now = performance.now();
+        const dt = Math.max(1, now - cropState.lastMoveTime);
         const dx = e.clientX - cropState.startX;
         const dy = e.clientY - cropState.startY;
-        cropState.x = cropState.startOffsetX + dx;
-        cropState.y = cropState.startOffsetY + dy;
-        cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+
+        const nextX = cropState.startOffsetX + dx;
+        const nextY = cropState.startOffsetY + dy;
+
+        cropState.velocityX = (nextX - cropState.x) / (dt / 16.67);
+        cropState.velocityY = (nextY - cropState.y) / (dt / 16.67);
+
+        cropState.x = nextX;
+        cropState.y = nextY;
+        cropState.lastMoveTime = now;
+
+        applyCropTransform();
       });
 
-      const endCropDrag = () => {
-        cropState.dragging = false;
+      const endCropDrag = (e) => {
+        cropState.pointers.delete(e.pointerId);
+
+        if (cropState.pointers.size < 2) {
+          cropState.pinchStartDistance = 0;
+        }
+
+        if (cropState.pointers.size === 0) {
+          cropState.dragging = false;
+          startCropInertia();
+        }
       };
 
       cropViewport.addEventListener("pointerup", endCropDrag);
@@ -995,7 +1191,7 @@
     }
   }
 
-  function fileToDataUrlResized(file, maxSize = 1400) {
+  function fileToDataUrlResized(file, maxSize = 1600) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
@@ -1014,7 +1210,7 @@
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
-          resolve(canvas.toDataURL("image/jpeg", 0.88));
+          resolve(canvas.toDataURL("image/jpeg", 0.9));
         };
 
         img.onerror = reject;
@@ -1101,16 +1297,14 @@
     renderSlots();
 
     const content = groupKey === "A" ? slotAContent : slotBContent;
-    const startOffset = direction === "left" ? 26 : -26;
+    const startOffset = direction === "left" ? 22 : -22;
 
     content.style.setProperty("--slotX", `${startOffset}px`);
     content.style.setProperty("--slotOpacity", ".88");
-    content.style.setProperty("--slotScale", ".995");
 
     requestAnimationFrame(() => {
       content.style.setProperty("--slotX", "0px");
       content.style.setProperty("--slotOpacity", "1");
-      content.style.setProperty("--slotScale", "1");
     });
   }
 
@@ -1141,9 +1335,8 @@
       currentX = e.clientX;
       const dx = currentX - startX;
 
-      content.style.setProperty("--slotX", `${dx * 0.42}px`);
+      content.style.setProperty("--slotX", `${dx * 0.55}px`);
       content.style.setProperty("--slotOpacity", String(Math.max(0.62, 1 - Math.abs(dx) / 220)));
-      content.style.setProperty("--slotScale", String(1 - Math.min(0.02, Math.abs(dx) / 3000)));
     });
 
     function endSwipe() {
@@ -1160,13 +1353,23 @@
       } else {
         content.style.setProperty("--slotX", "0px");
         content.style.setProperty("--slotOpacity", "1");
-        content.style.setProperty("--slotScale", "1");
       }
     }
 
     section.addEventListener("pointerup", endSwipe);
     section.addEventListener("pointercancel", endSwipe);
     section.addEventListener("pointerleave", endSwipe);
+
+    section.addEventListener("wheel", (e) => {
+      if (overlay.classList.contains("open")) return;
+      if (Math.abs(e.deltaY) < 12) return;
+      e.preventDefault();
+      if (e.deltaY > 0) {
+        stepSlot(groupKey, 1, "left");
+      } else {
+        stepSlot(groupKey, -1, "right");
+      }
+    }, { passive: false });
   }
 
   slotAButton.addEventListener("click", () => openCurrentModule("A"));
