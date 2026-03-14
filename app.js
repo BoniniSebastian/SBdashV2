@@ -259,17 +259,16 @@
 
   function renderTimerPreview() {
     return `
-      <div class="timerPreview">
-        <div class="timerPreviewWheel">
-          <div class="timerPreviewBlob" aria-hidden="true"></div>
-          <div class="timerPreviewCenter">
-            <div class="timerPreviewTop">Timer</div>
-            <div class="timerPreviewBottom">Tryck för att starta</div>
-          </div>
-        </div>
+  <div class="timerPreview">
+    <div class="timerPreviewWheel">
+      <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+      <div class="timerPreviewBlob" aria-hidden="true"></div>
+      <div class="timerPreviewCenter">
+        ...
       </div>
-    `;
-  }
+    </div>
+  </div>
+`;
 
   function renderPlaceholderPreview(text) {
     return `<div class="placeholderPreview">${escapeHtml(text)}</div>`;
@@ -523,22 +522,18 @@
         : "Tryck för att starta";
 
     return `
-      <div class="timerModule">
-        <div class="timerWheelWrap">
-          <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
-            <div class="timerWheelBlob" aria-hidden="true"></div>
-            <div class="timerWheelCenter">
-              <div class="timerCenterTop">Timer</div>
-              <div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div>
-              <div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div>
-            </div>
-          </button>
+  <div class="timerModule">
+    <div class="timerWheelWrap">
+      <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
+        <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+        <div class="timerWheelBlob" aria-hidden="true"></div>
+        <div class="timerWheelCenter">
+          ...
         </div>
-
-        <div class="timerHint">${timerState.running ? "Svep upp eller ner för att se tiden gå klart." : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}</div>
-      </div>
-    `;
-  }
+      </button>
+    </div>
+  </div>
+`;
 
   function bindTimerModule() {
     const wheelBtn = $("timerWheelBtn");
