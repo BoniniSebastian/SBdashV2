@@ -237,9 +237,7 @@
     return `
       <div class="tasksPreview">
         <div class="tasksListPreview">
-          ${active
-            .map(
-              (task) => `
+          ${active.map((task) => `
             <div class="tasksItemPreview">
               <div class="tasksDot"></div>
               <div class="tasksTextWrap">
@@ -247,9 +245,7 @@
                 <div class="tasksSub">${task.subtasks?.length ? `${task.subtasks.length} delmål` : "Inga delmål"}</div>
               </div>
             </div>
-          `
-            )
-            .join("")}
+          `).join("")}
         </div>
       </div>
     `;
@@ -262,8 +258,8 @@
       <div class="notesPreview">
         <div class="notesPreviewHead">Anteckningar</div>
         <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(
-      hasText ? notes : "Tryck för att skriva."
-    )}</div>
+          hasText ? notes : "Tryck för att skriva."
+        )}</div>
       </div>
     `;
   }
@@ -363,9 +359,7 @@
         </div>
 
         <div class="weatherRows">
-          ${rows
-            .map(
-              (row) => `
+          ${rows.map((row) => `
             <div class="weatherRow">
               <div class="weatherRowTime">${escapeHtml(row.time)}</div>
               <div class="weatherRowMain">${
@@ -373,9 +367,7 @@
               } · Regnrisk ${escapeHtml(row.rain)}</div>
               <div class="weatherRowTemp">${escapeHtml(row.temp)}</div>
             </div>
-          `
-            )
-            .join("")}
+          `).join("")}
         </div>
       </div>
     `;
@@ -405,9 +397,7 @@
       return `<div class="fullModuleText">Inga tasks ännu.</div>`;
     }
 
-    return tasks
-      .map(
-        (task) => `
+    return tasks.map((task) => `
       <div class="taskCard ${task.done ? "is-done" : ""}" data-task-id="${task.id}">
         <div class="taskMainRow">
           <input class="taskCheck" type="checkbox" ${task.done ? "checked" : ""} data-action="toggle-task" data-task-id="${task.id}" />
@@ -416,16 +406,12 @@
         </div>
 
         <div class="subTasks">
-          ${(task.subtasks || [])
-            .map(
-              (sub) => `
+          ${(task.subtasks || []).map((sub) => `
             <div class="subTaskRow">
               <div class="subTaskMark"></div>
               <div class="subTaskText">${escapeHtml(sub)}</div>
             </div>
-          `
-            )
-            .join("")}
+          `).join("")}
         </div>
 
         <div class="subTaskInputRow">
@@ -433,9 +419,7 @@
           <button class="addSubBtn" type="button" data-action="add-sub" data-task-id="${task.id}">Spara</button>
         </div>
       </div>
-    `
-      )
-      .join("");
+    `).join("");
   }
 
   function bindTasksModule() {
@@ -547,8 +531,8 @@
     const bottomText = timerState.running
       ? "Pågår"
       : timerState.selecting
-      ? "Svep för att välja · tryck igen för start"
-      : "Tryck för att starta";
+        ? "Svep för att välja · tryck igen för start"
+        : "Tryck för att starta";
 
     return `
       <div class="timerModule">
@@ -565,11 +549,9 @@
         </div>
 
         <div class="timerHint">
-          ${
-            timerState.running
-              ? "Svep upp eller ner för att se tiden gå klart."
-              : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."
-          }
+          ${timerState.running
+            ? "Svep upp eller ner för att se tiden gå klart."
+            : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}
         </div>
       </div>
     `;
@@ -598,8 +580,8 @@
         bottomEl.textContent = timerState.running
           ? "Pågår"
           : timerState.selecting
-          ? "Svep för att välja · tryck igen för start"
-          : "Tryck för att starta";
+            ? "Svep för att välja · tryck igen för start"
+            : "Tryck för att starta";
       }
     }
 
@@ -777,32 +759,19 @@
   }
 
   function animateSlotSwitch(groupKey, direction) {
-  renderSlots();
+    renderSlots();
 
-  const content = groupKey === "A" ? slotAContent : slotBContent;
-  const startOffset = direction === "left" ? 26 : -26;
+    const content = groupKey === "A" ? slotAContent : slotBContent;
+    const startOffset = direction === "left" ? 26 : -26;
 
-  content.style.setProperty("--slotX", `${startOffset}px`);
-  content.style.setProperty("--slotOpacity", ".88");
-  content.style.setProperty("--slotScale", ".995");
+    content.style.setProperty("--slotX", `${startOffset}px`);
+    content.style.setProperty("--slotOpacity", ".88");
+    content.style.setProperty("--slotScale", ".995");
 
-  requestAnimationFrame(() => {
-    content.style.setProperty("--slotX", "0px");
-    content.style.setProperty("--slotOpacity", "1");
-    content.style.setProperty("--slotScale", "1");
-  });
-}
-
-      const newContent = groupKey === "A" ? slotAContent : slotBContent;
-      newContent.style.setProperty("--slotX", `${direction === "left" ? 34 : -34}px`);
-      newContent.style.setProperty("--slotOpacity", ".58");
-      newContent.style.setProperty("--slotScale", ".985");
-
-      requestAnimationFrame(() => {
-        newContent.style.setProperty("--slotX", "0px");
-        newContent.style.setProperty("--slotOpacity", "1");
-        newContent.style.setProperty("--slotScale", "1");
-      });
+    requestAnimationFrame(() => {
+      content.style.setProperty("--slotX", "0px");
+      content.style.setProperty("--slotOpacity", "1");
+      content.style.setProperty("--slotScale", "1");
     });
   }
 
