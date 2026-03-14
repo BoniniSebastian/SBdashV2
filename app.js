@@ -127,14 +127,16 @@
   }
 
   function weatherTypeFromCode(code) {
-    if ([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code)) return "rain";
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code)) return "rain";
     if ([0].includes(code)) return "sun";
     return "cloud";
   }
 
   async function loadWeather() {
     try {
-      const url = "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
+      const url =
+        "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
+
       const res = await fetch(url, { cache: "no-store" });
       const data = await res.json();
 
@@ -159,6 +161,7 @@
       for (let i = 0; i < times.length && hourlyRows.length < 8; i += 1) {
         const dt = new Date(times[i]);
         if (dt.getDate() !== now.getDate() || dt.getHours() < currentHour) continue;
+
         hourlyRows.push({
           time: `${String(dt.getHours()).padStart(2, "0")}:00`,
           temp: `${Math.round(temps[i])}°`,
@@ -222,6 +225,7 @@
 
   function renderTasksPreview() {
     const active = tasks.slice(0, 3);
+
     if (!active.length) {
       return `
         <div class="tasksPreview">
@@ -233,7 +237,9 @@
     return `
       <div class="tasksPreview">
         <div class="tasksListPreview">
-          ${active.map(task => `
+          ${active
+            .map(
+              (task) => `
             <div class="tasksItemPreview">
               <div class="tasksDot"></div>
               <div class="tasksTextWrap">
@@ -241,7 +247,9 @@
                 <div class="tasksSub">${task.subtasks?.length ? `${task.subtasks.length} delmål` : "Inga delmål"}</div>
               </div>
             </div>
-          `).join("")}
+          `
+            )
+            .join("")}
         </div>
       </div>
     `;
@@ -249,26 +257,31 @@
 
   function renderNotesPreview() {
     const hasText = notes.trim().length > 0;
+
     return `
       <div class="notesPreview">
         <div class="notesPreviewHead">Anteckningar</div>
-        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(hasText ? notes : "Tryck för att skriva.")}</div>
+        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(
+      hasText ? notes : "Tryck för att skriva."
+    )}</div>
       </div>
     `;
   }
 
   function renderTimerPreview() {
     return `
-  <div class="timerPreview">
-    <div class="timerPreviewWheel">
-      <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
-      <div class="timerPreviewBlob" aria-hidden="true"></div>
-      <div class="timerPreviewCenter">
-        ...
+      <div class="timerPreview">
+        <div class="timerPreviewWheel">
+          <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+          <div class="timerPreviewBlob" aria-hidden="true"></div>
+          <div class="timerPreviewCenter">
+            <div class="timerPreviewTop">Timer</div>
+            <div class="timerPreviewBottom">Tryck för att starta</div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-`;
+    `;
+  }
 
   function renderPlaceholderPreview(text) {
     return `<div class="placeholderPreview">${escapeHtml(text)}</div>`;
@@ -282,6 +295,7 @@
     if (module.key === "timer") return renderTimerPreview();
     if (module.key === "tasks") return renderTasksPreview();
     if (module.key === "notes") return renderNotesPreview();
+
     return renderPlaceholderPreview(module.text || "—");
   }
 
@@ -349,13 +363,19 @@
         </div>
 
         <div class="weatherRows">
-          ${rows.map(row => `
+          ${rows
+            .map(
+              (row) => `
             <div class="weatherRow">
               <div class="weatherRowTime">${escapeHtml(row.time)}</div>
-              <div class="weatherRowMain">${row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"} · Regnrisk ${escapeHtml(row.rain)}</div>
+              <div class="weatherRowMain">${
+                row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"
+              } · Regnrisk ${escapeHtml(row.rain)}</div>
               <div class="weatherRowTemp">${escapeHtml(row.temp)}</div>
             </div>
-          `).join("")}
+          `
+            )
+            .join("")}
         </div>
       </div>
     `;
@@ -385,7 +405,9 @@
       return `<div class="fullModuleText">Inga tasks ännu.</div>`;
     }
 
-    return tasks.map(task => `
+    return tasks
+      .map(
+        (task) => `
       <div class="taskCard ${task.done ? "is-done" : ""}" data-task-id="${task.id}">
         <div class="taskMainRow">
           <input class="taskCheck" type="checkbox" ${task.done ? "checked" : ""} data-action="toggle-task" data-task-id="${task.id}" />
@@ -394,12 +416,16 @@
         </div>
 
         <div class="subTasks">
-          ${(task.subtasks || []).map(sub => `
+          ${(task.subtasks || [])
+            .map(
+              (sub) => `
             <div class="subTaskRow">
               <div class="subTaskMark"></div>
               <div class="subTaskText">${escapeHtml(sub)}</div>
             </div>
-          `).join("")}
+          `
+            )
+            .join("")}
         </div>
 
         <div class="subTaskInputRow">
@@ -407,7 +433,9 @@
           <button class="addSubBtn" type="button" data-action="add-sub" data-task-id="${task.id}">Spara</button>
         </div>
       </div>
-    `).join("");
+    `
+      )
+      .join("");
   }
 
   function bindTasksModule() {
@@ -424,6 +452,7 @@
     function addTask() {
       const text = tasksInput.value.trim();
       if (!text) return;
+
       tasks.unshift({ id: uid(), text, done: false, subtasks: [] });
       tasksInput.value = "";
       saveTasks();
@@ -445,11 +474,11 @@
 
       const action = btn.dataset.action;
       const taskId = btn.dataset.taskId;
-      const task = tasks.find(item => item.id === taskId);
+      const task = tasks.find((item) => item.id === taskId);
       if (!task) return;
 
       if (action === "delete-task") {
-        tasks = tasks.filter(item => item.id !== taskId);
+        tasks = tasks.filter((item) => item.id !== taskId);
       }
 
       if (action === "add-sub") {
@@ -475,7 +504,7 @@
       const checkbox = e.target.closest("[data-action='toggle-task']");
       if (!checkbox) return;
 
-      const task = tasks.find(item => item.id === checkbox.dataset.taskId);
+      const task = tasks.find((item) => item.id === checkbox.dataset.taskId);
       if (!task) return;
 
       task.done = checkbox.checked;
@@ -518,22 +547,33 @@
     const bottomText = timerState.running
       ? "Pågår"
       : timerState.selecting
-        ? "Svep för att välja · tryck igen för start"
-        : "Tryck för att starta";
+      ? "Svep för att välja · tryck igen för start"
+      : "Tryck för att starta";
 
     return `
-  <div class="timerModule">
-    <div class="timerWheelWrap">
-      <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
-        <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
-        <div class="timerWheelBlob" aria-hidden="true"></div>
-        <div class="timerWheelCenter">
-          ...
+      <div class="timerModule">
+        <div class="timerWheelWrap">
+          <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
+            <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+            <div class="timerWheelBlob" aria-hidden="true"></div>
+            <div class="timerWheelCenter">
+              <div class="timerCenterTop">Timer</div>
+              <div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div>
+              <div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div>
+            </div>
+          </button>
         </div>
-      </button>
-    </div>
-  </div>
-`;
+
+        <div class="timerHint">
+          ${
+            timerState.running
+              ? "Svep upp eller ner för att se tiden gå klart."
+              : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."
+          }
+        </div>
+      </div>
+    `;
+  }
 
   function bindTimerModule() {
     const wheelBtn = $("timerWheelBtn");
@@ -547,17 +587,19 @@
 
     function refreshTimerModuleView() {
       const preset = TIMER_OPTIONS[timerState.presetIndex];
+
       if (valueEl) {
         valueEl.textContent = timerState.running
           ? formatRemaining(timerState.remainingMs)
           : preset.label;
       }
+
       if (bottomEl) {
         bottomEl.textContent = timerState.running
           ? "Pågår"
           : timerState.selecting
-            ? "Svep för att välja · tryck igen för start"
-            : "Tryck för att starta";
+          ? "Svep för att välja · tryck igen för start"
+          : "Tryck för att starta";
       }
     }
 
@@ -637,6 +679,7 @@
 
     wheelBtn.addEventListener("pointermove", (e) => {
       if (!dragging || timerState.running) return;
+
       const dy = e.clientY - startY;
 
       if (Math.abs(dy) > 26) {
@@ -675,6 +718,7 @@
     if (h > 0) {
       return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     }
+
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
@@ -705,7 +749,9 @@
       }, 800);
     } catch {
       if (alarmAudio) {
-        try { alarmAudio.play(); } catch {}
+        try {
+          alarmAudio.play();
+        } catch {}
       }
     }
   }
@@ -740,6 +786,7 @@
 
     requestAnimationFrame(() => {
       renderSlots();
+
       const newContent = groupKey === "A" ? slotAContent : slotBContent;
       newContent.style.setProperty("--slotX", `${direction === "left" ? 34 : -34}px`);
       newContent.style.setProperty("--slotOpacity", ".58");
