@@ -2,9 +2,10 @@
   const $ = (id) => document.getElementById(id);
 
   const STORAGE_KEYS = {
-    tasks: "sbdash_v4_tasks",
-    notes: "sbdash_v4_notes",
-    timerPreset: "sbdash_v4_timer_preset"
+    tasks: "sbdash_v5_tasks",
+    notes: "sbdash_v5_notes",
+    timerPreset: "sbdash_v5_timer_preset",
+    imageCards: "sbdash_v5_image_cards"
   };
 
   const dayDateEl = $("dayDate");
@@ -63,6 +64,21 @@
     intervalId: null
   };
 
+  let imageCards = normalizeImageCards(loadJson(STORAGE_KEYS.imageCards, null));
+
+  const cropState = {
+    open: false,
+    index: -1,
+    scale: 1,
+    x: 0,
+    y: 0,
+    dragging: false,
+    startX: 0,
+    startY: 0,
+    startOffsetX: 0,
+    startOffsetY: 0
+  };
+
   const slotGroups = {
     A: {
       index: 0,
@@ -77,7 +93,7 @@
       modules: [
         { key: "tasks" },
         { key: "notes" },
-        { key: "placeholder", text: "B3" }
+        { key: "images" }
       ]
     }
   };
@@ -105,6 +121,33 @@
 
   function saveTimerPreset() {
     localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex));
+  }
+
+  function normalizeImageCards(cards) {
+    const base = Array.from({ length: 3 }, () => ({
+      src: "",
+      note: "",
+      scale: 1,
+      x: 0,
+      y: 0
+    }));
+
+    if (!Array.isArray(cards)) return base;
+
+    return base.map((item, index) => {
+      const source = cards[index] || {};
+      return {
+        src: typeof source.src === "string" ? source.src : "",
+        note: typeof source.note === "string" ? source.note : "",
+        scale: Number.isFinite(source.scale) ? source.scale : 1,
+        x: Number.isFinite(source.x) ? source.x : 0,
+        y: Number.isFinite(source.y) ? source.y : 0
+      };
+    });
+  }
+
+  function saveImageCards() {
+    localStorage.setItem(STORAGE_KEYS.imageCards, JSON.stringify(imageCards));
   }
 
   function clampPresetIndex(value) {
@@ -208,6 +251,19 @@
     `;
   }
 
+  function cameraIconMarkup() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.5 7.5h3l1.4-2h6.2l1.4 2h3A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V9a1.5 1.5 0 0 1 1.5-1.5Z"></path>
+        <circle cx="12" cy="13" r="3.5"></circle>
+      </svg>
+    `;
+  }
+
+  function imageTransformStyle(card) {
+    return `transform: translate(${card.x}px, ${card.y}px) scale(${card.scale});`;
+  }
+
   function renderWeatherPreview() {
     return `
       <div class="weatherPreview">
@@ -279,6 +335,32 @@
     `;
   }
 
+  function renderImagesPreview() {
+    return `
+      <div class="b3Preview">
+        ${imageCards.map((card, index) => {
+          const hasImage = !!card.src;
+          return `
+            <div class="b3PreviewItem">
+              <div class="b3PreviewFrame ${hasImage ? "has-image" : "is-empty"}">
+                ${
+                  hasImage
+                    ? `<img class="b3PreviewImg" src="${card.src}" alt="" style="${imageTransformStyle(card)}">`
+                    : `<div class="b3PreviewCamera">${cameraIconMarkup()}</div>`
+                }
+              </div>
+              <div class="b3PreviewNote ${card.note.trim() ? "" : "is-empty"}">${
+                hasImage
+                  ? escapeHtml(card.note.trim() || " ")
+                  : " "
+              }</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
   function renderPlaceholderPreview(text) {
     return `<div class="placeholderPreview">${escapeHtml(text)}</div>`;
   }
@@ -291,6 +373,7 @@
     if (module.key === "timer") return renderTimerPreview();
     if (module.key === "tasks") return renderTasksPreview();
     if (module.key === "notes") return renderNotesPreview();
+    if (module.key === "images") return renderImagesPreview();
 
     return renderPlaceholderPreview(module.text || "—");
   }
@@ -317,12 +400,17 @@
     } else if (module.key === "timer") {
       overlayContent.innerHTML = renderTimerModule();
       bindTimerModule();
+    } else if (module.key === "images") {
+      overlayContent.innerHTML = renderImagesModule();
+      bindImagesModule();
     } else {
       overlayContent.innerHTML = renderPlaceholderModule(module.text || "Nästa modul");
     }
   }
 
   function closeModule() {
+    cropState.open = false;
+    cropState.index = -1;
     overlay.classList.remove("open");
     overlay.setAttribute("aria-hidden", "true");
     overlay.dataset.moduleKey = "";
@@ -685,6 +773,239 @@
 
     wheelBtn.addEventListener("pointerup", endDrag);
     wheelBtn.addEventListener("pointercancel", endDrag);
+  }
+
+  function renderImagesModule() {
+    return `
+      <div class="b3Module fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Bilder</div>
+          <div class="fullModuleText">Tryck på en bild för att välja eller beskära. Anteckningarna sparas under varje bild.</div>
+        </div>
+
+        <div class="b3ModuleList">
+          ${imageCards.map((card, index) => `
+            <section class="b3ModuleItem" data-card-index="${index}">
+              <button class="b3ModuleImageBtn ${card.src ? "has-image" : "is-empty"}" type="button" data-action="edit-image" data-index="${index}" aria-label="Redigera bild ${index + 1}">
+                ${
+                  card.src
+                    ? `<img class="b3ModuleImage" src="${card.src}" alt="" style="${imageTransformStyle(card)}">`
+                    : `
+                      <div class="b3ModuleEmpty">
+                        <div class="b3ModuleEmptyCam">${cameraIconMarkup()}</div>
+                      </div>
+                    `
+                }
+              </button>
+
+              <textarea
+                class="b3NoteInput"
+                data-action="note-input"
+                data-index="${index}"
+                placeholder="Skriv anteckning..."
+              >${escapeHtml(card.note)}</textarea>
+
+              <input class="b3FileInput" id="b3FileInput_${index}" data-index="${index}" type="file" accept="image/*" hidden>
+            </section>
+          `).join("")}
+        </div>
+
+        ${cropState.open ? renderCropEditor() : ""}
+      </div>
+    `;
+  }
+
+  function renderCropEditor() {
+    const card = imageCards[cropState.index];
+    if (!card || !card.src) return "";
+
+    return `
+      <div class="b3CropOverlay" id="b3CropOverlay">
+        <div class="b3CropTop">
+          <button class="b3CropMiniBtn" type="button" data-action="crop-cancel">Avbryt</button>
+          <button class="b3CropMiniBtn b3CropMiniBtn--primary" type="button" data-action="crop-save">Spara</button>
+        </div>
+
+        <div class="b3CropViewport" id="b3CropViewport">
+          <img
+            class="b3CropImage"
+            id="b3CropImage"
+            src="${card.src}"
+            alt=""
+            style="transform: translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale});"
+          >
+        </div>
+
+        <div class="b3CropControls">
+          <label class="b3CropLabel" for="b3CropZoom">Zoom</label>
+          <input
+            class="b3CropRange"
+            id="b3CropZoom"
+            type="range"
+            min="1"
+            max="3"
+            step="0.01"
+            value="${cropState.scale}"
+          >
+        </div>
+      </div>
+    `;
+  }
+
+  function bindImagesModule() {
+    const root = overlayContent.querySelector(".b3Module");
+    if (!root) return;
+
+    root.querySelectorAll(".b3NoteInput").forEach((input) => {
+      input.addEventListener("input", () => {
+        const index = Number(input.dataset.index);
+        imageCards[index].note = input.value;
+        saveImageCards();
+        renderSlots();
+      });
+    });
+
+    root.querySelectorAll(".b3FileInput").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const file = input.files?.[0];
+        const index = Number(input.dataset.index);
+        if (!file) return;
+
+        const src = await fileToDataUrlResized(file, 1400);
+        imageCards[index].src = src;
+        imageCards[index].scale = 1;
+        imageCards[index].x = 0;
+        imageCards[index].y = 0;
+        saveImageCards();
+
+        cropState.open = true;
+        cropState.index = index;
+        cropState.scale = imageCards[index].scale;
+        cropState.x = imageCards[index].x;
+        cropState.y = imageCards[index].y;
+
+        overlayContent.innerHTML = renderImagesModule();
+        bindImagesModule();
+        renderSlots();
+      });
+    });
+
+    root.addEventListener("click", (e) => {
+      const actionEl = e.target.closest("[data-action]");
+      if (!actionEl) return;
+
+      const action = actionEl.dataset.action;
+
+      if (action === "edit-image") {
+        const index = Number(actionEl.dataset.index);
+        const card = imageCards[index];
+
+        if (!card.src) {
+          const input = $(`b3FileInput_${index}`);
+          input?.click();
+          return;
+        }
+
+        cropState.open = true;
+        cropState.index = index;
+        cropState.scale = card.scale || 1;
+        cropState.x = card.x || 0;
+        cropState.y = card.y || 0;
+
+        overlayContent.innerHTML = renderImagesModule();
+        bindImagesModule();
+      }
+
+      if (action === "crop-cancel") {
+        cropState.open = false;
+        cropState.index = -1;
+        overlayContent.innerHTML = renderImagesModule();
+        bindImagesModule();
+      }
+
+      if (action === "crop-save") {
+        if (cropState.index > -1) {
+          imageCards[cropState.index].scale = cropState.scale;
+          imageCards[cropState.index].x = cropState.x;
+          imageCards[cropState.index].y = cropState.y;
+          saveImageCards();
+          renderSlots();
+        }
+
+        cropState.open = false;
+        cropState.index = -1;
+        overlayContent.innerHTML = renderImagesModule();
+        bindImagesModule();
+      }
+    });
+
+    const cropViewport = $("b3CropViewport");
+    const cropImage = $("b3CropImage");
+    const cropZoom = $("b3CropZoom");
+
+    if (cropViewport && cropImage && cropZoom) {
+      cropZoom.addEventListener("input", () => {
+        cropState.scale = Number(cropZoom.value);
+        cropImage.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+      });
+
+      cropViewport.addEventListener("pointerdown", (e) => {
+        cropState.dragging = true;
+        cropState.startX = e.clientX;
+        cropState.startY = e.clientY;
+        cropState.startOffsetX = cropState.x;
+        cropState.startOffsetY = cropState.y;
+        cropViewport.setPointerCapture?.(e.pointerId);
+      });
+
+      cropViewport.addEventListener("pointermove", (e) => {
+        if (!cropState.dragging) return;
+        const dx = e.clientX - cropState.startX;
+        const dy = e.clientY - cropState.startY;
+        cropState.x = cropState.startOffsetX + dx;
+        cropState.y = cropState.startOffsetY + dy;
+        cropImage.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+      });
+
+      const endCropDrag = () => {
+        cropState.dragging = false;
+      };
+
+      cropViewport.addEventListener("pointerup", endCropDrag);
+      cropViewport.addEventListener("pointercancel", endCropDrag);
+      cropViewport.addEventListener("pointerleave", endCropDrag);
+    }
+  }
+
+  function fileToDataUrlResized(file, maxSize = 1400) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = new Image();
+
+        img.onload = () => {
+          const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
+          const width = Math.round(img.width * ratio);
+          const height = Math.round(img.height * ratio);
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          resolve(canvas.toDataURL("image/jpeg", 0.88));
+        };
+
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   function updateTimerBar(ratio) {
