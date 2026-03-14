@@ -777,15 +777,21 @@
   }
 
   function animateSlotSwitch(groupKey, direction) {
-    const content = groupKey === "A" ? slotAContent : slotBContent;
-    const offset = direction === "left" ? -30 : 30;
+  renderSlots();
 
-    content.style.setProperty("--slotX", `${offset}px`);
-    content.style.setProperty("--slotOpacity", ".58");
-    content.style.setProperty("--slotScale", ".985");
+  const content = groupKey === "A" ? slotAContent : slotBContent;
+  const startOffset = direction === "left" ? 26 : -26;
 
-    requestAnimationFrame(() => {
-      renderSlots();
+  content.style.setProperty("--slotX", `${startOffset}px`);
+  content.style.setProperty("--slotOpacity", ".88");
+  content.style.setProperty("--slotScale", ".995");
+
+  requestAnimationFrame(() => {
+    content.style.setProperty("--slotX", "0px");
+    content.style.setProperty("--slotOpacity", "1");
+    content.style.setProperty("--slotScale", "1");
+  });
+}
 
       const newContent = groupKey === "A" ? slotAContent : slotBContent;
       newContent.style.setProperty("--slotX", `${direction === "left" ? 34 : -34}px`);
