@@ -43,6 +43,11 @@ button{
   border:0;
 }
 
+input,
+textarea{
+  font-size:16px;
+}
+
 .app{
   position:fixed;
   inset:0;
@@ -133,6 +138,7 @@ button{
   position:relative;
   min-height:0;
   overflow:hidden;
+  overscroll-behavior:contain;
 }
 
 .slotButton{
@@ -483,7 +489,7 @@ button{
   height:100%;
   display:grid;
   grid-template-rows:1fr 1fr 1fr;
-  gap:4px;
+  gap:6px;
 }
 
 .b3PreviewItem{
@@ -495,7 +501,8 @@ button{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:rgba(255,255,255,.02);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
   border:1px solid rgba(255,255,255,.05);
 }
 
