@@ -2,25 +2,41 @@
   const $ = (id) => document.getElementById(id);
 
   const STORAGE_KEYS = {
-    tasks: "sbdash_v3_tasks",
-    freeText: "sbdash_v3_freetext"
+    tasks: "sbdash_v4_tasks",
+    notes: "sbdash_v4_notes",
+    timerPreset: "sbdash_v4_timer_preset"
   };
 
   const dayDateEl = $("dayDate");
-  const slotAContent = $("slotAContent");
-  const slotBContent = $("slotBContent");
+
   const slotAButton = $("slotAButton");
   const slotBButton = $("slotBButton");
-  const slotALeft = $("slotALeft");
-  const slotARight = $("slotARight");
-  const slotBLeft = $("slotBLeft");
-  const slotBRight = $("slotBRight");
+  const slotAContent = $("slotAContent");
+  const slotBContent = $("slotBContent");
   const slotASection = $("slotASection");
   const slotBSection = $("slotBSection");
 
   const overlay = $("moduleOverlay");
   const overlayContent = $("overlayContent");
   const closeFab = $("closeFab");
+
+  const timerDoneOverlay = $("timerDoneOverlay");
+  const timerDoneCloseFab = $("timerDoneCloseFab");
+
+  const timerMidBarWrap = $("timerMidBarWrap");
+  const timerMidBar = $("timerMidBar");
+
+  const alarmAudio = $("alarmAudio");
+
+  const TIMER_OPTIONS = [
+    { label: "1m", seconds: 60 },
+    { label: "5m", seconds: 300 },
+    { label: "10m", seconds: 600 },
+    { label: "15m", seconds: 900 },
+    { label: "25m", seconds: 1500 },
+    { label: "30m", seconds: 1800 },
+    { label: "1h", seconds: 3600 }
+  ];
 
   let weatherState = {
     temp: "--°",
@@ -35,23 +51,33 @@
     { id: uid(), text: "Kolla det viktigaste", done: false, subtasks: [] }
   ]);
 
-  let freeText = localStorage.getItem(STORAGE_KEYS.freeText) || "";
+  let notes = localStorage.getItem(STORAGE_KEYS.notes) || "";
+
+  let timerState = {
+    presetIndex: clampPresetIndex(Number(localStorage.getItem(STORAGE_KEYS.timerPreset)) || 0),
+    selecting: false,
+    running: false,
+    startedAt: 0,
+    totalMs: 0,
+    remainingMs: 0,
+    intervalId: null
+  };
 
   const slotGroups = {
     A: {
       index: 0,
       modules: [
-        { key: "weather", name: "A1", title: "Väder" },
-        { key: "placeholder", name: "A2", title: "A2" },
-        { key: "placeholder", name: "A3", title: "A3" }
+        { key: "weather" },
+        { key: "timer" },
+        { key: "placeholder", text: "A3" }
       ]
     },
     B: {
       index: 0,
       modules: [
-        { key: "tasks", name: "B1", title: "Tasks" },
-        { key: "freeText", name: "B2", title: "Fritext" },
-        { key: "placeholder", name: "B3", title: "B3" }
+        { key: "tasks" },
+        { key: "notes" },
+        { key: "placeholder", text: "B3" }
       ]
     }
   };
@@ -73,19 +99,28 @@
     localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
   }
 
-  function saveFreeText() {
-    localStorage.setItem(STORAGE_KEYS.freeText, freeText);
+  function saveNotes() {
+    localStorage.setItem(STORAGE_KEYS.notes, notes);
+  }
+
+  function saveTimerPreset() {
+    localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex));
+  }
+
+  function clampPresetIndex(value) {
+    if (Number.isNaN(value)) return 0;
+    return Math.max(0, Math.min(TIMER_OPTIONS.length - 1, value));
   }
 
   function formatDayDate() {
     const now = new Date();
-    const fmt = new Intl.DateTimeFormat("sv-SE", {
+    const formatted = new Intl.DateTimeFormat("sv-SE", {
       weekday: "long",
       day: "numeric",
       month: "long"
     }).format(now);
 
-    const parts = fmt.split(" ");
+    const parts = formatted.split(" ");
     const weekday = (parts.shift() || "").replace(/\.$/, "").toUpperCase();
     const rest = parts.join(" ").toUpperCase();
     dayDateEl.textContent = `${weekday} · ${rest}`;
@@ -110,19 +145,20 @@
       const rain = hourly.precipitation_probability || [];
       const codes = hourly.weather_code || [];
 
+      const type = weatherTypeFromCode(current.weather_code);
       const labels = {
         sun: "Klart",
         cloud: "Molnigt",
         rain: "Regn"
       };
 
-      const type = weatherTypeFromCode(current.weather_code);
-      const nowHour = new Date().getHours();
       const hourlyRows = [];
+      const now = new Date();
+      const currentHour = now.getHours();
 
       for (let i = 0; i < times.length && hourlyRows.length < 8; i += 1) {
         const dt = new Date(times[i]);
-        if (dt.getDate() !== new Date().getDate() || dt.getHours() < nowHour) continue;
+        if (dt.getDate() !== now.getDate() || dt.getHours() < currentHour) continue;
         hourlyRows.push({
           time: `${String(dt.getHours()).padStart(2, "0")}:00`,
           temp: `${Math.round(temps[i])}°`,
@@ -138,7 +174,7 @@
         type,
         hourly: hourlyRows
       };
-    } catch (error) {
+    } catch {
       weatherState = {
         temp: "--°",
         status: "Kunde inte ladda väder",
@@ -149,9 +185,14 @@
     }
 
     renderSlots();
-    if (overlay.dataset.moduleKey === "weather") {
-      openModule("A");
+
+    if (overlay.classList.contains("open") && currentModuleKey() === "weather") {
+      openCurrentModule("A");
     }
+  }
+
+  function currentModuleKey() {
+    return overlay.dataset.moduleKey || "";
   }
 
   function weatherGlyph(type, large = false) {
@@ -171,7 +212,6 @@
           ${weatherGlyph(weatherState.type)}
         </div>
         <div class="weatherPreviewText">
-          <div class="moduleTitle">${slotGroups.A.modules[slotGroups.A.index].name} · Väder</div>
           <div class="weatherPreviewTemp">${escapeHtml(weatherState.temp)}</div>
           <div class="weatherPreviewStatus">${escapeHtml(weatherState.status)}</div>
           <div class="weatherPreviewMeta">${escapeHtml(weatherState.meta)}</div>
@@ -185,7 +225,6 @@
     if (!active.length) {
       return `
         <div class="tasksPreview">
-          <div class="moduleTitle">${slotGroups.B.modules[slotGroups.B.index].name} · Tasks</div>
           <div class="tasksEmpty">Inga tasks ännu. Tryck för att skapa din första.</div>
         </div>
       `;
@@ -193,7 +232,6 @@
 
     return `
       <div class="tasksPreview">
-        <div class="moduleTitle">${slotGroups.B.modules[slotGroups.B.index].name} · Tasks</div>
         <div class="tasksListPreview">
           ${active.map(task => `
             <div class="tasksItemPreview">
@@ -209,38 +247,43 @@
     `;
   }
 
-  function renderFreeTextPreview() {
-    const hasText = freeText.trim().length > 0;
+  function renderNotesPreview() {
+    const hasText = notes.trim().length > 0;
     return `
-      <div class="freeTextPreview">
-        <div class="moduleTitle">${slotGroups.B.modules[slotGroups.B.index].name} · Fritext</div>
-        <div class="freeTextPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(hasText ? freeText : "Tryck för att skriva fritt.")}</div>
+      <div class="notesPreview">
+        <div class="notesPreviewHead">Anteckningar</div>
+        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(hasText ? notes : "Tryck för att skriva.")}</div>
       </div>
     `;
   }
 
-  function renderPlaceholderPreview(module) {
+  function renderTimerPreview() {
     return `
-      <div class="placeholderPreview">
-        <div class="moduleTitle">${module.name}</div>
-        <div class="placeholderTitle">${escapeHtml(module.title)}</div>
-        <div class="placeholderBody">Den här sloten är redo för nästa modul när du vill lägga till den.</div>
+      <div class="timerPreview">
+        <div class="timerPreviewWheel">
+          <div class="timerPreviewBlob" aria-hidden="true"></div>
+          <div class="timerPreviewCenter">
+            <div class="timerPreviewTop">Timer</div>
+            <div class="timerPreviewBottom">Tryck för att starta</div>
+          </div>
+        </div>
       </div>
     `;
+  }
+
+  function renderPlaceholderPreview(text) {
+    return `<div class="placeholderPreview">${escapeHtml(text)}</div>`;
   }
 
   function renderSlot(groupKey) {
     const group = slotGroups[groupKey];
     const module = group.modules[group.index];
 
-    if (groupKey === "A") {
-      if (module.key === "weather") return renderWeatherPreview();
-      return renderPlaceholderPreview(module);
-    }
-
+    if (module.key === "weather") return renderWeatherPreview();
+    if (module.key === "timer") return renderTimerPreview();
     if (module.key === "tasks") return renderTasksPreview();
-    if (module.key === "freeText") return renderFreeTextPreview();
-    return renderPlaceholderPreview(module);
+    if (module.key === "notes") return renderNotesPreview();
+    return renderPlaceholderPreview(module.text || "—");
   }
 
   function renderSlots() {
@@ -248,7 +291,7 @@
     slotBContent.innerHTML = renderSlot("B");
   }
 
-  function openModule(groupKey) {
+  function openCurrentModule(groupKey) {
     const module = slotGroups[groupKey].modules[slotGroups[groupKey].index];
     overlay.dataset.moduleKey = module.key;
     overlay.classList.add("open");
@@ -259,11 +302,14 @@
     } else if (module.key === "tasks") {
       overlayContent.innerHTML = renderTasksModule();
       bindTasksModule();
-    } else if (module.key === "freeText") {
-      overlayContent.innerHTML = renderFreeTextModule();
-      bindFreeTextModule();
+    } else if (module.key === "notes") {
+      overlayContent.innerHTML = renderNotesModule();
+      bindNotesModule();
+    } else if (module.key === "timer") {
+      overlayContent.innerHTML = renderTimerModule();
+      bindTimerModule();
     } else {
-      overlayContent.innerHTML = renderPlaceholderModule(module);
+      overlayContent.innerHTML = renderPlaceholderModule(module.text || "Nästa modul");
     }
   }
 
@@ -273,11 +319,24 @@
     overlay.dataset.moduleKey = "";
   }
 
+  function showTimerDoneOverlay() {
+    timerDoneOverlay.classList.add("open");
+    timerDoneOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function hideTimerDoneOverlay() {
+    timerDoneOverlay.classList.remove("open");
+    timerDoneOverlay.setAttribute("aria-hidden", "true");
+  }
+
   function renderWeatherModule() {
+    const rows = weatherState.hourly.length
+      ? weatherState.hourly
+      : [{ time: "Nu", temp: weatherState.temp, rain: "0%", type: weatherState.type }];
+
     return `
       <div class="fullModule">
         <div class="fullModuleHead">
-          <div class="fullModuleLabel">A1 · Väder</div>
           <div class="fullModuleTitle">Väder</div>
         </div>
 
@@ -291,7 +350,7 @@
         </div>
 
         <div class="weatherRows">
-          ${(weatherState.hourly.length ? weatherState.hourly : [{ time: "Nu", temp: weatherState.temp, rain: "0%", type: weatherState.type }]).map(row => `
+          ${rows.map(row => `
             <div class="weatherRow">
               <div class="weatherRowTime">${escapeHtml(row.time)}</div>
               <div class="weatherRowMain">${row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"} · Regnrisk ${escapeHtml(row.rain)}</div>
@@ -307,9 +366,7 @@
     return `
       <div class="tasksModule fullModule">
         <div class="fullModuleHead">
-          <div class="fullModuleLabel">B1 · Tasks</div>
           <div class="fullModuleTitle">Tasks</div>
-          <div class="fullModuleText">Skapa uppgifter, lägg till delmål och håll vyn ren.</div>
         </div>
 
         <div class="tasksComposer">
@@ -359,18 +416,23 @@
     const tasksAddBtn = $("tasksAddBtn");
     const tasksModuleList = $("tasksModuleList");
 
+    function rerenderTasksModule() {
+      overlayContent.innerHTML = renderTasksModule();
+      bindTasksModule();
+      renderSlots();
+    }
+
     function addTask() {
       const text = tasksInput.value.trim();
       if (!text) return;
       tasks.unshift({ id: uid(), text, done: false, subtasks: [] });
       tasksInput.value = "";
       saveTasks();
-      renderSlots();
-      overlayContent.innerHTML = renderTasksModule();
-      bindTasksModule();
+      rerenderTasksModule();
     }
 
     tasksAddBtn.addEventListener("click", addTask);
+
     tasksInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -384,15 +446,15 @@
 
       const action = btn.dataset.action;
       const taskId = btn.dataset.taskId;
-      const task = tasks.find((item) => item.id === taskId);
+      const task = tasks.find(item => item.id === taskId);
       if (!task) return;
 
       if (action === "delete-task") {
-        tasks = tasks.filter((item) => item.id !== taskId);
+        tasks = tasks.filter(item => item.id !== taskId);
       }
 
       if (action === "add-sub") {
-        const input = $("sub_" + taskId);
+        const input = $(`sub_${taskId}`);
         const val = input?.value.trim();
         if (val) {
           task.subtasks = task.subtasks || [];
@@ -401,61 +463,264 @@
       }
 
       if (action === "focus-sub") {
-        const input = $("sub_" + taskId);
+        const input = $(`sub_${taskId}`);
         input?.focus();
         return;
       }
 
       saveTasks();
-      renderSlots();
-      overlayContent.innerHTML = renderTasksModule();
-      bindTasksModule();
+      rerenderTasksModule();
     });
 
     tasksModuleList.addEventListener("change", (e) => {
       const checkbox = e.target.closest("[data-action='toggle-task']");
       if (!checkbox) return;
-      const task = tasks.find((item) => item.id === checkbox.dataset.taskId);
+
+      const task = tasks.find(item => item.id === checkbox.dataset.taskId);
       if (!task) return;
+
       task.done = checkbox.checked;
       saveTasks();
-      renderSlots();
-      overlayContent.innerHTML = renderTasksModule();
-      bindTasksModule();
+      rerenderTasksModule();
     });
   }
 
-  function renderFreeTextModule() {
+  function renderNotesModule() {
     return `
-      <div class="freeTextModule fullModule">
-        <div class="fullModuleHead">
-          <div class="fullModuleLabel">B2 · Fritext</div>
-          <div class="fullModuleTitle">Fritext</div>
+      <div class="notesModule fullModule">
+        <div class="notesHead">
+          <div class="notesLabel">Anteckningar</div>
         </div>
-        <div class="freeTextBox">
-          <textarea class="freeTextInput" id="freeTextInput" placeholder="Skriv fritt...">${escapeHtml(freeText)}</textarea>
+
+        <div class="notesBox">
+          <textarea class="notesInput" id="notesInput" placeholder="Skriv fritt...">${escapeHtml(notes)}</textarea>
         </div>
       </div>
     `;
   }
 
-  function bindFreeTextModule() {
-    const input = $("freeTextInput");
+  function bindNotesModule() {
+    const input = $("notesInput");
     if (!input) return;
+
     input.addEventListener("input", () => {
-      freeText = input.value;
-      saveFreeText();
+      notes = input.value;
+      saveNotes();
       renderSlots();
     });
   }
 
-  function renderPlaceholderModule(module) {
+  function renderTimerModule() {
+    const preset = TIMER_OPTIONS[timerState.presetIndex];
+    const valueText = timerState.running
+      ? formatRemaining(timerState.remainingMs)
+      : preset.label;
+
+    const bottomText = timerState.running
+      ? "Pågår"
+      : timerState.selecting
+        ? "Svep för att välja · tryck igen för start"
+        : "Tryck för att starta";
+
+    return `
+      <div class="timerModule">
+        <div class="timerWheelWrap">
+          <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
+            <div class="timerWheelBlob" aria-hidden="true"></div>
+            <div class="timerWheelCenter">
+              <div class="timerCenterTop">Timer</div>
+              <div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div>
+              <div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="timerHint">${timerState.running ? "Svep upp eller ner för att se tiden gå klart." : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}</div>
+      </div>
+    `;
+  }
+
+  function bindTimerModule() {
+    const wheelBtn = $("timerWheelBtn");
+    const valueEl = $("timerCenterValue");
+    const bottomEl = $("timerCenterBottom");
+
+    if (!wheelBtn) return;
+
+    let startY = 0;
+    let dragging = false;
+
+    function refreshTimerModuleView() {
+      const preset = TIMER_OPTIONS[timerState.presetIndex];
+      if (valueEl) {
+        valueEl.textContent = timerState.running
+          ? formatRemaining(timerState.remainingMs)
+          : preset.label;
+      }
+      if (bottomEl) {
+        bottomEl.textContent = timerState.running
+          ? "Pågår"
+          : timerState.selecting
+            ? "Svep för att välja · tryck igen för start"
+            : "Tryck för att starta";
+      }
+    }
+
+    function startTimer() {
+      if (timerState.running) return;
+
+      const preset = TIMER_OPTIONS[timerState.presetIndex];
+      timerState.running = true;
+      timerState.selecting = false;
+      timerState.totalMs = preset.seconds * 1000;
+      timerState.remainingMs = timerState.totalMs;
+      timerState.startedAt = Date.now();
+
+      timerMidBarWrap.classList.add("show");
+      updateTimerBar(1);
+
+      if (timerState.intervalId) clearInterval(timerState.intervalId);
+
+      timerState.intervalId = setInterval(() => {
+        const elapsed = Date.now() - timerState.startedAt;
+        const remaining = Math.max(0, timerState.totalMs - elapsed);
+        timerState.remainingMs = remaining;
+
+        const ratio = timerState.totalMs > 0 ? remaining / timerState.totalMs : 0;
+        updateTimerBar(ratio);
+
+        if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
+          refreshTimerModuleView();
+        }
+
+        if (remaining <= 0) {
+          finishTimer();
+        }
+      }, 200);
+
+      refreshTimerModuleView();
+    }
+
+    function finishTimer() {
+      if (timerState.intervalId) {
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+      }
+
+      timerState.running = false;
+      timerState.remainingMs = 0;
+      updateTimerBar(0);
+      timerMidBarWrap.classList.remove("show");
+
+      if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
+        overlayContent.innerHTML = renderTimerModule();
+        bindTimerModule();
+      }
+
+      playAlarm();
+      showTimerDoneOverlay();
+      renderSlots();
+    }
+
+    wheelBtn.addEventListener("click", () => {
+      if (timerState.running) return;
+
+      if (!timerState.selecting) {
+        timerState.selecting = true;
+        refreshTimerModuleView();
+      } else {
+        startTimer();
+      }
+    });
+
+    wheelBtn.addEventListener("pointerdown", (e) => {
+      if (timerState.running) return;
+      dragging = true;
+      startY = e.clientY;
+      wheelBtn.setPointerCapture?.(e.pointerId);
+    });
+
+    wheelBtn.addEventListener("pointermove", (e) => {
+      if (!dragging || timerState.running) return;
+      const dy = e.clientY - startY;
+
+      if (Math.abs(dy) > 26) {
+        timerState.selecting = true;
+
+        if (dy < 0) {
+          timerState.presetIndex = clampPresetIndex(timerState.presetIndex + 1);
+        } else {
+          timerState.presetIndex = clampPresetIndex(timerState.presetIndex - 1);
+        }
+
+        saveTimerPreset();
+        startY = e.clientY;
+        refreshTimerModuleView();
+      }
+    });
+
+    function endDrag() {
+      dragging = false;
+    }
+
+    wheelBtn.addEventListener("pointerup", endDrag);
+    wheelBtn.addEventListener("pointercancel", endDrag);
+  }
+
+  function updateTimerBar(ratio) {
+    timerMidBar.style.transform = `scaleX(${Math.max(0, Math.min(1, ratio))})`;
+  }
+
+  function formatRemaining(ms) {
+    const totalSec = Math.ceil(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+
+    if (h > 0) {
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function playAlarm() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+
+      o.type = "sine";
+      o.frequency.value = 880;
+      g.gain.value = 0.0001;
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.start();
+
+      g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
+
+      setTimeout(() => {
+        o.stop();
+        ctx.close();
+      }, 800);
+    } catch {
+      if (alarmAudio) {
+        try { alarmAudio.play(); } catch {}
+      }
+    }
+  }
+
+  function renderPlaceholderModule(text) {
     return `
       <div class="fullModule">
         <div class="fullModuleHead">
-          <div class="fullModuleLabel">${escapeHtml(module.name)}</div>
-          <div class="fullModuleTitle">${escapeHtml(module.title)}</div>
-          <div class="fullModuleText">Den här sloten är redo. Det blir inte jobbigt att lägga till fler slotar och moduler senare, eftersom allt nu bygger på samma A/B-struktur och samma render-logik.</div>
+          <div class="fullModuleTitle">${escapeHtml(text)}</div>
+          <div class="fullModuleText">Redo för nästa modul.</div>
         </div>
       </div>
     `;
@@ -466,79 +731,100 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function animateSlotSwitch(groupKey, direction) {
+    const content = groupKey === "A" ? slotAContent : slotBContent;
+    const offset = direction === "left" ? -30 : 30;
+
+    content.style.setProperty("--slotX", `${offset}px`);
+    content.style.setProperty("--slotOpacity", ".58");
+    content.style.setProperty("--slotScale", ".985");
+
+    requestAnimationFrame(() => {
+      renderSlots();
+      const newContent = groupKey === "A" ? slotAContent : slotBContent;
+      newContent.style.setProperty("--slotX", `${direction === "left" ? 34 : -34}px`);
+      newContent.style.setProperty("--slotOpacity", ".58");
+      newContent.style.setProperty("--slotScale", ".985");
+
+      requestAnimationFrame(() => {
+        newContent.style.setProperty("--slotX", "0px");
+        newContent.style.setProperty("--slotOpacity", "1");
+        newContent.style.setProperty("--slotScale", "1");
+      });
+    });
   }
 
   function stepSlot(groupKey, delta, direction) {
     const group = slotGroups[groupKey];
     group.index = (group.index + delta + group.modules.length) % group.modules.length;
-    const section = groupKey === "A" ? slotASection : slotBSection;
-    const content = groupKey === "A" ? slotAContent : slotBContent;
-
-    content.style.setProperty("--slotX", direction === "left" ? "34px" : "-34px");
-    content.style.setProperty("--slotOpacity", ".5");
-
-    requestAnimationFrame(() => {
-      renderSlots();
-      const newContent = groupKey === "A" ? slotAContent : slotBContent;
-      section.classList.remove("swipe-left", "swipe-right");
-      section.classList.add(direction === "left" ? "swipe-left" : "swipe-right");
-      newContent.style.setProperty("--slotX", "0px");
-      newContent.style.setProperty("--slotOpacity", "1");
-      setTimeout(() => section.classList.remove("swipe-left", "swipe-right"), 180);
-    });
+    animateSlotSwitch(groupKey, direction);
   }
 
   function bindSwipe(section, groupKey) {
+    let dragging = false;
     let startX = 0;
     let currentX = 0;
-    let active = false;
+
+    const content = groupKey === "A" ? slotAContent : slotBContent;
 
     section.addEventListener("pointerdown", (e) => {
-      active = true;
+      dragging = true;
       startX = e.clientX;
       currentX = e.clientX;
-      section.classList.add("is-swiping");
+      section.classList.add("is-dragging");
+      section.setPointerCapture?.(e.pointerId);
     });
 
     section.addEventListener("pointermove", (e) => {
-      if (!active) return;
+      if (!dragging) return;
+
       currentX = e.clientX;
       const dx = currentX - startX;
-      if (Math.abs(dx) > 8) {
-        section.classList.toggle("swipe-right", dx > 0);
-        section.classList.toggle("swipe-left", dx < 0);
-      }
+
+      content.style.setProperty("--slotX", `${dx * 0.42}px`);
+      content.style.setProperty("--slotOpacity", String(Math.max(0.62, 1 - Math.abs(dx) / 220)));
+      content.style.setProperty("--slotScale", String(1 - Math.min(0.02, Math.abs(dx) / 3000)));
     });
 
-    const end = () => {
-      if (!active) return;
-      const dx = currentX - startX;
-      active = false;
-      section.classList.remove("is-swiping");
-      if (dx < -44) stepSlot(groupKey, 1, "left");
-      else if (dx > 44) stepSlot(groupKey, -1, "right");
-      else section.classList.remove("swipe-left", "swipe-right");
-    };
+    function endSwipe() {
+      if (!dragging) return;
 
-    section.addEventListener("pointerup", end);
-    section.addEventListener("pointercancel", end);
-    section.addEventListener("pointerleave", end);
+      const dx = currentX - startX;
+      dragging = false;
+      section.classList.remove("is-dragging");
+
+      if (dx < -48) {
+        stepSlot(groupKey, 1, "left");
+      } else if (dx > 48) {
+        stepSlot(groupKey, -1, "right");
+      } else {
+        content.style.setProperty("--slotX", "0px");
+        content.style.setProperty("--slotOpacity", "1");
+        content.style.setProperty("--slotScale", "1");
+      }
+    }
+
+    section.addEventListener("pointerup", endSwipe);
+    section.addEventListener("pointercancel", endSwipe);
+    section.addEventListener("pointerleave", endSwipe);
   }
 
-  slotAButton.addEventListener("click", () => openModule("A"));
-  slotBButton.addEventListener("click", () => openModule("B"));
-  slotALeft.addEventListener("click", (e) => { e.stopPropagation(); stepSlot("A", -1, "right"); });
-  slotARight.addEventListener("click", (e) => { e.stopPropagation(); stepSlot("A", 1, "left"); });
-  slotBLeft.addEventListener("click", (e) => { e.stopPropagation(); stepSlot("B", -1, "right"); });
-  slotBRight.addEventListener("click", (e) => { e.stopPropagation(); stepSlot("B", 1, "left"); });
+  slotAButton.addEventListener("click", () => openCurrentModule("A"));
+  slotBButton.addEventListener("click", () => openCurrentModule("B"));
+
   closeFab.addEventListener("click", closeModule);
+  timerDoneCloseFab.addEventListener("click", hideTimerDoneOverlay);
 
   bindSwipe(slotASection, "A");
   bindSwipe(slotBSection, "B");
+
   formatDayDate();
   renderSlots();
   loadWeather();
+
   setInterval(formatDayDate, 60 * 1000);
 })();
