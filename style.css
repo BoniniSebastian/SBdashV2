@@ -604,6 +604,7 @@ button{
   inset:calc(var(--safeTop) + 16px) 0 calc(var(--safeBottom) + 72px) 0;
   overflow:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
 }
 
 .overlayContent{
@@ -1030,12 +1031,14 @@ button{
 .b3ModuleImageBtn{
   position:relative;
   width:100%;
-  height:42vh;
-  min-height:250px;
+  aspect-ratio:3.6 / 1;
+  height:auto;
+  min-height:0;
   overflow:hidden;
   background:rgba(255,255,255,.02);
   border:1px solid rgba(255,255,255,.06);
   cursor:pointer;
+  touch-action:manipulation;
 }
 
 .b3ModuleImageBtn.is-empty{
@@ -1067,6 +1070,29 @@ button{
   color:rgba(255,255,255,.36);
 }
 
+.b3ModuleActions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:20px;
+}
+
+.b3ModuleHint{
+  font-size:12px;
+  color:rgba(255,255,255,.42);
+}
+
+.b3ModuleRemoveBtn{
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+  font-size:12px;
+  color:rgba(255,255,255,.50);
+}
+
 .b3NoteInput{
   width:100%;
   min-height:4.6em;
@@ -1075,7 +1101,7 @@ button{
   outline:none;
   background:transparent;
   color:rgba(255,255,255,.90);
-  font-size:15px;
+  font-size:16px;
   line-height:1.45;
   padding:0;
 }
@@ -1091,6 +1117,8 @@ button{
   display:flex;
   flex-direction:column;
   padding:calc(var(--safeTop) + 18px) 18px calc(var(--safeBottom) + 24px) 18px;
+  touch-action:none;
+  overscroll-behavior:contain;
 }
 
 .b3CropTop{
@@ -1121,6 +1149,7 @@ button{
   border:1px solid rgba(255,255,255,.06);
   background:rgba(255,255,255,.02);
   touch-action:none;
+  overscroll-behavior:contain;
 }
 
 .b3CropImage{
@@ -1298,12 +1327,13 @@ button{
   }
 
   .b3ModuleImageBtn{
-    height:38vh;
-    min-height:220px;
+    aspect-ratio:3.6 / 1;
+    height:auto;
+    min-height:0;
   }
 
   .b3NoteInput{
-    font-size:15px;
+    font-size:16px;
   }
 
   .b3PreviewItem{
