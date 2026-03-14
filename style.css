@@ -1116,3 +1116,32 @@ button{
     font-size:52px;
   }
 }
+
+/* TIMER NEON RING */
+
+.timerWheel,
+.timerPreviewWheel {
+  position: relative;
+}
+
+.timerNeonRing {
+  position: absolute;
+  width: 115%;
+  height: 115%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.timerWheelBlob,
+.timerPreviewBlob {
+  z-index: 1;
+}
+
+.timerWheelCenter,
+.timerPreviewCenter {
+  position: relative;
+  z-index: 2;
+}
