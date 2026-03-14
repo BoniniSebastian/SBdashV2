@@ -419,28 +419,13 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
+  overflow:visible;
   background:
     radial-gradient(circle at 50% 50%, rgba(0,0,0,.88) 0%, rgba(0,0,0,.82) 58%, rgba(0,0,0,.70) 100%);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.05),
     0 0 30px rgba(0,209,255,.14),
     0 0 48px rgba(255,100,180,.08);
-}
-
-.timerPreviewWheel::before{
-  content:"";
-  position:absolute;
-  inset:-3px;
-  border-radius:inherit;
-  padding:2px;
-  background:linear-gradient(135deg, rgba(0,209,255,.98), rgba(120,120,255,.72), rgba(255,100,180,.96));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask-composite:exclude;
-  opacity:.96;
 }
 
 .timerPreviewBlob{
@@ -457,7 +442,7 @@ button{
 
 .timerPreviewCenter{
   position:relative;
-  z-index:1;
+  z-index:2;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -887,28 +872,13 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
+  overflow:visible;
   background:
     radial-gradient(circle at 50% 50%, rgba(0,0,0,.82) 0%, rgba(0,0,0,.72) 54%, rgba(0,0,0,.58) 100%);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.05),
     0 0 34px rgba(0,209,255,.14),
     0 0 56px rgba(255,100,180,.08);
-}
-
-.timerWheel::before{
-  content:"";
-  position:absolute;
-  inset:-3px;
-  border-radius:inherit;
-  padding:2px;
-  background:linear-gradient(135deg, rgba(0,209,255,.98), rgba(120,120,255,.72), rgba(255,100,180,.96));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask-composite:exclude;
-  opacity:.96;
 }
 
 .timerWheelBlob{
@@ -925,7 +895,7 @@ button{
 
 .timerWheelCenter{
   position:relative;
-  z-index:1;
+  z-index:2;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -1120,28 +1090,32 @@ button{
 /* TIMER NEON RING */
 
 .timerWheel,
-.timerPreviewWheel {
-  position: relative;
+.timerPreviewWheel{
+  position:relative;
 }
 
-.timerNeonRing {
-  position: absolute;
-  width: 115%;
-  height: 115%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 0;
+.timerNeonRing{
+  position:absolute;
+  width:115%;
+  height:115%;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  pointer-events:none;
+  z-index:0;
+  opacity:.98;
+  filter:
+    drop-shadow(0 0 10px rgba(0,209,255,.30))
+    drop-shadow(0 0 22px rgba(255,100,180,.18));
 }
 
 .timerWheelBlob,
-.timerPreviewBlob {
-  z-index: 1;
+.timerPreviewBlob{
+  z-index:1;
 }
 
 .timerWheelCenter,
-.timerPreviewCenter {
-  position: relative;
-  z-index: 2;
+.timerPreviewCenter{
+  position:relative;
+  z-index:2;
 }
