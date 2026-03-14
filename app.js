@@ -261,7 +261,7 @@
   }
 
   function imageTransformStyle(card) {
-    return `transform: translate(${card.x}px, ${card.y}px) scale(${card.scale});`;
+    return `transform: translate(-50%, -50%) translate(${card.x}px, ${card.y}px) scale(${card.scale});`;
   }
 
   function renderWeatherPreview() {
@@ -338,7 +338,7 @@
   function renderImagesPreview() {
     return `
       <div class="b3Preview">
-        ${imageCards.map((card, index) => {
+        ${imageCards.map((card) => {
           const hasImage = !!card.src;
           return `
             <div class="b3PreviewItem">
@@ -350,9 +350,7 @@
                 }
               </div>
               <div class="b3PreviewNote ${card.note.trim() ? "" : "is-empty"}">${
-                hasImage
-                  ? escapeHtml(card.note.trim() || " ")
-                  : " "
+                hasImage ? escapeHtml(card.note.trim() || " ") : " "
               }</div>
             </div>
           `;
@@ -798,6 +796,11 @@
                 }
               </button>
 
+              <div class="b3ModuleActions">
+                <div class="b3ModuleHint">${card.src ? "Tryck på bilden för att beskära" : "Tryck på bilden för att lägga till"}</div>
+                ${card.src ? `<button class="b3ModuleRemoveBtn" type="button" data-action="remove-image" data-index="${index}">Ta bort bild</button>` : ""}
+              </div>
+
               <textarea
                 class="b3NoteInput"
                 data-action="note-input"
@@ -832,7 +835,7 @@
             id="b3CropImage"
             src="${card.src}"
             alt=""
-            style="transform: translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale});"
+            style="transform: translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale});"
           >
         </div>
 
@@ -859,8 +862,8 @@
     root.querySelectorAll(".b3NoteInput").forEach((input) => {
       input.addEventListener("input", () => {
         const index = Number(input.dataset.index);
-        imageCards[index].note = input.value;
-        saveImageCards();
+        imageCards[index].note = input.value
+                saveImageCards();
         renderSlots();
       });
     });
@@ -914,6 +917,20 @@
 
         overlayContent.innerHTML = renderImagesModule();
         bindImagesModule();
+        return;
+      }
+
+      if (action === "remove-image") {
+        const index = Number(actionEl.dataset.index);
+        imageCards[index].src = "";
+        imageCards[index].scale = 1;
+        imageCards[index].x = 0;
+        imageCards[index].y = 0;
+        saveImageCards();
+        overlayContent.innerHTML = renderImagesModule();
+        bindImagesModule();
+        renderSlots();
+        return;
       }
 
       if (action === "crop-cancel") {
@@ -921,6 +938,7 @@
         cropState.index = -1;
         overlayContent.innerHTML = renderImagesModule();
         bindImagesModule();
+        return;
       }
 
       if (action === "crop-save") {
@@ -946,7 +964,7 @@
     if (cropViewport && cropImage && cropZoom) {
       cropZoom.addEventListener("input", () => {
         cropState.scale = Number(cropZoom.value);
-        cropImage.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+        cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
       });
 
       cropViewport.addEventListener("pointerdown", (e) => {
@@ -964,7 +982,7 @@
         const dy = e.clientY - cropState.startY;
         cropState.x = cropState.startOffsetX + dx;
         cropState.y = cropState.startOffsetY + dy;
-        cropImage.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+        cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
       });
 
       const endCropDrag = () => {
