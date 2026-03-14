@@ -155,11 +155,11 @@ button{
   display:flex;
   flex-direction:column;
   justify-content:center;
-  transform:translate3d(var(--slotX,0),0,0) scale(var(--slotScale,1));
+  transform:translate3d(var(--slotX,0),0,0);
   opacity:var(--slotOpacity,1);
   transition:
-    transform .34s cubic-bezier(.20,.82,.22,1),
-    opacity .22s ease;
+    transform .18s ease-out,
+    opacity .18s ease-out;
   will-change:transform, opacity;
 }
 
@@ -481,29 +481,20 @@ button{
 .b3Preview{
   width:100%;
   height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:6px;
+  display:grid;
+  grid-template-rows:1fr 1fr 1fr;
+  gap:4px;
 }
 
 .b3PreviewItem{
   min-height:0;
-  display:grid;
-  grid-template-rows:minmax(0, 1fr) 14px;
-  gap:3px;
-  flex:1;
 }
 
 .b3PreviewFrame{
   position:relative;
-  min-height:0;
+  width:100%;
+  height:100%;
   overflow:hidden;
-  background:rgba(255,255,255,.02);
-  border:1px solid rgba(255,255,255,.05);
-}
-
-.b3PreviewFrame.is-empty{
   background:rgba(255,255,255,.02);
   border:1px solid rgba(255,255,255,.05);
 }
@@ -521,8 +512,9 @@ button{
 
 .b3PreviewCamera{
   position:absolute;
-  top:5px;
-  right:5px;
+  top:50%;
+  right:10px;
+  transform:translateY(-50%);
   width:14px;
   height:14px;
   color:rgba(255,255,255,.34);
@@ -530,17 +522,7 @@ button{
 }
 
 .b3PreviewNote{
-  font-size:11px;
-  line-height:1;
-  color:rgba(255,255,255,.72);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  min-width:0;
-}
-
-.b3PreviewNote.is-empty{
-  color:transparent;
+  display:none;
 }
 
 /* TIMER MID BAR */
@@ -742,7 +724,8 @@ button{
 
 .tasksInput,
 .taskSubInput,
-.notesInput{
+.notesInput,
+.b3NoteInput{
   width:100%;
   border:0;
   outline:none;
@@ -752,6 +735,11 @@ button{
 
 .tasksInput{
   min-height:38px;
+  font-size:16px;
+}
+
+.taskSubInput{
+  min-height:30px;
   font-size:16px;
 }
 
@@ -872,11 +860,6 @@ button{
   align-items:center;
 }
 
-.taskSubInput{
-  min-height:30px;
-  font-size:14px;
-}
-
 .addSubBtn{
   font-size:12px;
   color:rgba(0,209,255,.86);
@@ -923,6 +906,7 @@ button{
   justify-content:center;
   gap:18px;
   text-align:center;
+  padding-top:60px;
 }
 
 .timerWheelWrap{
@@ -1095,7 +1079,7 @@ button{
 
 .b3NoteInput{
   width:100%;
-  min-height:4.6em;
+  min-height:4.8em;
   resize:vertical;
   border:0;
   outline:none;
@@ -1143,8 +1127,9 @@ button{
 
 .b3CropViewport{
   position:relative;
-  flex:1;
-  min-height:46vh;
+  width:100%;
+  aspect-ratio:3.6 / 1;
+  max-height:34vh;
   overflow:hidden;
   border:1px solid rgba(255,255,255,.06);
   background:rgba(255,255,255,.02);
@@ -1156,11 +1141,18 @@ button{
   position:absolute;
   left:50%;
   top:50%;
-  width:100%;
-  height:100%;
   object-fit:cover;
   transform-origin:center;
   will-change:transform;
+}
+
+.b3CropMask{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255,255,255,.55),
+    inset 0 0 0 9999px rgba(0,0,0,.18);
 }
 
 .b3CropControls{
@@ -1326,22 +1318,8 @@ button{
     font-size:52px;
   }
 
-  .b3ModuleImageBtn{
-    aspect-ratio:3.6 / 1;
-    height:auto;
-    min-height:0;
-  }
-
-  .b3NoteInput{
-    font-size:16px;
-  }
-
-  .b3PreviewItem{
-    grid-template-rows:minmax(0, 1fr) 13px;
-  }
-
-  .b3PreviewNote{
-    font-size:10px;
+  .b3CropViewport{
+    max-height:28vh;
   }
 }
 
