@@ -1,6 +1,3 @@
-# index.html
-
-```html
 <!doctype html>
 <html lang="sv">
 <head>
@@ -16,7 +13,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
   <div class="app">
@@ -24,34 +21,28 @@
     <div class="ambient ambient--two" aria-hidden="true"></div>
 
     <header class="topBar">
-      <div class="topMeta">
-        <div class="dayDate" id="dayDate">FREDAG · 13 MARS</div>
-      </div>
+      <div class="dayDate" id="dayDate">FREDAG · 13 MARS</div>
     </header>
 
     <div class="line line--top" aria-hidden="true"></div>
 
+    <div class="timerMidBarWrap" id="timerMidBarWrap" aria-hidden="true">
+      <div class="timerMidBar" id="timerMidBar"></div>
+    </div>
+
     <main class="slots" aria-label="Slotar">
       <section class="slotSection" id="slotASection" aria-label="Slot A">
-        <button class="sideRail sideRail--left" id="slotALeft" type="button" aria-label="Föregående modul i slot A"></button>
-
         <button class="slotButton" id="slotAButton" type="button" aria-label="Öppna modul i slot A">
           <div class="slotContent" id="slotAContent"></div>
         </button>
-
-        <button class="sideRail sideRail--right" id="slotARight" type="button" aria-label="Nästa modul i slot A"></button>
       </section>
 
       <div class="line line--middle" aria-hidden="true"></div>
 
       <section class="slotSection" id="slotBSection" aria-label="Slot B">
-        <button class="sideRail sideRail--left" id="slotBLeft" type="button" aria-label="Föregående modul i slot B"></button>
-
         <button class="slotButton" id="slotBButton" type="button" aria-label="Öppna modul i slot B">
           <div class="slotContent" id="slotBContent"></div>
         </button>
-
-        <button class="sideRail sideRail--right" id="slotBRight" type="button" aria-label="Nästa modul i slot B"></button>
       </section>
     </main>
 
@@ -73,12 +64,23 @@
         <div class="overlayScroll" id="overlayScroll">
           <div class="overlayContent" id="overlayContent"></div>
         </div>
-
         <button class="closeFab" id="closeFab" type="button" aria-label="Stäng modul">✕</button>
       </div>
     </div>
+
+    <div class="overlay doneOverlay" id="timerDoneOverlay" aria-hidden="true">
+      <div class="overlayInner doneOverlayInner">
+        <div class="doneBlob" aria-hidden="true"></div>
+        <div class="doneCenter">
+          <div class="doneTitle">Tiden ute</div>
+        </div>
+        <button class="closeFab" id="timerDoneCloseFab" type="button" aria-label="Stäng timer klart">✕</button>
+      </div>
+    </div>
+
+    <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
