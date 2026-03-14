@@ -158,8 +158,8 @@ button{
   transform:translate3d(var(--slotX,0),0,0) scale(var(--slotScale,1));
   opacity:var(--slotOpacity,1);
   transition:
-    transform .52s cubic-bezier(.16,.90,.18,1),
-    opacity .34s ease;
+    transform .34s cubic-bezier(.20,.82,.22,1),
+    opacity .22s ease;
   will-change:transform, opacity;
 }
 
