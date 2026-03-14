@@ -476,6 +476,73 @@ button{
   color:rgba(255,255,255,.86);
 }
 
+/* B3 PREVIEW */
+
+.b3Preview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+}
+
+.b3PreviewItem{
+  min-height:0;
+  display:grid;
+  grid-template-rows:minmax(0, 1fr) 14px;
+  gap:3px;
+  flex:1;
+}
+
+.b3PreviewFrame{
+  position:relative;
+  min-height:0;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.b3PreviewFrame.is-empty{
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.b3PreviewImg{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform-origin:center;
+  will-change:transform;
+}
+
+.b3PreviewCamera{
+  position:absolute;
+  top:5px;
+  right:5px;
+  width:14px;
+  height:14px;
+  color:rgba(255,255,255,.34);
+  pointer-events:none;
+}
+
+.b3PreviewNote{
+  font-size:11px;
+  line-height:1;
+  color:rgba(255,255,255,.72);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+
+.b3PreviewNote.is-empty{
+  color:transparent;
+}
+
 /* TIMER MID BAR */
 
 .timerMidBarWrap{
@@ -689,7 +756,8 @@ button{
 
 .tasksInput::placeholder,
 .taskSubInput::placeholder,
-.notesInput::placeholder{
+.notesInput::placeholder,
+.b3NoteInput::placeholder{
   color:rgba(255,255,255,.28);
 }
 
@@ -938,6 +1006,149 @@ button{
   color:rgba(255,255,255,.64);
 }
 
+/* B3 MODULE */
+
+.b3Module{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.b3ModuleList{
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+  padding-bottom:20px;
+}
+
+.b3ModuleItem{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.b3ModuleImageBtn{
+  position:relative;
+  width:100%;
+  height:42vh;
+  min-height:250px;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.06);
+  cursor:pointer;
+}
+
+.b3ModuleImageBtn.is-empty{
+  background:rgba(255,255,255,.02);
+}
+
+.b3ModuleImage{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform-origin:center;
+  will-change:transform;
+}
+
+.b3ModuleEmpty{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.b3ModuleEmptyCam{
+  width:22px;
+  height:22px;
+  color:rgba(255,255,255,.36);
+}
+
+.b3NoteInput{
+  width:100%;
+  min-height:4.6em;
+  resize:vertical;
+  border:0;
+  outline:none;
+  background:transparent;
+  color:rgba(255,255,255,.90);
+  font-size:15px;
+  line-height:1.45;
+  padding:0;
+}
+
+.b3CropOverlay{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  background:
+    radial-gradient(900px 560px at 24% 16%, rgba(0,180,255,.08), transparent 58%),
+    radial-gradient(840px 520px at 82% 74%, rgba(255,100,180,.06), transparent 58%),
+    rgba(5,11,18,.985);
+  display:flex;
+  flex-direction:column;
+  padding:calc(var(--safeTop) + 18px) 18px calc(var(--safeBottom) + 24px) 18px;
+}
+
+.b3CropTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.b3CropMiniBtn{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.82);
+  padding:10px 14px;
+  cursor:pointer;
+}
+
+.b3CropMiniBtn--primary{
+  color:rgba(255,255,255,.94);
+}
+
+.b3CropViewport{
+  position:relative;
+  flex:1;
+  min-height:46vh;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.02);
+  touch-action:none;
+}
+
+.b3CropImage{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform-origin:center;
+  will-change:transform;
+}
+
+.b3CropControls{
+  padding-top:16px;
+}
+
+.b3CropLabel{
+  display:block;
+  margin-bottom:8px;
+  font-size:13px;
+  color:rgba(255,255,255,.58);
+}
+
+.b3CropRange{
+  width:100%;
+}
+
 /* DONE */
 
 .doneOverlayInner{
@@ -1084,6 +1295,23 @@ button{
 
   .timerCenterValue{
     font-size:52px;
+  }
+
+  .b3ModuleImageBtn{
+    height:38vh;
+    min-height:220px;
+  }
+
+  .b3NoteInput{
+    font-size:15px;
+  }
+
+  .b3PreviewItem{
+    grid-template-rows:minmax(0, 1fr) 13px;
+  }
+
+  .b3PreviewNote{
+    font-size:10px;
   }
 }
 
