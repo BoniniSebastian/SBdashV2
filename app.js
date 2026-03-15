@@ -1670,7 +1670,6 @@
       <div class="calendarModule fullModule">
         <div class="fullModuleHead">
           <div class="fullModuleTitle">Kalender</div>
-          <div class="fullModuleText">Helskärm utan ramen från startsidan.</div>
         </div>
         <div class="calendarModuleFrameWrap">
           <iframe
