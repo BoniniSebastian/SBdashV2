@@ -1689,8 +1689,8 @@ a{
 
 .calendarOpenHint{
   position:absolute;
-  right:26px;
-  bottom:26px;
+  right:20px;
+  top:12px;
   font-size:12px;
   color:rgba(255,255,255,.66);
 }
