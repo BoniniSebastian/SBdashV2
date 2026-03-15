@@ -1322,3 +1322,13 @@ input,textarea,select{
   position:relative;
   z-index:2;
 }
+.calendarBottomFill{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: env(safe-area-inset-bottom);
+  background: #ffffff;
+  z-index: 3;
+  pointer-events: none;
+}
