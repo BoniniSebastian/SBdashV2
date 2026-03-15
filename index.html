@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
   <div class="app">
@@ -68,6 +68,26 @@
       </div>
     </div>
 
+    <div class="articleOverlay" id="articleOverlay" aria-hidden="true">
+      <div class="articleOverlayInner">
+        <div class="articleTopBar">
+          <button class="articleBackBtn" id="articleBackBtn" type="button" aria-label="Tillbaka till nyheter">← NYHETER</button>
+          <button class="articleOpenBtn" id="articleOpenBtn" type="button" aria-label="Öppna externt">Öppna externt</button>
+        </div>
+
+        <div class="articleMeta" id="articleMeta"></div>
+        <div class="articleTitle" id="articleTitle"></div>
+
+        <div class="articleFrameWrap">
+          <iframe
+            id="articleFrame"
+            title="Artikel"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay doneOverlay" id="timerDoneOverlay" aria-hidden="true">
       <div class="overlayInner doneOverlayInner">
         <div class="doneBlob" aria-hidden="true"></div>
@@ -82,6 +102,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
