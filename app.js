@@ -52,8 +52,6 @@
     { id: "oil", name: "Olja", short: "Olja", tv: "TVC:USOIL", tape: { description: "Olja", proName: "TVC:USOIL" } },
     { id: "eth", name: "ETH", short: "ETH", tv: "BITSTAMP:ETHUSD", tape: { description: "ETH", proName: "BITSTAMP:ETHUSD" } },
     { id: "us100", name: "US100", short: "US100", tv: "FOREXCOM:NSXUSD", tape: { description: "US100", proName: "FOREXCOM:NSXUSD" } },
-    { id: "japan", name: "Japan", short: "Japan", tv: "TVC:NI225", tape: { description: "Japan", proName: "TVC:NI225" } },
-    { id: "france", name: "Frankrike", short: "France", tv: "TVC:CAC40", tape: { description: "Frankrike", proName: "TVC:CAC40" } },
     { id: "usdeur", name: "USD/EUR", short: "USD/EUR", tv: "FX_IDC:USDEUR", tape: { description: "USD/EUR", proName: "FX_IDC:USDEUR" } }
   ];
 
@@ -674,7 +672,7 @@
         <div class="marketsPreviewTapeShell">
           <div class="marketsPreviewTape" id="marketsPreviewTape"></div>
         </div>
-        <div class="marketsPreviewFoot">Guld • Silver • Olja • ETH • US100 • Japan • Frankrike • USD/EUR</div>
+        <div class="marketsPreviewFoot">Guld • Silver • Olja • ETH • US100 • USD/EUR</div>
       </div>
     `;
   }
