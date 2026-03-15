@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=13" />
+  <link rel="stylesheet" href="style.css?v=20" />
 </head>
 <body>
   <div class="app">
@@ -21,7 +21,7 @@
     <div class="ambient ambient--two" aria-hidden="true"></div>
 
     <header class="topBar">
-      <div class="dayDate" id="dayDate">FREDAG · 13 MARS</div>
+      <div class="dayDate" id="dayDate">SÖNDAG · 15 MARS</div>
     </header>
 
     <div class="line line--top" aria-hidden="true"></div>
@@ -46,7 +46,7 @@
       </section>
     </main>
 
-    <section class="calendarStrip" aria-label="Kalender">
+    <section class="calendarStrip" id="calendarStrip" aria-label="Kalender">
       <div class="calendarFrameWrap">
         <iframe
           id="calendarFrame"
@@ -55,7 +55,8 @@
           referrerpolicy="strict-origin-when-cross-origin"
           title="Google Kalender"
         ></iframe>
-        <div class="calendarFade" aria-hidden="true"></div>
+        <div class="calendarTint" aria-hidden="true"></div>
+        <div class="calendarTapHint" aria-hidden="true">Kalender</div>
       </div>
     </section>
 
@@ -79,10 +80,24 @@
         <div class="articleTitle" id="articleTitle"></div>
 
         <div class="articleFrameWrap">
+          <iframe id="articleFrame" title="Artikel" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="calendarOverlay" id="calendarOverlay" aria-hidden="true">
+      <div class="calendarOverlayInner">
+        <div class="calendarOverlayTop">
+          <div class="calendarOverlayTitle">Kalender</div>
+          <button class="calendarCloseBtn" id="calendarCloseBtn" type="button" aria-label="Stäng kalender">✕</button>
+        </div>
+        <div class="calendarOverlayFrameWrap">
           <iframe
-            id="articleFrame"
-            title="Artikel"
+            id="calendarOverlayFrame"
+            src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=1"
+            loading="lazy"
             referrerpolicy="strict-origin-when-cross-origin"
+            title="Google Kalender fullskärm"
           ></iframe>
         </div>
       </div>
@@ -102,6 +117,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js?v=13"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>
