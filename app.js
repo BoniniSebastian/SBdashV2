@@ -5,7 +5,8 @@
     tasks: "sbdash_v7_tasks",
     notes: "sbdash_v7_notes",
     timerPreset: "sbdash_v7_timer_preset",
-    matchCards: "sbdash_v7_match_cards"
+    matchCards: "sbdash_v7_match_cards",
+    newsCache: "sbdash_v7_news_cache"
   };
 
   const dayDateEl = $("dayDate");
@@ -24,6 +25,13 @@
   const timerMidBar = $("timerMidBar");
   const alarmAudio = $("alarmAudio");
 
+  const articleOverlay = $("articleOverlay");
+  const articleBackBtn = $("articleBackBtn");
+  const articleOpenBtn = $("articleOpenBtn");
+  const articleMeta = $("articleMeta");
+  const articleTitle = $("articleTitle");
+  const articleFrame = $("articleFrame");
+
   const TIMER_OPTIONS = [
     { label: "1m", seconds: 60 },
     { label: "5m", seconds: 300 },
@@ -33,6 +41,9 @@
     { label: "30m", seconds: 1800 },
     { label: "1h", seconds: 3600 }
   ];
+
+  const NEWS_REFRESH_MS = 10 * 60 * 1000;
+  const NEWS_LIMIT = 12;
 
   let weatherState = {
     temp: "--°",
@@ -61,13 +72,23 @@
 
   let matchCards = normalizeMatchCards(loadJson(STORAGE_KEYS.matchCards, null));
 
+  const initialNewsCache = normalizeNewsCache(loadJson(STORAGE_KEYS.newsCache, null));
+  let newsState = {
+    items: initialNewsCache.items,
+    updatedAt: initialNewsCache.updatedAt,
+    loading: false,
+    error: ""
+  };
+
+  let currentArticle = null;
+
   const slotGroups = {
     A: {
       index: 0,
       modules: [
         { key: "weather" },
         { key: "timer" },
-        { key: "placeholder", text: "A3" }
+        { key: "news" }
       ]
     },
     B: {
@@ -109,6 +130,13 @@
     localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards));
   }
 
+  function saveNewsCache() {
+    localStorage.setItem(STORAGE_KEYS.newsCache, JSON.stringify({
+      items: newsState.items,
+      updatedAt: newsState.updatedAt
+    }));
+  }
+
   function makeEmptyMatchCard() {
     return {
       id: uid(),
@@ -145,6 +173,35 @@
         ocrStatus: typeof source.ocrStatus === "string" ? source.ocrStatus : ""
       };
     });
+  }
+
+  function normalizeNewsCache(cache) {
+    if (!cache || typeof cache !== "object") {
+      return { items: [], updatedAt: 0 };
+    }
+
+    const items = Array.isArray(cache.items)
+      ? cache.items.map((item, index) => normalizeNewsItem(item, index)).filter(Boolean)
+      : [];
+
+    return {
+      items,
+      updatedAt: Number.isFinite(cache.updatedAt) ? cache.updatedAt : 0
+    };
+  }
+
+  function normalizeNewsItem(item, index = 0) {
+    if (!item || typeof item !== "object") return null;
+
+    return {
+      id: typeof item.id === "string" ? item.id : `news_${index}_${Date.now()}`,
+      title: typeof item.title === "string" ? item.title : "",
+      source: typeof item.source === "string" ? item.source : "",
+      publishedAt: typeof item.publishedAt === "string" ? item.publishedAt : "",
+      link: typeof item.link === "string" ? item.link : "",
+      image: typeof item.image === "string" ? item.image : "",
+      category: typeof item.category === "string" ? item.category : ""
+    };
   }
 
   function clampPresetIndex(value) {
@@ -234,6 +291,96 @@
     }
   }
 
+  async function loadNews(force = false) {
+    if (newsState.loading) return;
+
+    const now = Date.now();
+    if (!force && newsState.updatedAt && now - newsState.updatedAt < NEWS_REFRESH_MS) {
+      return;
+    }
+
+    newsState.loading = true;
+    newsState.error = "";
+
+    try {
+      const worldFeed = "https://news.google.com/rss/search?q=världen%20OR%20world&hl=sv&gl=SE&ceid=SE:sv";
+      const swedenFeed = "https://news.google.com/rss/search?q=Sverige&hl=sv&gl=SE&ceid=SE:sv";
+
+      const [worldItems, swedenItems] = await Promise.all([
+        fetchRssJson(worldFeed, "Världen"),
+        fetchRssJson(swedenFeed, "Sverige")
+      ]);
+
+      const merged = [...worldItems, ...swedenItems]
+        .filter((item) => item.title && item.link)
+        .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+
+      const unique = [];
+      const seen = new Set();
+
+      for (const item of merged) {
+        const key = `${item.title}__${item.source}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(item);
+        if (unique.length >= NEWS_LIMIT) break;
+      }
+
+      if (unique.length) {
+        newsState.items = unique;
+        newsState.updatedAt = Date.now();
+        saveNewsCache();
+      } else if (!newsState.items.length) {
+        newsState.error = "Kunde inte ladda nyheter";
+      }
+    } catch {
+      if (!newsState.items.length) {
+        newsState.error = "Kunde inte ladda nyheter";
+      }
+    } finally {
+      newsState.loading = false;
+      renderSlots();
+
+      if (overlay.classList.contains("open") && currentModuleKey() === "news") {
+        openCurrentModule("A");
+      }
+    }
+  }
+
+  async function fetchRssJson(feedUrl, category) {
+    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+
+    if (!data || !Array.isArray(data.items)) return [];
+
+    return data.items.map((item, index) => ({
+      id: `${category}_${index}_${Date.now()}`,
+      title: cleanText(item.title || ""),
+      source: cleanText(item.author || data.feed?.title || category),
+      publishedAt: item.pubDate || "",
+      link: item.link || "",
+      image: pickNewsImage(item),
+      category
+    }));
+  }
+
+  function pickNewsImage(item) {
+    if (typeof item.thumbnail === "string" && item.thumbnail) return item.thumbnail;
+    if (typeof item.enclosure?.link === "string" && item.enclosure.link) return item.enclosure.link;
+
+    const content = item.content || item.description || "";
+    const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return match ? match[1] : "";
+  }
+
+  function cleanText(value) {
+    const text = String(value || "");
+    const tmp = document.createElement("textarea");
+    tmp.innerHTML = text;
+    return tmp.value.replace(/\s+/g, " ").trim();
+  }
+
   function currentModuleKey() {
     return overlay.dataset.moduleKey || "";
   }
@@ -295,6 +442,21 @@
       card.note ||
       card.imageSrc
     );
+  }
+
+  function formatNewsAge(publishedAt) {
+    if (!publishedAt) return "";
+    const diff = Date.now() - new Date(publishedAt).getTime();
+    if (!Number.isFinite(diff)) return "";
+
+    const mins = Math.max(1, Math.floor(diff / 60000));
+    if (mins < 60) return `${mins}m`;
+
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d`;
   }
 
   function renderWeatherPreview() {
@@ -360,6 +522,41 @@
     `;
   }
 
+  function renderNewsPreview() {
+    const items = newsState.items.slice(0, 3);
+
+    if (!items.length) {
+      return `
+        <div class="newsPreview">
+          <div class="newsPreviewLabel">Nyheter</div>
+          <div class="newsPreviewEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
+        </div>
+      `;
+    }
+
+    const hero = items[0];
+    const rest = items.slice(1);
+
+    return `
+      <div class="newsPreview">
+        <div class="newsPreviewLabel">Nyheter</div>
+
+        <div class="newsPreviewHero">
+          <div class="newsPreviewThumb">
+            ${hero.image ? `<img src="${hero.image}" alt="">` : ""}
+          </div>
+          <div class="newsPreviewHeroTitle">${escapeHtml(hero.title)}</div>
+        </div>
+
+        <div class="newsPreviewSubList">
+          ${rest.map((item) => `
+            <div class="newsPreviewSubItem">${escapeHtml(item.title)}</div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderMatchesPreview() {
     const visible = matchCards.filter(isFilledMatch).slice(0, 4);
 
@@ -407,6 +604,7 @@
     if (module.key === "tasks") return renderTasksPreview();
     if (module.key === "notes") return renderNotesPreview();
     if (module.key === "matches") return renderMatchesPreview();
+    if (module.key === "news") return renderNewsPreview();
 
     return renderPlaceholderPreview(module.text || "—");
   }
@@ -436,6 +634,9 @@
     } else if (module.key === "matches") {
       overlayContent.innerHTML = renderMatchesModule();
       bindMatchesModule();
+    } else if (module.key === "news") {
+      overlayContent.innerHTML = renderNewsModule();
+      bindNewsModule();
     } else {
       overlayContent.innerHTML = renderPlaceholderModule(module.text || "Nästa modul");
     }
@@ -455,6 +656,22 @@
   function hideTimerDoneOverlay() {
     timerDoneOverlay.classList.remove("open");
     timerDoneOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  function openArticle(item) {
+    currentArticle = item;
+    articleMeta.textContent = `${item.source || "Nyhet"}${item.publishedAt ? ` • ${formatNewsAge(item.publishedAt)}` : ""}`;
+    articleTitle.textContent = item.title || "";
+    articleFrame.src = item.link || "";
+    articleOverlay.classList.add("open");
+    articleOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeArticle() {
+    articleOverlay.classList.remove("open");
+    articleOverlay.setAttribute("aria-hidden", "true");
+    articleFrame.src = "about:blank";
+    currentArticle = null;
   }
 
   function renderWeatherModule() {
@@ -780,7 +997,60 @@
     wheelBtn.addEventListener("pointerup", endDrag);
     wheelBtn.addEventListener("pointercancel", endDrag);
   }
-    function renderMatchesModule() {
+    function renderNewsModule() {
+    const items = newsState.items.slice(0, NEWS_LIMIT);
+
+    return `
+      <div class="newsModule fullModule">
+        <div class="newsModuleHeader">
+          <div class="fullModuleTitle">Nyheter</div>
+          <div class="newsLiveRow">
+            <div class="newsLiveDot"></div>
+            <div class="newsLiveLabel">Live</div>
+            <div class="newsLiveText">${escapeHtml(items[0]?.title || newsState.error || "Laddar nyheter…")}</div>
+          </div>
+        </div>
+
+        ${items.length ? `
+          <div class="newsList">
+            ${items.map((item, index) => `
+              <article class="newsItem" data-action="open-news-item" data-index="${index}">
+                <div class="newsItemThumb">
+                  ${item.image ? `<img src="${item.image}" alt="">` : ""}
+                </div>
+                <div class="newsItemBody">
+                  <div class="newsItemTitle">${escapeHtml(item.title)}</div>
+                  <div class="newsItemMeta">${escapeHtml(item.source || "Nyhet")}${item.publishedAt ? ` • ${escapeHtml(formatNewsAge(item.publishedAt))}` : ""}</div>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        ` : `
+          <div class="newsEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
+        `}
+      </div>
+    `;
+  }
+
+  function bindNewsModule() {
+    overlayContent.addEventListener("click", onNewsModuleClick, { once: true });
+  }
+
+  function onNewsModuleClick(e) {
+    const itemEl = e.target.closest("[data-action='open-news-item']");
+    if (!itemEl) {
+      bindNewsModule();
+      return;
+    }
+
+    const index = Number(itemEl.dataset.index);
+    const item = newsState.items[index];
+    if (item) openArticle(item);
+
+    bindNewsModule();
+  }
+
+  function renderMatchesModule() {
     return `
       <div class="matchesModule fullModule">
         <div class="fullModuleHead">
@@ -1248,7 +1518,7 @@
     section.addEventListener(
       "wheel",
       (e) => {
-        if (overlay.classList.contains("open")) return;
+        if (overlay.classList.contains("open") || articleOverlay.classList.contains("open")) return;
         if (Math.abs(e.deltaY) < 12) return;
 
         e.preventDefault();
@@ -1265,11 +1535,21 @@
   closeFab.addEventListener("click", closeModule);
   timerDoneCloseFab.addEventListener("click", hideTimerDoneOverlay);
 
+  articleBackBtn.addEventListener("click", closeArticle);
+  articleOpenBtn.addEventListener("click", () => {
+    if (currentArticle?.link) {
+      window.open(currentArticle.link, "_blank", "noopener,noreferrer");
+    }
+  });
+
   bindSwipe(slotASection, "A");
   bindSwipe(slotBSection, "B");
 
   formatDayDate();
   renderSlots();
   loadWeather();
+  loadNews(true);
+
   setInterval(formatDayDate, 60 * 1000);
+  setInterval(() => loadNews(true), NEWS_REFRESH_MS);
 })();
