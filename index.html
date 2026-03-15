@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=13" />
+  <link rel="stylesheet" href="style.css?v=14" />
 </head>
 <body>
   <div class="app">
@@ -55,7 +55,12 @@
           referrerpolicy="strict-origin-when-cross-origin"
           title="Google Kalender"
         ></iframe>
+        <div class="calendarShade" aria-hidden="true"></div>
         <div class="calendarFade" aria-hidden="true"></div>
+        <button class="calendarOpenBtn" id="calendarOpenBtn" type="button" aria-label="Öppna kalender i helskärm">
+          <span class="calendarOpenLabel">Kalender</span>
+          <span class="calendarOpenHint">Tryck för helskärm</span>
+        </button>
       </div>
     </section>
 
@@ -102,6 +107,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>
