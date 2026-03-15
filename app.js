@@ -2,31 +2,26 @@
   const $ = (id) => document.getElementById(id);
 
   const STORAGE_KEYS = {
-    tasks: "sbdash_v6_tasks",
-    notes: "sbdash_v6_notes",
-    timerPreset: "sbdash_v6_timer_preset",
-    matchCards: "sbdash_v6_match_cards"
+    tasks: "sbdash_v7_tasks",
+    notes: "sbdash_v7_notes",
+    timerPreset: "sbdash_v7_timer_preset",
+    matchCards: "sbdash_v7_match_cards"
   };
 
   const dayDateEl = $("dayDate");
-
   const slotAButton = $("slotAButton");
   const slotBButton = $("slotBButton");
   const slotAContent = $("slotAContent");
   const slotBContent = $("slotBContent");
   const slotASection = $("slotASection");
   const slotBSection = $("slotBSection");
-
   const overlay = $("moduleOverlay");
   const overlayContent = $("overlayContent");
   const closeFab = $("closeFab");
-
   const timerDoneOverlay = $("timerDoneOverlay");
   const timerDoneCloseFab = $("timerDoneCloseFab");
-
   const timerMidBarWrap = $("timerMidBarWrap");
   const timerMidBar = $("timerMidBar");
-
   const alarmAudio = $("alarmAudio");
 
   const TIMER_OPTIONS = [
@@ -76,7 +71,7 @@
       ]
     },
     B: {
-      index: 0,
+      index: 2,
       modules: [
         { key: "tasks" },
         { key: "notes" },
@@ -110,6 +105,10 @@
     localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex));
   }
 
+  function saveMatchCards() {
+    localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards));
+  }
+
   function makeEmptyMatchCard() {
     return {
       id: uid(),
@@ -121,7 +120,8 @@
       opponent: "",
       location: "",
       gathering: "",
-      note: ""
+      note: "",
+      ocrStatus: ""
     };
   }
 
@@ -141,13 +141,10 @@
         opponent: typeof source.opponent === "string" ? source.opponent : "",
         location: typeof source.location === "string" ? source.location : "",
         gathering: typeof source.gathering === "string" ? source.gathering : "",
-        note: typeof source.note === "string" ? source.note : ""
+        note: typeof source.note === "string" ? source.note : "",
+        ocrStatus: typeof source.ocrStatus === "string" ? source.ocrStatus : ""
       };
     });
-  }
-
-  function saveMatchCards() {
-    localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards));
   }
 
   function clampPresetIndex(value) {
@@ -179,6 +176,7 @@
     try {
       const url =
         "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
+
       const res = await fetch(url, { cache: "no-store" });
       const data = await res.json();
 
@@ -203,6 +201,7 @@
       for (let i = 0; i < times.length && hourlyRows.length < 8; i += 1) {
         const dt = new Date(times[i]);
         if (dt.getDate() !== now.getDate() || dt.getHours() < currentHour) continue;
+
         hourlyRows.push({
           time: `${String(dt.getHours()).padStart(2, "0")}:00`,
           temp: `${Math.round(temps[i])}°`,
@@ -229,6 +228,7 @@
     }
 
     renderSlots();
+
     if (overlay.classList.contains("open") && currentModuleKey() === "weather") {
       openCurrentModule("A");
     }
@@ -255,6 +255,46 @@
         <circle cx="12" cy="13" r="3.5"></circle>
       </svg>
     `;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function shortDayDate(value) {
+    const v = (value || "").trim();
+    if (!v) return "Datum saknas";
+    return v
+      .replace(/^måndag/i, "Mån")
+      .replace(/^tisdag/i, "Tis")
+      .replace(/^onsdag/i, "Ons")
+      .replace(/^torsdag/i, "Tor")
+      .replace(/^fredag/i, "Fre")
+      .replace(/^lördag/i, "Lör")
+      .replace(/^söndag/i, "Sön");
+  }
+
+  function playerClass(player) {
+    return player === "Alice" ? "is-alice" : player === "Milo" ? "is-milo" : "";
+  }
+
+  function isFilledMatch(card) {
+    return !!(
+      card.dateText ||
+      card.timeText ||
+      card.player ||
+      card.series ||
+      card.opponent ||
+      card.location ||
+      card.gathering ||
+      card.note ||
+      card.imageSrc
+    );
   }
 
   function renderWeatherPreview() {
@@ -298,7 +338,9 @@
     return `
       <div class="notesPreview">
         <div class="notesPreviewHead">Anteckningar</div>
-        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(hasText ? notes : "Tryck för att skriva.")}</div>
+        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(
+          hasText ? notes : "Tryck för att skriva."
+        )}</div>
       </div>
     `;
   }
@@ -318,29 +360,9 @@
     `;
   }
 
-  function isFilledMatch(card) {
-    return !!(card.dateText || card.timeText || card.player || card.opponent || card.location || card.gathering || card.series || card.note || card.imageSrc);
-  }
-
-  function shortDayDate(value) {
-    const v = (value || "").trim();
-    if (!v) return "Datum saknas";
-    return v
-      .replace(/^måndag/i, "Mån")
-      .replace(/^tisdag/i, "Tis")
-      .replace(/^onsdag/i, "Ons")
-      .replace(/^torsdag/i, "Tor")
-      .replace(/^fredag/i, "Fre")
-      .replace(/^lördag/i, "Lör")
-      .replace(/^söndag/i, "Sön");
-  }
-
-  function playerClass(player) {
-    return player === "Alice" ? "is-alice" : player === "Milo" ? "is-milo" : "";
-  }
-
   function renderMatchesPreview() {
     const visible = matchCards.filter(isFilledMatch).slice(0, 4);
+
     if (!visible.length) {
       return `
         <div class="matchPreview matchPreview--empty">
@@ -457,7 +479,9 @@
           ${rows.map((row) => `
             <div class="weatherRow">
               <div class="weatherRowTime">${escapeHtml(row.time)}</div>
-              <div class="weatherRowMain">${row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"} · Regnrisk ${escapeHtml(row.rain)}</div>
+              <div class="weatherRowMain">${
+                row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"
+              } · Regnrisk ${escapeHtml(row.rain)}</div>
               <div class="weatherRowTemp">${escapeHtml(row.temp)}</div>
             </div>
           `).join("")}
@@ -608,6 +632,7 @@
   function bindNotesModule() {
     const input = $("notesInput");
     if (!input) return;
+
     input.addEventListener("input", () => {
       notes = input.value;
       saveNotes();
@@ -665,12 +690,14 @@
 
     function startTimer() {
       if (timerState.running) return;
+
       const preset = TIMER_OPTIONS[timerState.presetIndex];
       timerState.running = true;
       timerState.selecting = false;
       timerState.totalMs = preset.seconds * 1000;
       timerState.remainingMs = timerState.totalMs;
       timerState.startedAt = Date.now();
+
       timerMidBarWrap.classList.add("show");
       updateTimerBar(1);
 
@@ -681,7 +708,11 @@
         timerState.remainingMs = remaining;
         const ratio = timerState.totalMs > 0 ? remaining / timerState.totalMs : 0;
         updateTimerBar(ratio);
-        if (overlay.classList.contains("open") && currentModuleKey() === "timer") refreshTimerModuleView();
+
+        if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
+          refreshTimerModuleView();
+        }
+
         if (remaining <= 0) finishTimer();
       }, 200);
 
@@ -693,6 +724,7 @@
         clearInterval(timerState.intervalId);
         timerState.intervalId = null;
       }
+
       timerState.running = false;
       timerState.remainingMs = 0;
       updateTimerBar(0);
@@ -710,6 +742,7 @@
 
     wheelBtn.addEventListener("click", () => {
       if (timerState.running) return;
+
       if (!timerState.selecting) {
         timerState.selecting = true;
         refreshTimerModuleView();
@@ -730,9 +763,10 @@
       const dy = e.clientY - startY;
       if (Math.abs(dy) > 26) {
         timerState.selecting = true;
-        timerState.presetIndex = dy < 0
-          ? clampPresetIndex(timerState.presetIndex + 1)
-          : clampPresetIndex(timerState.presetIndex - 1);
+        timerState.presetIndex =
+          dy < 0
+            ? clampPresetIndex(timerState.presetIndex + 1)
+            : clampPresetIndex(timerState.presetIndex - 1);
         saveTimerPreset();
         startY = e.clientY;
         refreshTimerModuleView();
@@ -763,13 +797,21 @@
               </div>
 
               <button class="matchImageBtn ${card.imageSrc ? "has-image" : "is-empty"}" type="button" data-action="pick-image" data-index="${index}">
-                ${card.imageSrc
-                  ? `<img class="matchImagePreview" src="${card.imageSrc}" alt="Matchbild ${index + 1}">`
-                  : `<div class="matchImageEmpty"><div class="matchImageEmptyIcon">${cameraIconMarkup()}</div><div class="matchImageEmptyText">Lägg till SportAdmin-bild</div></div>`}
+                ${
+                  card.imageSrc
+                    ? `<img class="matchImagePreview" src="${card.imageSrc}" alt="Matchbild ${index + 1}">`
+                    : `<div class="matchImageEmpty"><div class="matchImageEmptyIcon">${cameraIconMarkup()}</div><div class="matchImageEmptyText">Lägg till SportAdmin-bild</div></div>`
+                }
               </button>
 
               <div class="matchImageActions">
-                <div class="matchImageHint">${card.imageSrc ? "Tryck för att byta bild" : "Ladda upp bild som referens"}</div>
+                <div class="matchImageHint">${
+                  card.ocrStatus
+                    ? escapeHtml(card.ocrStatus)
+                    : card.imageSrc
+                      ? "Tryck för att byta bild"
+                      : "Ladda upp bild som referens"
+                }</div>
                 ${card.imageSrc ? `<button class="matchDeleteImageBtn" type="button" data-action="remove-image" data-index="${index}">Ta bort bild</button>` : ""}
               </div>
 
@@ -844,7 +886,6 @@
 
   function parseSportAdminText(rawText) {
     const lines = cleanOcrLines(rawText);
-
     const result = {
       dateText: "",
       timeText: "",
@@ -885,7 +926,7 @@
     }
 
     const seriesLine =
-      lines.find((line) => /\b\d{4}\b/.test(line) && /\bA\b|\bB\b|\bC\b|mellersta|södra|norra|västra|östra|pojkar|flickor/i.test(line)) ||
+      lines.find((line) => /\b\d{4}\b/.test(line) && /mellersta|södra|norra|västra|östra|pojkar|flickor|\bA\b|\bB\b|\bC\b/i.test(line)) ||
       lines.find((line) => /pojkar|flickor/i.test(line));
 
     if (seriesLine) {
@@ -895,7 +936,9 @@
         .trim();
     }
 
-    const skipWords = /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|samling|plats|aktivitet|svara|kallelse|kommentar|närvaro|sportadmin|pojkar|flickor|matchstart|starttid|sluttid|tid:/i;
+    const skipWords =
+      /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|samling|plats|aktivitet|svara|kallelse|kommentar|närvaro|sportadmin|pojkar|flickor|matchstart|starttid|sluttid|tid:/i;
+
     const opponentCandidates = lines.filter((line) => {
       if (line.length < 3) return false;
       if (/\d{1,2}[:.]\d{2}/.test(line)) return false;
@@ -955,12 +998,19 @@
     const root = overlayContent.querySelector(".matchesModule");
     if (!root) return;
 
-    root.querySelectorAll(".matchFileInput").forEach((input, index) => {
+    root.querySelectorAll(".matchFileInput").forEach((input) => {
       input.addEventListener("change", async () => {
         const file = input.files?.[0];
+        const index = Number(input.id.replace("matchFileInput_", ""));
         if (!file) return;
 
+        matchCards[index].ocrStatus = "Förbereder bild…";
+        saveMatchCards();
+        overlayContent.innerHTML = renderMatchesModule();
+        bindMatchesModule();
+
         matchCards[index].imageSrc = await fileToDataUrlResized(file, 1800);
+        matchCards[index].ocrStatus = "Läser av text…";
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
         bindMatchesModule();
@@ -974,6 +1024,7 @@
         matchCards[index].opponent = extracted.opponent || matchCards[index].opponent;
         matchCards[index].location = extracted.location || matchCards[index].location;
         matchCards[index].gathering = extracted.gathering || matchCards[index].gathering;
+        matchCards[index].ocrStatus = "OCR klar. Kontrollera gärna fälten.";
 
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
@@ -996,6 +1047,7 @@
 
       if (action === "remove-image") {
         matchCards[index].imageSrc = "";
+        matchCards[index].ocrStatus = "";
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
         bindMatchesModule();
@@ -1043,8 +1095,10 @@
   function fileToDataUrlResized(file, maxSize = 1800) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+
       reader.onload = () => {
         const img = new Image();
+
         img.onload = () => {
           const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
           const width = Math.round(img.width * ratio);
@@ -1059,9 +1113,11 @@
 
           resolve(canvas.toDataURL("image/jpeg", 0.9));
         };
+
         img.onerror = reject;
         img.src = reader.result;
       };
+
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -1076,7 +1132,11 @@
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    if (h > 0) {
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
@@ -1106,7 +1166,9 @@
       }, 800);
     } catch {
       if (alarmAudio) {
-        try { alarmAudio.play(); } catch {}
+        try {
+          alarmAudio.play();
+        } catch {}
       }
     }
   }
@@ -1122,19 +1184,11 @@
     `;
   }
 
-  function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   function animateSlotSwitch(groupKey, direction) {
     renderSlots();
     const content = groupKey === "A" ? slotAContent : slotBContent;
     const startOffset = direction === "left" ? 22 : -22;
+
     content.style.setProperty("--slotX", `${startOffset}px`);
     content.style.setProperty("--slotOpacity", ".88");
 
@@ -1191,13 +1245,19 @@
     section.addEventListener("pointercancel", endSwipe);
     section.addEventListener("pointerleave", endSwipe);
 
-    section.addEventListener("wheel", (e) => {
-      if (overlay.classList.contains("open")) return;
-      if (Math.abs(e.deltaY) < 12) return;
-      e.preventDefault();
-      if (e.deltaY > 0) stepSlot(groupKey, 1, "left");
-      else stepSlot(groupKey, -1, "right");
-    }, { passive: false });
+    section.addEventListener(
+      "wheel",
+      (e) => {
+        if (overlay.classList.contains("open")) return;
+        if (Math.abs(e.deltaY) < 12) return;
+
+        e.preventDefault();
+
+        if (e.deltaY > 0) stepSlot(groupKey, 1, "left");
+        else stepSlot(groupKey, -1, "right");
+      },
+      { passive: false }
+    );
   }
 
   slotAButton.addEventListener("click", () => openCurrentModule("A"));
