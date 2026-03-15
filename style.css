@@ -26,7 +26,7 @@ html,body{
   height:100%;
   background:var(--bg);
   color:var(--text);
-  font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
 }
 
 body{ overflow:hidden; }
@@ -120,16 +120,13 @@ input,textarea,select{
   top:calc(var(--safeTop) + var(--topH));
   bottom:calc(var(--calendarH) + var(--safeBottom));
   display:grid;
-  grid-template-rows:1fr 1px 1fr;
+  grid-template-rows:minmax(0,1fr) 1px minmax(0,1fr);
   z-index:6;
 }
 
 .line--middle{
-  position:absolute;
-  top:50%;
-  left:0;
-  right:0;
-  transform:translateY(-.5px);
+  grid-row:2;
+  position:relative;
 }
 
 .slotSection{
@@ -167,6 +164,37 @@ input,textarea,select{
 
 .slotSection.is-dragging .slotContent{
   transition:none;
+}
+
+.timerMidBarWrap{
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  height:1px;
+  z-index:10;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(-1px);
+  transition:opacity .18s ease;
+}
+
+.timerMidBarWrap.show{
+  opacity:1;
+}
+
+.timerMidBar{
+  position:absolute;
+  left:0;
+  top:-1px;
+  height:3px;
+  width:100%;
+  background:var(--orange);
+  transform-origin:left center;
+  transform:scaleX(1);
+  box-shadow:
+    0 0 6px rgba(255,122,0,.6),
+    0 0 12px rgba(255,122,0,.35);
 }
 
 .weatherPreview{
@@ -555,37 +583,6 @@ input,textarea,select{
   font-weight:700;
 }
 
-.timerMidBarWrap{
-  position:absolute;
-  left:0;
-  right:0;
-  top:50%;
-  height:1px;
-  z-index:10;
-  pointer-events:none;
-  opacity:0;
-  transform:translateY(-.5px);
-  transition:opacity .18s ease;
-}
-
-.timerMidBarWrap.show{
-  opacity:1;
-}
-
-.timerMidBar{
-  position:absolute;
-  left:0;
-  top:-1px;
-  height:3px;
-  width:100%;
-  background:var(--orange);
-  transform-origin:left center;
-  transform:scaleX(1);
-  box-shadow:
-    0 0 6px rgba(255,122,0,.6),
-    0 0 12px rgba(255,122,0,.35);
-}
-
 .overlay{
   position:absolute;
   inset:0;
@@ -663,7 +660,7 @@ input,textarea,select{
 
 .fullModuleText{
   margin-top:10px;
-  max-width:36ch;
+  max-width:40ch;
   font-size:15px;
   line-height:1.48;
   color:rgba(255,255,255,.58);
