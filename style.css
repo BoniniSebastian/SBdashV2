@@ -1,1555 +1,1889 @@
-(() => {
-  const $ = (id) => document.getElementById(id);
-
-  const STORAGE_KEYS = {
-    tasks: "sbdash_v7_tasks",
-    notes: "sbdash_v7_notes",
-    timerPreset: "sbdash_v7_timer_preset",
-    matchCards: "sbdash_v7_match_cards",
-    newsCache: "sbdash_v7_news_cache"
-  };
-
-  const dayDateEl = $("dayDate");
-  const slotAButton = $("slotAButton");
-  const slotBButton = $("slotBButton");
-  const slotAContent = $("slotAContent");
-  const slotBContent = $("slotBContent");
-  const slotASection = $("slotASection");
-  const slotBSection = $("slotBSection");
-  const overlay = $("moduleOverlay");
-  const overlayContent = $("overlayContent");
-  const closeFab = $("closeFab");
-  const timerDoneOverlay = $("timerDoneOverlay");
-  const timerDoneCloseFab = $("timerDoneCloseFab");
-  const timerMidBarWrap = $("timerMidBarWrap");
-  const timerMidBar = $("timerMidBar");
-  const alarmAudio = $("alarmAudio");
-
-  const articleOverlay = $("articleOverlay");
-  const articleBackBtn = $("articleBackBtn");
-  const articleOpenBtn = $("articleOpenBtn");
-  const articleMeta = $("articleMeta");
-  const articleTitle = $("articleTitle");
-  const articleFrame = $("articleFrame");
-
-  const TIMER_OPTIONS = [
-    { label: "1m", seconds: 60 },
-    { label: "5m", seconds: 300 },
-    { label: "10m", seconds: 600 },
-    { label: "15m", seconds: 900 },
-    { label: "25m", seconds: 1500 },
-    { label: "30m", seconds: 1800 },
-    { label: "1h", seconds: 3600 }
-  ];
-
-  const NEWS_REFRESH_MS = 10 * 60 * 1000;
-  const NEWS_LIMIT = 12;
-
-  let weatherState = {
-    temp: "--°",
-    status: "Laddar väder…",
-    meta: "—",
-    type: "cloud",
-    hourly: []
-  };
-
-  let tasks = loadJson(STORAGE_KEYS.tasks, [
-    { id: uid(), text: "Planera dagen", done: false, subtasks: ["Välj fokus", "Stäm av kalendern"] },
-    { id: uid(), text: "Kolla det viktigaste", done: false, subtasks: [] }
-  ]);
-
-  let notes = localStorage.getItem(STORAGE_KEYS.notes) || "";
-
-  let timerState = {
-    presetIndex: clampPresetIndex(Number(localStorage.getItem(STORAGE_KEYS.timerPreset)) || 0),
-    selecting: false,
-    running: false,
-    startedAt: 0,
-    totalMs: 0,
-    remainingMs: 0,
-    intervalId: null
-  };
-
-  let matchCards = normalizeMatchCards(loadJson(STORAGE_KEYS.matchCards, null));
-
-  const initialNewsCache = normalizeNewsCache(loadJson(STORAGE_KEYS.newsCache, null));
-  let newsState = {
-    items: initialNewsCache.items,
-    updatedAt: initialNewsCache.updatedAt,
-    loading: false,
-    error: ""
-  };
-
-  let currentArticle = null;
-
-  const slotGroups = {
-    A: {
-      index: 0,
-      modules: [
-        { key: "weather" },
-        { key: "timer" },
-        { key: "news" }
-      ]
-    },
-    B: {
-      index: 2,
-      modules: [
-        { key: "tasks" },
-        { key: "notes" },
-        { key: "matches" }
-      ]
-    }
-  };
-
-  function uid() {
-    return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  }
-
-  function loadJson(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  function saveTasks() {
-    localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
-  }
-
-  function saveNotes() {
-    localStorage.setItem(STORAGE_KEYS.notes, notes);
-  }
-
-  function saveTimerPreset() {
-    localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex));
-  }
-
-  function saveMatchCards() {
-    localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards));
-  }
-
-  function saveNewsCache() {
-    localStorage.setItem(STORAGE_KEYS.newsCache, JSON.stringify({
-      items: newsState.items,
-      updatedAt: newsState.updatedAt
-    }));
-  }
-
-  function makeEmptyMatchCard() {
-    return {
-      id: uid(),
-      imageSrc: "",
-      dateText: "",
-      timeText: "",
-      player: "",
-      series: "",
-      opponent: "",
-      location: "",
-      gathering: "",
-      note: "",
-      ocrStatus: ""
-    };
-  }
-
-  function normalizeMatchCards(cards) {
-    const base = Array.from({ length: 5 }, () => makeEmptyMatchCard());
-    if (!Array.isArray(cards)) return base;
-
-    return base.map((item, index) => {
-      const source = cards[index] || {};
-      return {
-        id: typeof source.id === "string" ? source.id : uid(),
-        imageSrc: typeof source.imageSrc === "string" ? source.imageSrc : "",
-        dateText: typeof source.dateText === "string" ? source.dateText : "",
-        timeText: typeof source.timeText === "string" ? source.timeText : "",
-        player: typeof source.player === "string" ? source.player : "",
-        series: typeof source.series === "string" ? source.series : "",
-        opponent: typeof source.opponent === "string" ? source.opponent : "",
-        location: typeof source.location === "string" ? source.location : "",
-        gathering: typeof source.gathering === "string" ? source.gathering : "",
-        note: typeof source.note === "string" ? source.note : "",
-        ocrStatus: typeof source.ocrStatus === "string" ? source.ocrStatus : ""
-      };
-    });
-  }
-
-  function normalizeNewsCache(cache) {
-    if (!cache || typeof cache !== "object") {
-      return { items: [], updatedAt: 0 };
-    }
-
-    const items = Array.isArray(cache.items)
-      ? cache.items.map((item, index) => normalizeNewsItem(item, index)).filter(Boolean)
-      : [];
-
-    return {
-      items,
-      updatedAt: Number.isFinite(cache.updatedAt) ? cache.updatedAt : 0
-    };
-  }
-
-  function normalizeNewsItem(item, index = 0) {
-    if (!item || typeof item !== "object") return null;
-
-    return {
-      id: typeof item.id === "string" ? item.id : `news_${index}_${Date.now()}`,
-      title: typeof item.title === "string" ? item.title : "",
-      source: typeof item.source === "string" ? item.source : "",
-      publishedAt: typeof item.publishedAt === "string" ? item.publishedAt : "",
-      link: typeof item.link === "string" ? item.link : "",
-      image: typeof item.image === "string" ? item.image : "",
-      category: typeof item.category === "string" ? item.category : ""
-    };
-  }
-
-  function clampPresetIndex(value) {
-    if (Number.isNaN(value)) return 0;
-    return Math.max(0, Math.min(TIMER_OPTIONS.length - 1, value));
-  }
-
-  function formatDayDate() {
-    const now = new Date();
-    const formatted = new Intl.DateTimeFormat("sv-SE", {
-      weekday: "long",
-      day: "numeric",
-      month: "long"
-    }).format(now);
-
-    const parts = formatted.split(" ");
-    const weekday = (parts.shift() || "").replace(/\.$/, "").toUpperCase();
-    const rest = parts.join(" ").toUpperCase();
-    dayDateEl.textContent = `${weekday} · ${rest}`;
-  }
-
-  function weatherTypeFromCode(code) {
-    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code)) return "rain";
-    if ([0].includes(code)) return "sun";
-    return "cloud";
-  }
-
-  async function loadWeather() {
-    try {
-      const url =
-        "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
-
-      const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json();
-
-      const current = data.current || {};
-      const hourly = data.hourly || {};
-      const times = hourly.time || [];
-      const temps = hourly.temperature_2m || [];
-      const rain = hourly.precipitation_probability || [];
-      const codes = hourly.weather_code || [];
-
-      const type = weatherTypeFromCode(current.weather_code);
-      const labels = {
-        sun: "Klart",
-        cloud: "Molnigt",
-        rain: "Regn"
-      };
-
-      const hourlyRows = [];
-      const now = new Date();
-      const currentHour = now.getHours();
-
-      for (let i = 0; i < times.length && hourlyRows.length < 8; i += 1) {
-        const dt = new Date(times[i]);
-        if (dt.getDate() !== now.getDate() || dt.getHours() < currentHour) continue;
-
-        hourlyRows.push({
-          time: `${String(dt.getHours()).padStart(2, "0")}:00`,
-          temp: `${Math.round(temps[i])}°`,
-          rain: `${Math.round(rain[i] || 0)}%`,
-          type: weatherTypeFromCode(codes[i])
-        });
-      }
-
-      weatherState = {
-        temp: `${Math.round(current.temperature_2m ?? 0)}°`,
-        status: labels[type],
-        meta: `Känns som ${Math.round(current.apparent_temperature ?? 0)}° · Vind ${Math.round(current.wind_speed_10m ?? 0)} m/s`,
-        type,
-        hourly: hourlyRows
-      };
-    } catch {
-      weatherState = {
-        temp: "--°",
-        status: "Kunde inte ladda väder",
-        meta: "Kontrollera anslutning",
-        type: "cloud",
-        hourly: []
-      };
-    }
-
-    renderSlots();
-
-    if (overlay.classList.contains("open") && currentModuleKey() === "weather") {
-      openCurrentModule("A");
-    }
-  }
-
-  async function loadNews(force = false) {
-    if (newsState.loading) return;
-
-    const now = Date.now();
-    if (!force && newsState.updatedAt && now - newsState.updatedAt < NEWS_REFRESH_MS) {
-      return;
-    }
-
-    newsState.loading = true;
-    newsState.error = "";
-
-    try {
-      const worldFeed = "https://news.google.com/rss/search?q=världen%20OR%20world&hl=sv&gl=SE&ceid=SE:sv";
-      const swedenFeed = "https://news.google.com/rss/search?q=Sverige&hl=sv&gl=SE&ceid=SE:sv";
-
-      const [worldItems, swedenItems] = await Promise.all([
-        fetchRssJson(worldFeed, "Världen"),
-        fetchRssJson(swedenFeed, "Sverige")
-      ]);
-
-      const merged = [...worldItems, ...swedenItems]
-        .filter((item) => item.title && item.link)
-        .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
-
-      const unique = [];
-      const seen = new Set();
-
-      for (const item of merged) {
-        const key = `${item.title}__${item.source}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        unique.push(item);
-        if (unique.length >= NEWS_LIMIT) break;
-      }
-
-      if (unique.length) {
-        newsState.items = unique;
-        newsState.updatedAt = Date.now();
-        saveNewsCache();
-      } else if (!newsState.items.length) {
-        newsState.error = "Kunde inte ladda nyheter";
-      }
-    } catch {
-      if (!newsState.items.length) {
-        newsState.error = "Kunde inte ladda nyheter";
-      }
-    } finally {
-      newsState.loading = false;
-      renderSlots();
-
-      if (overlay.classList.contains("open") && currentModuleKey() === "news") {
-        openCurrentModule("A");
-      }
-    }
-  }
-
-  async function fetchRssJson(feedUrl, category) {
-    const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
-    const res = await fetch(url, { cache: "no-store" });
-    const data = await res.json();
-
-    if (!data || !Array.isArray(data.items)) return [];
-
-    return data.items.map((item, index) => ({
-      id: `${category}_${index}_${Date.now()}`,
-      title: cleanText(item.title || ""),
-      source: cleanText(item.author || data.feed?.title || category),
-      publishedAt: item.pubDate || "",
-      link: item.link || "",
-      image: pickNewsImage(item),
-      category
-    }));
-  }
-
-  function pickNewsImage(item) {
-    if (typeof item.thumbnail === "string" && item.thumbnail) return item.thumbnail;
-    if (typeof item.enclosure?.link === "string" && item.enclosure.link) return item.enclosure.link;
-
-    const content = item.content || item.description || "";
-    const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-    return match ? match[1] : "";
-  }
-
-  function cleanText(value) {
-    const text = String(value || "");
-    const tmp = document.createElement("textarea");
-    tmp.innerHTML = text;
-    return tmp.value.replace(/\s+/g, " ").trim();
-  }
-
-  function currentModuleKey() {
-    return overlay.dataset.moduleKey || "";
-  }
-
-  function weatherGlyph(type, large = false) {
-    return `
-      <div class="weatherGlyph ${large ? "weatherGlyphLarge" : ""} is-${type}">
-        <div class="sun"></div>
-        <div class="cloud"></div>
-        <div class="rain"></div>
-      </div>
-    `;
-  }
-
-  function cameraIconMarkup() {
-    return `
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4.5 7.5h3l1.4-2h6.2l1.4 2h3A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V9a1.5 1.5 0 0 1 1.5-1.5Z"></path>
-        <circle cx="12" cy="13" r="3.5"></circle>
-      </svg>
-    `;
-  }
-
-  function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function shortDayDate(value) {
-    const v = (value || "").trim();
-    if (!v) return "Datum saknas";
-    return v
-      .replace(/^måndag/i, "Mån")
-      .replace(/^tisdag/i, "Tis")
-      .replace(/^onsdag/i, "Ons")
-      .replace(/^torsdag/i, "Tor")
-      .replace(/^fredag/i, "Fre")
-      .replace(/^lördag/i, "Lör")
-      .replace(/^söndag/i, "Sön");
-  }
-
-  function playerClass(player) {
-    return player === "Alice" ? "is-alice" : player === "Milo" ? "is-milo" : "";
-  }
-
-  function isFilledMatch(card) {
-    return !!(
-      card.dateText ||
-      card.timeText ||
-      card.player ||
-      card.series ||
-      card.opponent ||
-      card.location ||
-      card.gathering ||
-      card.note ||
-      card.imageSrc
-    );
-  }
-
-  function formatNewsAge(publishedAt) {
-    if (!publishedAt) return "";
-    const diff = Date.now() - new Date(publishedAt).getTime();
-    if (!Number.isFinite(diff)) return "";
-
-    const mins = Math.max(1, Math.floor(diff / 60000));
-    if (mins < 60) return `${mins}m`;
-
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h`;
-
-    const days = Math.floor(hours / 24);
-    return `${days}d`;
-  }
-
-  function renderWeatherPreview() {
-    return `
-      <div class="weatherPreview">
-        <div class="weatherPreviewVisual">${weatherGlyph(weatherState.type)}</div>
-        <div class="weatherPreviewText">
-          <div class="weatherPreviewTemp">${escapeHtml(weatherState.temp)}</div>
-          <div class="weatherPreviewStatus">${escapeHtml(weatherState.status)}</div>
-          <div class="weatherPreviewMeta">${escapeHtml(weatherState.meta)}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderTasksPreview() {
-    const active = tasks.slice(0, 3);
-    if (!active.length) {
-      return `<div class="tasksPreview"><div class="tasksEmpty">Inga tasks ännu. Tryck för att skapa din första.</div></div>`;
-    }
-
-    return `
-      <div class="tasksPreview">
-        <div class="tasksListPreview">
-          ${active.map((task) => `
-            <div class="tasksItemPreview">
-              <div class="tasksDot"></div>
-              <div class="tasksTextWrap">
-                <div class="tasksText">${escapeHtml(task.text)}</div>
-                <div class="tasksSub">${task.subtasks?.length ? `${task.subtasks.length} delmål` : "Inga delmål"}</div>
-              </div>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderNotesPreview() {
-    const hasText = notes.trim().length > 0;
-    return `
-      <div class="notesPreview">
-        <div class="notesPreviewHead">Anteckningar</div>
-        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(
-          hasText ? notes : "Tryck för att skriva."
-        )}</div>
-      </div>
-    `;
-  }
-
-  function renderTimerPreview() {
-    return `
-      <div class="timerPreview">
-        <div class="timerPreviewWheel">
-          <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
-          <div class="timerPreviewBlob" aria-hidden="true"></div>
-          <div class="timerPreviewCenter">
-            <div class="timerPreviewTop">Timer</div>
-            <div class="timerPreviewBottom">Tryck för att starta</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderNewsPreview() {
-    const items = newsState.items.slice(0, 3);
-
-    if (!items.length) {
-      return `
-        <div class="newsPreview">
-          <div class="newsPreviewLabel">Nyheter</div>
-          <div class="newsPreviewEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
-        </div>
-      `;
-    }
-
-    const hero = items[0];
-    const rest = items.slice(1);
-
-    return `
-      <div class="newsPreview">
-        <div class="newsPreviewLabel">Nyheter</div>
-
-        <div class="newsPreviewHero">
-          <div class="newsPreviewThumb">
-            ${hero.image ? `<img src="${hero.image}" alt="">` : ""}
-          </div>
-          <div class="newsPreviewHeroTitle">${escapeHtml(hero.title)}</div>
-        </div>
-
-        <div class="newsPreviewSubList">
-          ${rest.map((item) => `
-            <div class="newsPreviewSubItem">${escapeHtml(item.title)}</div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderMatchesPreview() {
-    const visible = matchCards.filter(isFilledMatch).slice(0, 4);
-
-    if (!visible.length) {
-      return `
-        <div class="matchPreview matchPreview--empty">
-          <div class="matchPreviewEmpty">Lägg till upp till 5 matcher i modulen.</div>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="matchPreview">
-        ${visible.map((card, index) => `
-          <article class="matchPreviewCard ${index < visible.length - 1 ? "has-divider" : ""}">
-            <div class="matchPreviewRow matchPreviewRow--strong">
-              <span>${escapeHtml(shortDayDate(card.dateText))}</span>
-              <span class="matchPlayer ${playerClass(card.player)}">${escapeHtml(card.player || "Spelare")}</span>
-              <span class="matchGathering">Saml. ${escapeHtml(card.gathering || "--:--")}</span>
-            </div>
-            <div class="matchPreviewRow matchPreviewRow--muted">
-              <span>${escapeHtml(card.location || "Plats saknas")}</span>
-              <span>${escapeHtml(card.opponent || "Motstånd saknas")}</span>
-              <span>${escapeHtml(card.timeText || "Tid saknas")}</span>
-            </div>
-            <div class="matchPreviewRow matchPreviewRow--note ${card.note.trim() ? "has-note" : "is-empty"}">
-              ${card.note.trim() ? escapeHtml(card.note.trim()) : " "}
-            </div>
-          </article>
-        `).join("")}
-      </div>
-    `;
-  }
-
-  function renderPlaceholderPreview(text) {
-    return `<div class="placeholderPreview">${escapeHtml(text)}</div>`;
-  }
-
-  function renderSlot(groupKey) {
-    const group = slotGroups[groupKey];
-    const module = group.modules[group.index];
-
-    if (module.key === "weather") return renderWeatherPreview();
-    if (module.key === "timer") return renderTimerPreview();
-    if (module.key === "tasks") return renderTasksPreview();
-    if (module.key === "notes") return renderNotesPreview();
-    if (module.key === "matches") return renderMatchesPreview();
-    if (module.key === "news") return renderNewsPreview();
-
-    return renderPlaceholderPreview(module.text || "—");
-  }
-
-  function renderSlots() {
-    slotAContent.innerHTML = renderSlot("A");
-    slotBContent.innerHTML = renderSlot("B");
-  }
-
-  function openCurrentModule(groupKey) {
-    const module = slotGroups[groupKey].modules[slotGroups[groupKey].index];
-    overlay.dataset.moduleKey = module.key;
-    overlay.classList.add("open");
-    overlay.setAttribute("aria-hidden", "false");
-
-    if (module.key === "weather") {
-      overlayContent.innerHTML = renderWeatherModule();
-    } else if (module.key === "tasks") {
-      overlayContent.innerHTML = renderTasksModule();
-      bindTasksModule();
-    } else if (module.key === "notes") {
-      overlayContent.innerHTML = renderNotesModule();
-      bindNotesModule();
-    } else if (module.key === "timer") {
-      overlayContent.innerHTML = renderTimerModule();
-      bindTimerModule();
-    } else if (module.key === "matches") {
-      overlayContent.innerHTML = renderMatchesModule();
-      bindMatchesModule();
-    } else if (module.key === "news") {
-      overlayContent.innerHTML = renderNewsModule();
-      bindNewsModule();
-    } else {
-      overlayContent.innerHTML = renderPlaceholderModule(module.text || "Nästa modul");
-    }
-  }
-
-  function closeModule() {
-    overlay.classList.remove("open");
-    overlay.setAttribute("aria-hidden", "true");
-    overlay.dataset.moduleKey = "";
-  }
-
-  function showTimerDoneOverlay() {
-    timerDoneOverlay.classList.add("open");
-    timerDoneOverlay.setAttribute("aria-hidden", "false");
-  }
-
-  function hideTimerDoneOverlay() {
-    timerDoneOverlay.classList.remove("open");
-    timerDoneOverlay.setAttribute("aria-hidden", "true");
-  }
-
-  function openArticle(item) {
-    currentArticle = item;
-    articleMeta.textContent = `${item.source || "Nyhet"}${item.publishedAt ? ` • ${formatNewsAge(item.publishedAt)}` : ""}`;
-    articleTitle.textContent = item.title || "";
-    articleFrame.src = item.link || "";
-    articleOverlay.classList.add("open");
-    articleOverlay.setAttribute("aria-hidden", "false");
-  }
-
-  function closeArticle() {
-    articleOverlay.classList.remove("open");
-    articleOverlay.setAttribute("aria-hidden", "true");
-    articleFrame.src = "about:blank";
-    currentArticle = null;
-  }
-
-  function renderWeatherModule() {
-    const rows = weatherState.hourly.length
-      ? weatherState.hourly
-      : [{ time: "Nu", temp: weatherState.temp, rain: "0%", type: weatherState.type }];
-
-    return `
-      <div class="fullModule">
-        <div class="fullModuleHead">
-          <div class="fullModuleTitle">Väder</div>
-        </div>
-        <div class="weatherModuleTop">
-          <div>
-            <div class="weatherBigTemp">${escapeHtml(weatherState.temp)}</div>
-            <div class="weatherBigStatus">${escapeHtml(weatherState.status)}</div>
-            <div class="weatherMetaLine">${escapeHtml(weatherState.meta)}</div>
-          </div>
-          ${weatherGlyph(weatherState.type, true)}
-        </div>
-        <div class="weatherRows">
-          ${rows.map((row) => `
-            <div class="weatherRow">
-              <div class="weatherRowTime">${escapeHtml(row.time)}</div>
-              <div class="weatherRowMain">${
-                row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"
-              } · Regnrisk ${escapeHtml(row.rain)}</div>
-              <div class="weatherRowTemp">${escapeHtml(row.temp)}</div>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderTasksModule() {
-    return `
-      <div class="tasksModule fullModule">
-        <div class="fullModuleHead">
-          <div class="fullModuleTitle">Tasks</div>
-        </div>
-        <div class="tasksComposer">
-          <input class="tasksInput" id="tasksInput" type="text" maxlength="140" placeholder="Skapa uppgift..." autocomplete="off" />
-          <button class="tasksAddBtn" id="tasksAddBtn" type="button" aria-label="Lägg till task">+</button>
-        </div>
-        <div class="tasksModuleList" id="tasksModuleList">${renderTasksList()}</div>
-      </div>
-    `;
-  }
-
-  function renderTasksList() {
-    if (!tasks.length) return `<div class="fullModuleText">Inga tasks ännu.</div>`;
-
-    return tasks.map((task) => `
-      <div class="taskCard ${task.done ? "is-done" : ""}" data-task-id="${task.id}">
-        <div class="taskMainRow">
-          <input class="taskCheck" type="checkbox" ${task.done ? "checked" : ""} data-action="toggle-task" data-task-id="${task.id}" />
-          <button class="taskTextBtn" type="button" data-action="focus-sub" data-task-id="${task.id}">${escapeHtml(task.text)}</button>
-          <button class="taskDeleteBtn" type="button" data-action="delete-task" data-task-id="${task.id}">Ta bort</button>
-        </div>
-        <div class="subTasks">
-          ${(task.subtasks || []).map((sub) => `
-            <div class="subTaskRow">
-              <div class="subTaskMark"></div>
-              <div class="subTaskText">${escapeHtml(sub)}</div>
-            </div>
-          `).join("")}
-        </div>
-        <div class="subTaskInputRow">
-          <input class="taskSubInput" id="sub_${task.id}" type="text" maxlength="120" placeholder="Lägg till delmål..." autocomplete="off" />
-          <button class="addSubBtn" type="button" data-action="add-sub" data-task-id="${task.id}">Spara</button>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  function bindTasksModule() {
-    const tasksInput = $("tasksInput");
-    const tasksAddBtn = $("tasksAddBtn");
-    const tasksModuleList = $("tasksModuleList");
-
-    function rerenderTasksModule() {
-      overlayContent.innerHTML = renderTasksModule();
-      bindTasksModule();
-      renderSlots();
-    }
-
-    function addTask() {
-      const text = tasksInput.value.trim();
-      if (!text) return;
-      tasks.unshift({ id: uid(), text, done: false, subtasks: [] });
-      tasksInput.value = "";
-      saveTasks();
-      rerenderTasksModule();
-    }
-
-    function addSubtask(taskId) {
-      const task = tasks.find((item) => item.id === taskId);
-      const input = $(`sub_${taskId}`);
-      const val = input?.value.trim();
-      if (!task || !val) return;
-      task.subtasks = task.subtasks || [];
-      task.subtasks.push(val);
-      saveTasks();
-      rerenderTasksModule();
-    }
-
-    tasksAddBtn.addEventListener("click", addTask);
-
-    tasksInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addTask();
-      }
-    });
-
-    tasksModuleList.addEventListener("keydown", (e) => {
-      const subInput = e.target.closest(".taskSubInput");
-      if (!subInput) return;
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addSubtask(subInput.id.replace("sub_", ""));
-      }
-    });
-
-    tasksModuleList.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-action]");
-      if (!btn) return;
-      const action = btn.dataset.action;
-      const taskId = btn.dataset.taskId;
-      const task = tasks.find((item) => item.id === taskId);
-
-      if (action === "delete-task") {
-        tasks = tasks.filter((item) => item.id !== taskId);
-        saveTasks();
-        rerenderTasksModule();
-        return;
-      }
-
-      if (!task) return;
-
-      if (action === "add-sub") {
-        addSubtask(taskId);
-        return;
-      }
-
-      if (action === "focus-sub") {
-        const input = $(`sub_${taskId}`);
-        input?.focus();
-      }
-    });
-
-    tasksModuleList.addEventListener("change", (e) => {
-      const checkbox = e.target.closest("[data-action='toggle-task']");
-      if (!checkbox) return;
-      const task = tasks.find((item) => item.id === checkbox.dataset.taskId);
-      if (!task) return;
-      task.done = checkbox.checked;
-      saveTasks();
-      rerenderTasksModule();
-    });
-  }
-
-  function renderNotesModule() {
-    return `
-      <div class="notesModule fullModule">
-        <div class="notesHead"><div class="notesLabel">Anteckningar</div></div>
-        <div class="notesBox">
-          <textarea class="notesInput" id="notesInput" placeholder="Skriv fritt...">${escapeHtml(notes)}</textarea>
-        </div>
-      </div>
-    `;
-  }
-
-  function bindNotesModule() {
-    const input = $("notesInput");
-    if (!input) return;
-
-    input.addEventListener("input", () => {
-      notes = input.value;
-      saveNotes();
-      renderSlots();
-    });
-  }
-
-  function renderTimerModule() {
-    const preset = TIMER_OPTIONS[timerState.presetIndex];
-    const valueText = timerState.running ? formatRemaining(timerState.remainingMs) : preset.label;
-    const bottomText = timerState.running
-      ? "Pågår"
-      : timerState.selecting
-        ? "Svep för att välja · tryck igen för start"
-        : "Tryck för att starta";
-
-    return `
-      <div class="timerModule">
-        <div class="timerWheelWrap">
-          <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
-            <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
-            <div class="timerWheelBlob" aria-hidden="true"></div>
-            <div class="timerWheelCenter">
-              <div class="timerCenterTop">Timer</div>
-              <div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div>
-              <div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div>
-            </div>
-          </button>
-        </div>
-        <div class="timerHint">${timerState.running ? "Svep upp eller ner för att se tiden gå klart." : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}</div>
-      </div>
-    `;
-  }
-
-  function bindTimerModule() {
-    const wheelBtn = $("timerWheelBtn");
-    const valueEl = $("timerCenterValue");
-    const bottomEl = $("timerCenterBottom");
-    if (!wheelBtn) return;
-
-    let startY = 0;
-    let dragging = false;
-
-    function refreshTimerModuleView() {
-      const preset = TIMER_OPTIONS[timerState.presetIndex];
-      if (valueEl) valueEl.textContent = timerState.running ? formatRemaining(timerState.remainingMs) : preset.label;
-      if (bottomEl) {
-        bottomEl.textContent = timerState.running
-          ? "Pågår"
-          : timerState.selecting
-            ? "Svep för att välja · tryck igen för start"
-            : "Tryck för att starta";
-      }
-    }
-
-    function startTimer() {
-      if (timerState.running) return;
-
-      const preset = TIMER_OPTIONS[timerState.presetIndex];
-      timerState.running = true;
-      timerState.selecting = false;
-      timerState.totalMs = preset.seconds * 1000;
-      timerState.remainingMs = timerState.totalMs;
-      timerState.startedAt = Date.now();
-
-      timerMidBarWrap.classList.add("show");
-      updateTimerBar(1);
-
-      if (timerState.intervalId) clearInterval(timerState.intervalId);
-      timerState.intervalId = setInterval(() => {
-        const elapsed = Date.now() - timerState.startedAt;
-        const remaining = Math.max(0, timerState.totalMs - elapsed);
-        timerState.remainingMs = remaining;
-        const ratio = timerState.totalMs > 0 ? remaining / timerState.totalMs : 0;
-        updateTimerBar(ratio);
-
-        if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
-          refreshTimerModuleView();
-        }
-
-        if (remaining <= 0) finishTimer();
-      }, 200);
-
-      refreshTimerModuleView();
-    }
-
-    function finishTimer() {
-      if (timerState.intervalId) {
-        clearInterval(timerState.intervalId);
-        timerState.intervalId = null;
-      }
-
-      timerState.running = false;
-      timerState.remainingMs = 0;
-      updateTimerBar(0);
-      timerMidBarWrap.classList.remove("show");
-
-      if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
-        overlayContent.innerHTML = renderTimerModule();
-        bindTimerModule();
-      }
-
-      playAlarm();
-      showTimerDoneOverlay();
-      renderSlots();
-    }
-
-    wheelBtn.addEventListener("click", () => {
-      if (timerState.running) return;
-
-      if (!timerState.selecting) {
-        timerState.selecting = true;
-        refreshTimerModuleView();
-      } else {
-        startTimer();
-      }
-    });
-
-    wheelBtn.addEventListener("pointerdown", (e) => {
-      if (timerState.running) return;
-      dragging = true;
-      startY = e.clientY;
-      wheelBtn.setPointerCapture?.(e.pointerId);
-    });
-
-    wheelBtn.addEventListener("pointermove", (e) => {
-      if (!dragging || timerState.running) return;
-      const dy = e.clientY - startY;
-      if (Math.abs(dy) > 26) {
-        timerState.selecting = true;
-        timerState.presetIndex =
-          dy < 0
-            ? clampPresetIndex(timerState.presetIndex + 1)
-            : clampPresetIndex(timerState.presetIndex - 1);
-        saveTimerPreset();
-        startY = e.clientY;
-        refreshTimerModuleView();
-      }
-    });
-
-    function endDrag() {
-      dragging = false;
-    }
-
-    wheelBtn.addEventListener("pointerup", endDrag);
-    wheelBtn.addEventListener("pointercancel", endDrag);
-  }
-    function renderNewsModule() {
-    const items = newsState.items.slice(0, NEWS_LIMIT);
-
-    return `
-      <div class="newsModule fullModule">
-        <div class="newsModuleHeader">
-          <div class="fullModuleTitle">Nyheter</div>
-          <div class="newsLiveRow">
-            <div class="newsLiveDot"></div>
-            <div class="newsLiveLabel">Live</div>
-            <div class="newsLiveText">${escapeHtml(items[0]?.title || newsState.error || "Laddar nyheter…")}</div>
-          </div>
-        </div>
-
-        ${items.length ? `
-          <div class="newsList">
-            ${items.map((item, index) => `
-              <article class="newsItem" data-action="open-news-item" data-index="${index}">
-                <div class="newsItemThumb">
-                  ${item.image ? `<img src="${item.image}" alt="">` : ""}
-                </div>
-                <div class="newsItemBody">
-                  <div class="newsItemTitle">${escapeHtml(item.title)}</div>
-                  <div class="newsItemMeta">${escapeHtml(item.source || "Nyhet")}${item.publishedAt ? ` • ${escapeHtml(formatNewsAge(item.publishedAt))}` : ""}</div>
-                </div>
-              </article>
-            `).join("")}
-          </div>
-        ` : `
-          <div class="newsEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
-        `}
-      </div>
-    `;
-  }
-
-  function bindNewsModule() {
-    overlayContent.addEventListener("click", onNewsModuleClick, { once: true });
-  }
-
-  function onNewsModuleClick(e) {
-    const itemEl = e.target.closest("[data-action='open-news-item']");
-    if (!itemEl) {
-      bindNewsModule();
-      return;
-    }
-
-    const index = Number(itemEl.dataset.index);
-    const item = newsState.items[index];
-    if (item) openArticle(item);
-
-    bindNewsModule();
-  }
-
-  function renderMatchesModule() {
-    return `
-      <div class="matchesModule fullModule">
-        <div class="fullModuleHead">
-          <div class="fullModuleTitle">Matcher</div>
-          <div class="fullModuleText">Upp till 5 kort. Ladda upp SportAdmin-bild så försöker appen läsa av datum, tider, plats, spelare, serie och motstånd automatiskt. Du kan alltid rätta manuellt.</div>
-        </div>
-
-        <div class="matchesModuleList">
-          ${matchCards.map((card, index) => `
-            <section class="matchCardEditor" data-index="${index}">
-              <div class="matchCardEditorTop">
-                <div class="matchCardEditorCount">Kort ${index + 1}</div>
-                <button class="matchDeleteBtn" type="button" data-action="clear-match" data-index="${index}">Ta bort</button>
-              </div>
-
-              <button class="matchImageBtn ${card.imageSrc ? "has-image" : "is-empty"}" type="button" data-action="pick-image" data-index="${index}">
-                ${
-                  card.imageSrc
-                    ? `<img class="matchImagePreview" src="${card.imageSrc}" alt="Matchbild ${index + 1}">`
-                    : `<div class="matchImageEmpty"><div class="matchImageEmptyIcon">${cameraIconMarkup()}</div><div class="matchImageEmptyText">Lägg till SportAdmin-bild</div></div>`
-                }
-              </button>
-
-              <div class="matchImageActions">
-                <div class="matchImageHint">${
-                  card.ocrStatus
-                    ? escapeHtml(card.ocrStatus)
-                    : card.imageSrc
-                      ? "Tryck för att byta bild"
-                      : "Ladda upp bild som referens"
-                }</div>
-                ${card.imageSrc ? `<button class="matchDeleteImageBtn" type="button" data-action="remove-image" data-index="${index}">Ta bort bild</button>` : ""}
-              </div>
-
-              <div class="matchFieldsGrid">
-                <label class="matchField">
-                  <span>Datum</span>
-                  <input type="text" data-field="dateText" data-index="${index}" value="${escapeHtml(card.dateText)}" placeholder="Lördag 15 mars">
-                </label>
-
-                <label class="matchField">
-                  <span>Matchtid</span>
-                  <input type="text" data-field="timeText" data-index="${index}" value="${escapeHtml(card.timeText)}" placeholder="12:15–14:15">
-                </label>
-
-                <label class="matchField">
-                  <span>Spelare</span>
-                  <select data-field="player" data-index="${index}" class="matchPlayerSelect ${playerClass(card.player)}">
-                    <option value="" ${card.player === "" ? "selected" : ""}>Välj</option>
-                    <option value="Milo" ${card.player === "Milo" ? "selected" : ""}>Milo</option>
-                    <option value="Alice" ${card.player === "Alice" ? "selected" : ""}>Alice</option>
-                  </select>
-                </label>
-
-                <label class="matchField">
-                  <span>Serie</span>
-                  <input type="text" data-field="series" data-index="${index}" value="${escapeHtml(card.series)}" placeholder="2013 B Mellersta">
-                </label>
-
-                <label class="matchField">
-                  <span>Motstånd</span>
-                  <input type="text" data-field="opponent" data-index="${index}" value="${escapeHtml(card.opponent)}" placeholder="Norrtulls SK (B)">
-                </label>
-
-                <label class="matchField">
-                  <span>Plats</span>
-                  <input type="text" data-field="location" data-index="${index}" value="${escapeHtml(card.location)}" placeholder="Värmdö sporthall">
-                </label>
-
-                <label class="matchField">
-                  <span>Samling</span>
-                  <input type="text" data-field="gathering" data-index="${index}" value="${escapeHtml(card.gathering)}" placeholder="11:30">
-                </label>
-              </div>
-
-              <label class="matchField matchField--note">
-                <span>Anteckning</span>
-                <textarea data-field="note" data-index="${index}" placeholder="Åk 14, Ted ska med, restid 30 min...">${escapeHtml(card.note)}</textarea>
-              </label>
-
-              <input class="matchFileInput" id="matchFileInput_${index}" type="file" accept="image/*" hidden>
-            </section>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  function cleanOcrLines(text) {
-    return text
-      .split(/\r?\n/)
-      .map((line) => line.replace(/\s+/g, " ").trim())
-      .filter(Boolean);
-  }
-
-  function normalizeTimeString(value) {
-    return String(value || "")
-      .replace(/\./g, ":")
-      .replace(/\s+/g, "")
-      .replace(/[^0-9:\-–]/g, "")
-      .replace(/(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})/, "$1–$2");
-  }
-
-  function parseSportAdminText(rawText) {
-    const lines = cleanOcrLines(rawText);
-    const result = {
-      dateText: "",
-      timeText: "",
-      player: "",
-      series: "",
-      opponent: "",
-      location: "",
-      gathering: ""
-    };
-
-    const lineText = lines.join(" | ");
-
-    const dateLine =
-      lines.find((line) => /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag/i.test(line) && /\d/.test(line)) ||
-      lines.find((line) => /mån|tis|ons|tor|fre|lör|sön/i.test(line) && /\d/.test(line));
-
-    if (dateLine) result.dateText = dateLine;
-
-    const gatheringMatch = lineText.match(/samling\s*(\d{1,2}[:.]\d{2})/i);
-    if (gatheringMatch) result.gathering = gatheringMatch[1].replace(".", ":");
-
-    const timeRangeMatch = lineText.match(/(\d{1,2}[:.]\d{2})\s*[-–]\s*(\d{1,2}[:.]\d{2})/);
-    if (timeRangeMatch) {
-      result.timeText = `${timeRangeMatch[1].replace(".", ":")}–${timeRangeMatch[2].replace(".", ":")}`;
-    }
-
-    if (/milo/i.test(lineText)) result.player = "Milo";
-    if (/alice/i.test(lineText)) result.player = result.player || "Alice";
-
-    const locationLine =
-      lines.find((line) => /sporthall|arena|idrottshall|hallen|gymnasium|center|centret|plan/i.test(line)) ||
-      lines.find((line, idx) => /plats/i.test(line) && lines[idx + 1]);
-
-    if (locationLine) {
-      result.location = /plats/i.test(locationLine)
-        ? (lines[lines.indexOf(locationLine) + 1] || "")
-        : locationLine;
-    }
-
-    const seriesLine =
-      lines.find((line) => /\b\d{4}\b/.test(line) && /mellersta|södra|norra|västra|östra|pojkar|flickor|\bA\b|\bB\b|\bC\b/i.test(line)) ||
-      lines.find((line) => /pojkar|flickor/i.test(line));
-
-    if (seriesLine) {
-      result.series = seriesLine
-        .replace(/^pantamera\s*/i, "")
-        .replace(/^innebandy\s*/i, "")
-        .trim();
-    }
-
-    const skipWords =
-      /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|samling|plats|aktivitet|svara|kallelse|kommentar|närvaro|sportadmin|pojkar|flickor|matchstart|starttid|sluttid|tid:/i;
-
-    const opponentCandidates = lines.filter((line) => {
-      if (line.length < 3) return false;
-      if (/\d{1,2}[:.]\d{2}/.test(line)) return false;
-      if (/sporthall|arena|idrottshall|hallen|gymnasium|center|centret|plan/i.test(line)) return false;
-      if (skipWords.test(line)) return false;
-      if (/milo|alice/i.test(line)) return false;
-      return /[A-Za-zÅÄÖåäö]/.test(line);
-    });
-
-    if (opponentCandidates.length) {
-      const bestOpponent = opponentCandidates.find((line) => /\([A-Z]\)/.test(line)) || opponentCandidates[0];
-      result.opponent = bestOpponent;
-    }
-
-    result.dateText = result.dateText.trim();
-    result.timeText = normalizeTimeString(result.timeText);
-    result.series = result.series.trim();
-    result.opponent = result.opponent.trim();
-    result.location = result.location.trim();
-    result.gathering = normalizeTimeString(result.gathering);
-
-    return result;
-  }
-
-  async function extractMatchDataFromImage(dataUrl) {
-    if (!window.Tesseract) {
-      return {
-        dateText: "",
-        timeText: "",
-        player: "",
-        series: "",
-        opponent: "",
-        location: "",
-        gathering: ""
-      };
-    }
-
-    try {
-      const result = await window.Tesseract.recognize(dataUrl, "swe+eng", {
-        logger: () => {}
-      });
-      return parseSportAdminText(result.data.text || "");
-    } catch {
-      return {
-        dateText: "",
-        timeText: "",
-        player: "",
-        series: "",
-        opponent: "",
-        location: "",
-        gathering: ""
-      };
-    }
-  }
-
-  function bindMatchesModule() {
-    const root = overlayContent.querySelector(".matchesModule");
-    if (!root) return;
-
-    root.querySelectorAll(".matchFileInput").forEach((input) => {
-      input.addEventListener("change", async () => {
-        const file = input.files?.[0];
-        const index = Number(input.id.replace("matchFileInput_", ""));
-        if (!file) return;
-
-        matchCards[index].ocrStatus = "Förbereder bild…";
-        saveMatchCards();
-        overlayContent.innerHTML = renderMatchesModule();
-        bindMatchesModule();
-
-        matchCards[index].imageSrc = await fileToDataUrlResized(file, 1800);
-        matchCards[index].ocrStatus = "Läser av text…";
-        saveMatchCards();
-        overlayContent.innerHTML = renderMatchesModule();
-        bindMatchesModule();
-
-        const extracted = await extractMatchDataFromImage(matchCards[index].imageSrc);
-
-        matchCards[index].dateText = extracted.dateText || matchCards[index].dateText;
-        matchCards[index].timeText = extracted.timeText || matchCards[index].timeText;
-        matchCards[index].player = extracted.player || matchCards[index].player;
-        matchCards[index].series = extracted.series || matchCards[index].series;
-        matchCards[index].opponent = extracted.opponent || matchCards[index].opponent;
-        matchCards[index].location = extracted.location || matchCards[index].location;
-        matchCards[index].gathering = extracted.gathering || matchCards[index].gathering;
-        matchCards[index].ocrStatus = "OCR klar. Kontrollera gärna fälten.";
-
-        saveMatchCards();
-        overlayContent.innerHTML = renderMatchesModule();
-        bindMatchesModule();
-        renderSlots();
-      });
-    });
-
-    root.addEventListener("click", (e) => {
-      const actionEl = e.target.closest("[data-action]");
-      if (!actionEl) return;
-      const action = actionEl.dataset.action;
-      const index = Number(actionEl.dataset.index);
-
-      if (action === "pick-image") {
-        const input = $(`matchFileInput_${index}`);
-        input?.click();
-        return;
-      }
-
-      if (action === "remove-image") {
-        matchCards[index].imageSrc = "";
-        matchCards[index].ocrStatus = "";
-        saveMatchCards();
-        overlayContent.innerHTML = renderMatchesModule();
-        bindMatchesModule();
-        renderSlots();
-        return;
-      }
-
-      if (action === "clear-match") {
-        matchCards[index] = makeEmptyMatchCard();
-        saveMatchCards();
-        overlayContent.innerHTML = renderMatchesModule();
-        bindMatchesModule();
-        renderSlots();
-      }
-    });
-
-    root.addEventListener("input", (e) => {
-      const fieldEl = e.target.closest("[data-field]");
-      if (!fieldEl) return;
-
-      const index = Number(fieldEl.dataset.index);
-      const field = fieldEl.dataset.field;
-      matchCards[index][field] = fieldEl.value;
-      saveMatchCards();
-      renderSlots();
-
-      if (field === "player") {
-        fieldEl.classList.toggle("is-milo", fieldEl.value === "Milo");
-        fieldEl.classList.toggle("is-alice", fieldEl.value === "Alice");
-      }
-    });
-
-    root.addEventListener("change", (e) => {
-      const fieldEl = e.target.closest("[data-field]");
-      if (!fieldEl) return;
-
-      const index = Number(fieldEl.dataset.index);
-      const field = fieldEl.dataset.field;
-      matchCards[index][field] = fieldEl.value;
-      saveMatchCards();
-      renderSlots();
-    });
-  }
-
-  function fileToDataUrlResized(file, maxSize = 1800) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const img = new Image();
-
-        img.onload = () => {
-          const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
-          const width = Math.round(img.width * ratio);
-          const height = Math.round(img.height * ratio);
-
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          resolve(canvas.toDataURL("image/jpeg", 0.9));
-        };
-
-        img.onerror = reject;
-        img.src = reader.result;
-      };
-
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function updateTimerBar(ratio) {
-    timerMidBar.style.transform = `scaleX(${Math.max(0, Math.min(1, ratio))})`;
-  }
-
-  function formatRemaining(ms) {
-    const totalSec = Math.ceil(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-
-    if (h > 0) {
-      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    }
-
-    return `${m}:${String(s).padStart(2, "0")}`;
-  }
-
-  function playAlarm() {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-
-      const ctx = new AudioCtx();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-
-      o.type = "sine";
-      o.frequency.value = 880;
-      g.gain.value = 0.0001;
-
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start();
-
-      g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
-
-      setTimeout(() => {
-        o.stop();
-        ctx.close();
-      }, 800);
-    } catch {
-      if (alarmAudio) {
-        try {
-          alarmAudio.play();
-        } catch {}
-      }
-    }
-  }
-
-  function renderPlaceholderModule(text) {
-    return `
-      <div class="fullModule">
-        <div class="fullModuleHead">
-          <div class="fullModuleTitle">${escapeHtml(text)}</div>
-          <div class="fullModuleText">Redo för nästa modul.</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function animateSlotSwitch(groupKey, direction) {
-    renderSlots();
-    const content = groupKey === "A" ? slotAContent : slotBContent;
-    const startOffset = direction === "left" ? 22 : -22;
-
-    content.style.setProperty("--slotX", `${startOffset}px`);
-    content.style.setProperty("--slotOpacity", ".88");
-
-    requestAnimationFrame(() => {
-      content.style.setProperty("--slotX", "0px");
-      content.style.setProperty("--slotOpacity", "1");
-    });
-  }
-
-  function stepSlot(groupKey, delta, direction) {
-    const group = slotGroups[groupKey];
-    group.index = (group.index + delta + group.modules.length) % group.modules.length;
-    animateSlotSwitch(groupKey, direction);
-  }
-
-  function bindSwipe(section, groupKey) {
-    let dragging = false;
-    let startX = 0;
-    let currentX = 0;
-
-    const content = groupKey === "A" ? slotAContent : slotBContent;
-
-    section.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      startX = e.clientX;
-      currentX = e.clientX;
-      section.classList.add("is-dragging");
-      section.setPointerCapture?.(e.pointerId);
-    });
-
-    section.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      currentX = e.clientX;
-      const dx = currentX - startX;
-      content.style.setProperty("--slotX", `${dx * 0.55}px`);
-      content.style.setProperty("--slotOpacity", String(Math.max(0.62, 1 - Math.abs(dx) / 220)));
-    });
-
-    function endSwipe() {
-      if (!dragging) return;
-      const dx = currentX - startX;
-      dragging = false;
-      section.classList.remove("is-dragging");
-
-      if (dx < -48) stepSlot(groupKey, 1, "left");
-      else if (dx > 48) stepSlot(groupKey, -1, "right");
-      else {
-        content.style.setProperty("--slotX", "0px");
-        content.style.setProperty("--slotOpacity", "1");
-      }
-    }
-
-    section.addEventListener("pointerup", endSwipe);
-    section.addEventListener("pointercancel", endSwipe);
-    section.addEventListener("pointerleave", endSwipe);
-
-    section.addEventListener(
-      "wheel",
-      (e) => {
-        if (overlay.classList.contains("open") || articleOverlay.classList.contains("open")) return;
-        if (Math.abs(e.deltaY) < 12) return;
-
-        e.preventDefault();
-
-        if (e.deltaY > 0) stepSlot(groupKey, 1, "left");
-        else stepSlot(groupKey, -1, "right");
-      },
-      { passive: false }
-    );
-  }
-
-  slotAButton.addEventListener("click", () => openCurrentModule("A"));
-  slotBButton.addEventListener("click", () => openCurrentModule("B"));
-  closeFab.addEventListener("click", closeModule);
-  timerDoneCloseFab.addEventListener("click", hideTimerDoneOverlay);
-
-  articleBackBtn.addEventListener("click", closeArticle);
-  articleOpenBtn.addEventListener("click", () => {
-    if (currentArticle?.link) {
-      window.open(currentArticle.link, "_blank", "noopener,noreferrer");
-    }
-  });
-
-  bindSwipe(slotASection, "A");
-  bindSwipe(slotBSection, "B");
-
-  formatDayDate();
-  renderSlots();
-  loadWeather();
-  loadNews(true);
-
-  setInterval(formatDayDate, 60 * 1000);
-  setInterval(() => loadNews(true), NEWS_REFRESH_MS);
-})();
+:root{
+  --bg:#050b12;
+  --text:rgba(255,255,255,.94);
+  --muted:rgba(255,255,255,.60);
+  --line:rgba(255,255,255,.10);
+
+  --safeTop:env(safe-area-inset-top);
+  --safeBottom:env(safe-area-inset-bottom);
+
+  --padX:18px;
+  --topH:64px;
+
+  --calendarH:172px;
+  --calendarScale:.80;
+
+  --cyan:#22d3ee;
+  --pink:#e879f9;
+  --orange:#ff7a00;
+  --newsRed:#ff6d6d;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+
+body{ overflow:hidden; }
+
+button,input,textarea,select{
+  font:inherit;
+  color:inherit;
+}
+
+button{
+  background:none;
+  border:0;
+}
+
+input,textarea,select{
+  font-size:16px;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+.app{
+  position:fixed;
+  inset:0;
+  height:100dvh;
+  overflow:hidden;
+  background:
+    radial-gradient(980px 600px at 24% 16%, rgba(0,180,255,.12), transparent 58%),
+    radial-gradient(820px 520px at 82% 74%, rgba(255,100,180,.09), transparent 58%),
+    linear-gradient(180deg, #04080f 0%, #050b12 100%);
+}
+
+.ambient{
+  position:absolute;
+  border-radius:999px;
+  filter:blur(68px);
+  pointer-events:none;
+  opacity:.34;
+}
+
+.ambient--one{
+  width:360px;
+  height:360px;
+  left:-90px;
+  top:70px;
+  background:radial-gradient(circle, rgba(0,209,255,.28), transparent 68%);
+}
+
+.ambient--two{
+  width:320px;
+  height:320px;
+  right:-90px;
+  bottom:150px;
+  background:radial-gradient(circle, rgba(255,100,180,.22), transparent 70%);
+}
+
+.topBar{
+  position:absolute;
+  left:var(--padX);
+  right:var(--padX);
+  top:calc(var(--safeTop) + 10px);
+  height:48px;
+  display:flex;
+  align-items:center;
+  z-index:12;
+}
+
+.dayDate{
+  font-size:14px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.76);
+}
+
+.line{
+  position:absolute;
+  left:0;
+  right:0;
+  height:1px;
+  background:var(--line);
+  z-index:8;
+}
+
+.line--top{
+  top:calc(var(--safeTop) + var(--topH));
+}
+
+.slots{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(var(--safeTop) + var(--topH));
+  bottom:calc(var(--calendarH) + var(--safeBottom));
+  display:grid;
+  grid-template-rows:minmax(0,1fr) 1px minmax(0,1fr);
+  z-index:6;
+}
+
+.line--middle{
+  grid-row:2;
+  position:relative;
+}
+
+.slotSection{
+  position:relative;
+  min-height:0;
+  overflow:hidden;
+  overscroll-behavior:contain;
+}
+
+.slotButton{
+  appearance:none;
+  -webkit-appearance:none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  padding:16px 18px;
+  text-align:left;
+  cursor:pointer;
+  background:transparent;
+  touch-action:pan-y;
+}
+
+.slotContent{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  transform:translate3d(var(--slotX,0),0,0);
+  opacity:var(--slotOpacity,1);
+  transition:transform .18s ease-out, opacity .18s ease-out;
+  will-change:transform, opacity;
+}
+
+.slotSection.is-dragging .slotContent{
+  transition:none;
+}
+
+.timerMidBarWrap{
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  height:1px;
+  z-index:10;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(-1px);
+  transition:opacity .18s ease;
+}
+
+.timerMidBarWrap.show{
+  opacity:1;
+}
+
+.timerMidBar{
+  position:absolute;
+  left:0;
+  top:-1px;
+  height:3px;
+  width:100%;
+  background:var(--orange);
+  transform-origin:left center;
+  transform:scaleX(1);
+  box-shadow:
+    0 0 6px rgba(255,122,0,.6),
+    0 0 12px rgba(255,122,0,.35);
+}
+
+/* WEATHER PREVIEW */
+
+.weatherPreview{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns:126px 1fr;
+  align-items:center;
+  gap:10px;
+}
+
+.weatherPreviewVisual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.weatherPreviewText{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+}
+
+.weatherPreviewTemp{
+  font-size:36px;
+  line-height:.9;
+  font-weight:800;
+}
+
+.weatherPreviewStatus{
+  font-size:15px;
+  color:rgba(255,255,255,.84);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherPreviewMeta{
+  font-size:13px;
+  color:rgba(255,255,255,.54);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.weatherGlyph{
+  position:relative;
+  width:104px;
+  height:104px;
+  transform:scale(1.3);
+  transform-origin:center;
+}
+
+.weatherGlyphLarge{
+  width:124px;
+  height:124px;
+}
+
+.weatherGlyph .sun{
+  position:absolute;
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  left:30px;
+  top:18px;
+  background:rgba(255,214,90,.96);
+  box-shadow:0 0 22px rgba(255,214,90,.30);
+  animation:sunFloat 4s ease-in-out infinite;
+}
+
+.weatherGlyph .cloud,
+.weatherGlyph .cloud::before,
+.weatherGlyph .cloud::after{
+  position:absolute;
+  background:rgba(255,255,255,.92);
+  border-radius:999px;
+}
+
+.weatherGlyph .cloud{
+  width:54px;
+  height:20px;
+  left:22px;
+  top:44px;
+  animation:cloudDrift 5s ease-in-out infinite;
+}
+
+.weatherGlyph .cloud::before,
+.weatherGlyph .cloud::after{
+  content:"";
+}
+
+.weatherGlyph .cloud::before{
+  width:24px;
+  height:24px;
+  left:7px;
+  top:-10px;
+}
+
+.weatherGlyph .cloud::after{
+  width:28px;
+  height:28px;
+  right:4px;
+  top:-14px;
+}
+
+.weatherGlyph .rain{
+  position:absolute;
+  left:26px;
+  right:26px;
+  bottom:8px;
+  height:18px;
+}
+
+.weatherGlyph .rain::before,
+.weatherGlyph .rain::after{
+  content:"";
+  position:absolute;
+  width:2px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(110,210,255,.94);
+  box-shadow:
+    10px 2px 0 rgba(110,210,255,.92),
+    20px -1px 0 rgba(110,210,255,.92);
+  animation:rainDrop .9s linear infinite;
+}
+
+.weatherGlyph .rain::after{
+  left:8px;
+  animation-delay:.24s;
+}
+
+.weatherGlyph.is-sun .cloud,
+.weatherGlyph.is-sun .rain,
+.weatherGlyph.is-cloud .sun,
+.weatherGlyph.is-cloud .rain,
+.weatherGlyph.is-rain .sun{
+  display:none;
+}
+
+/* TASKS / NOTES PREVIEW */
+
+.tasksPreview,
+.notesPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.tasksListPreview{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.tasksItemPreview{
+  display:grid;
+  grid-template-columns:14px 1fr;
+  gap:10px;
+  align-items:start;
+}
+
+.tasksDot{
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(0,209,255,.95);
+  margin-top:7px;
+  box-shadow:0 0 10px rgba(0,209,255,.44);
+}
+
+.tasksTextWrap{
+  min-width:0;
+}
+
+.tasksText{
+  font-size:16px;
+  line-height:1.24;
+  color:rgba(255,255,255,.90);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tasksSub{
+  margin-top:3px;
+  font-size:12px;
+  color:rgba(255,255,255,.42);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tasksEmpty{
+  font-size:15px;
+  line-height:1.4;
+  color:rgba(255,255,255,.38);
+}
+
+.notesPreviewHead{
+  font-size:14px;
+  font-weight:600;
+  color:rgba(255,255,255,.76);
+  margin-bottom:8px;
+}
+
+.notesPreviewBody{
+  font-size:15px;
+  line-height:1.48;
+  color:rgba(255,255,255,.78);
+  display:-webkit-box;
+  -webkit-line-clamp:7;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:pre-wrap;
+}
+
+.notesPreviewBody.is-empty{
+  color:rgba(255,255,255,.34);
+}
+
+/* TIMER PREVIEW */
+
+.timerPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.timerPreviewWheel{
+  position:relative;
+  width:198px;
+  height:198px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,.88) 0%, rgba(0,0,0,.82) 58%, rgba(0,0,0,.70) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.05),
+    0 0 30px rgba(0,209,255,.14),
+    0 0 48px rgba(255,100,180,.08);
+}
+
+.timerPreviewBlob{
+  position:absolute;
+  width:112px;
+  height:112px;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(0,209,255,.30), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(255,100,180,.18), transparent 60%);
+  filter:blur(18px);
+  animation:breathBlob 4.4s ease-in-out infinite;
+}
+
+.timerPreviewCenter{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 18px;
+}
+
+.timerPreviewTop{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.88);
+}
+
+.timerPreviewBottom{
+  margin-top:8px;
+  font-size:12px;
+  color:rgba(255,255,255,.56);
+}
+
+/* NEWS PREVIEW */
+
+.newsPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:12px;
+}
+
+.newsPreviewLabel{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.78);
+}
+
+.newsPreviewHero{
+  display:grid;
+  grid-template-columns:96px 1fr;
+  gap:12px;
+  align-items:center;
+  min-height:0;
+}
+
+.newsPreviewThumb{
+  width:96px;
+  height:68px;
+  overflow:hidden;
+  border-radius:14px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+    radial-gradient(circle at 30% 30%, rgba(0,209,255,.16), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(255,100,180,.14), transparent 60%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06),
+    0 10px 24px rgba(0,0,0,.22);
+  flex:0 0 auto;
+}
+
+.newsPreviewThumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.newsPreviewHeroTitle{
+  min-width:0;
+  font-size:16px;
+  line-height:1.22;
+  font-weight:700;
+  color:rgba(255,255,255,.94);
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.newsPreviewSubList{
+  display:flex;
+  flex-direction:column;
+}
+
+.newsPreviewSubItem{
+  font-size:14px;
+  line-height:1.3;
+  color:rgba(255,255,255,.82);
+  padding:7px 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.newsPreviewSubItem + .newsPreviewSubItem{
+  border-top:1px solid rgba(255,255,255,.05);
+}
+
+.newsPreviewEmpty{
+  font-size:14px;
+  line-height:1.42;
+  color:rgba(255,255,255,.42);
+}
+
+/* MATCH PREVIEW */
+
+.matchPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+}
+
+.matchPreview--empty{
+  align-items:flex-start;
+}
+
+.matchPreviewEmpty{
+  font-size:14px;
+  line-height:1.45;
+  color:rgba(255,255,255,.42);
+}
+
+.matchPreviewCard{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:1px 0 5px 0;
+  min-height:0;
+}
+
+.matchPreviewCard.has-divider{
+  border-bottom:1px solid rgba(255,255,255,.045);
+}
+
+.matchPreviewRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.matchPreviewRow > span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.matchPreviewRow--strong{
+  font-size:12px;
+  line-height:1.22;
+  color:rgba(255,255,255,.96);
+  font-weight:600;
+}
+
+.matchPreviewRow--muted{
+  font-size:11px;
+  line-height:1.2;
+  color:rgba(255,255,255,.62);
+}
+
+.matchPreviewRow--note{
+  font-size:11px;
+  line-height:1.18;
+  color:rgba(255,255,255,.52);
+}
+
+.matchPreviewRow--note.is-empty{
+  opacity:.18;
+}
+
+.matchPreviewRow--note.has-note::before{
+  content:"";
+  width:4px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.75);
+  box-shadow:0 0 4px rgba(255,255,255,.18);
+  flex:0 0 auto;
+}
+
+.matchPlayer.is-milo{
+  color:var(--cyan);
+}
+
+.matchPlayer.is-alice{
+  color:var(--pink);
+}
+
+.matchGathering{
+  font-weight:700;
+}
+
+.placeholderPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  font-weight:700;
+  color:rgba(255,255,255,.86);
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+
+.overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.overlayInner{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(900px 560px at 24% 16%, rgba(0,180,255,.08), transparent 58%),
+    radial-gradient(840px 520px at 82% 74%, rgba(255,100,180,.06), transparent 58%),
+    rgba(5,11,18,.965);
+}
+
+.overlayScroll{
+  position:absolute;
+  inset:calc(var(--safeTop) + 16px) 0 calc(var(--safeBottom) + 72px) 0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+
+.overlayContent{
+  min-height:100%;
+  padding:0 18px 16px 18px;
+}
+.closeFab{
+  position:absolute;
+  left:50%;
+  bottom:calc(var(--safeBottom) + 8px);
+  transform:translateX(-50%);
+  width:44px;
+  height:44px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.94);
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  cursor:pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 8px 18px rgba(0,0,0,.22);
+}
+
+.fullModule,
+.tasksModule,
+.notesModule,
+.matchesModule,
+.newsModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.fullModuleHead{
+  padding:2px 0 14px 0;
+}
+
+.fullModuleTitle{
+  font-size:34px;
+  line-height:.95;
+  font-weight:800;
+}
+
+.fullModuleText{
+  margin-top:10px;
+  max-width:40ch;
+  font-size:15px;
+  line-height:1.48;
+  color:rgba(255,255,255,.58);
+}
+
+/* WEATHER MODULE */
+
+.weatherModuleTop{
+  display:grid;
+  grid-template-columns:1fr 120px;
+  gap:12px;
+  align-items:center;
+  padding:8px 0 18px 0;
+}
+
+.weatherBigTemp{
+  font-size:66px;
+  line-height:.88;
+  font-weight:800;
+}
+
+.weatherBigStatus{
+  margin-top:8px;
+  font-size:16px;
+  color:rgba(255,255,255,.84);
+}
+
+.weatherMetaLine{
+  margin-top:8px;
+  font-size:14px;
+  color:rgba(255,255,255,.56);
+}
+
+.weatherRows{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding-top:6px;
+}
+
+.weatherRow{
+  display:grid;
+  grid-template-columns:82px 1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:0 0 12px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.weatherRowTime{
+  font-size:12px;
+  color:rgba(255,255,255,.46);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.weatherRowMain{
+  font-size:15px;
+  color:rgba(255,255,255,.82);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.weatherRowTemp{
+  font-size:19px;
+  font-weight:700;
+  color:rgba(255,255,255,.94);
+}
+
+/* TASKS MODULE */
+
+.tasksComposer{
+  display:grid;
+  grid-template-columns:1fr 42px;
+  gap:10px;
+  align-items:center;
+  padding:12px 0 14px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.tasksInput,
+.taskSubInput,
+.notesInput,
+.matchField input,
+.matchField textarea,
+.matchField select{
+  width:100%;
+  border:0;
+  outline:none;
+  background:transparent;
+  color:rgba(255,255,255,.94);
+}
+
+.tasksInput{
+  min-height:38px;
+}
+
+.taskSubInput{
+  min-height:30px;
+}
+
+.tasksInput::placeholder,
+.taskSubInput::placeholder,
+.notesInput::placeholder,
+.matchField input::placeholder,
+.matchField textarea::placeholder{
+  color:rgba(255,255,255,.28);
+}
+
+.tasksAddBtn{
+  width:42px;
+  height:42px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  background:rgba(255,255,255,.04);
+  font-size:24px;
+  cursor:pointer;
+}
+
+.tasksModuleList{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:16px 0 0 0;
+}
+
+.taskCard{
+  padding:0 0 14px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.taskMainRow{
+  display:grid;
+  grid-template-columns:18px 1fr auto;
+  gap:10px;
+  align-items:start;
+}
+
+.taskCheck{
+  appearance:none;
+  -webkit-appearance:none;
+  width:15px;
+  height:15px;
+  border:1.5px solid rgba(255,255,255,.44);
+  background:transparent;
+  margin-top:3px;
+  cursor:pointer;
+}
+
+.taskCheck:checked{
+  border-color:rgba(0,209,255,.95);
+  background:rgba(0,209,255,.16);
+  box-shadow:0 0 10px rgba(0,209,255,.2);
+}
+
+.taskTextBtn,
+.taskDeleteBtn,
+.addSubBtn,
+.matchDeleteBtn,
+.matchDeleteImageBtn{
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+}
+
+.taskTextBtn{
+  text-align:left;
+  font-size:17px;
+  line-height:1.22;
+  color:rgba(255,255,255,.92);
+}
+
+.taskDeleteBtn{
+  font-size:12px;
+  color:rgba(255,255,255,.34);
+  padding-top:3px;
+}
+
+.taskCard.is-done .taskTextBtn{
+  opacity:.46;
+  text-decoration:line-through;
+}
+
+.subTasks{
+  margin:10px 0 0 28px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.subTaskRow{
+  display:grid;
+  grid-template-columns:12px 1fr;
+  gap:9px;
+  align-items:start;
+}
+
+.subTaskMark{
+  width:4px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.34);
+  margin-top:7px;
+}
+
+.subTaskText{
+  font-size:14px;
+  line-height:1.34;
+  color:rgba(255,255,255,.60);
+}
+
+.subTaskInputRow{
+  margin:10px 0 0 28px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+}
+
+.addSubBtn{
+  font-size:12px;
+  color:rgba(0,209,255,.86);
+}
+
+/* NOTES MODULE */
+
+.notesHead{
+  padding:0 0 10px 0;
+}
+
+.notesLabel{
+  font-size:18px;
+  font-weight:700;
+  color:rgba(255,255,255,.90);
+}
+
+.notesBox{
+  flex:1;
+  min-height:66vh;
+  padding-top:6px;
+}
+
+.notesInput{
+  min-height:66vh;
+  resize:none;
+  font-size:18px;
+  line-height:1.54;
+}
+
+/* TIMER MODULE */
+
+.timerModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  text-align:center;
+  padding-top:40px;
+}
+
+.timerWheelWrap{
+  position:relative;
+  width:min(74vw, 330px);
+  height:min(74vw, 330px);
+  display:grid;
+  place-items:center;
+}
+
+.timerWheel{
+  position:relative;
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,.82) 0%, rgba(0,0,0,.72) 54%, rgba(0,0,0,.58) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.05),
+    0 0 34px rgba(0,209,255,.14),
+    0 0 56px rgba(255,100,180,.08);
+}
+
+.timerWheelBlob{
+  position:absolute;
+  width:150px;
+  height:150px;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0,209,255,.34), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(255,100,180,.20), transparent 58%);
+  filter:blur(20px);
+  animation:breathBlob 4.6s ease-in-out infinite;
+}
+
+.timerWheelCenter{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 20px;
+}
+
+.timerCenterTop{
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.88);
+}
+
+.timerCenterValue{
+  margin:12px 0 8px 0;
+  font-size:58px;
+  line-height:.9;
+  font-weight:800;
+  text-shadow:
+    0 0 18px rgba(0,209,255,.16),
+    0 0 28px rgba(255,100,180,.08);
+}
+
+.timerCenterBottom{
+  font-size:13px;
+  color:rgba(255,255,255,.56);
+}
+
+.timerHint{
+  font-size:14px;
+  color:rgba(255,255,255,.56);
+  max-width:28ch;
+}
+
+/* NEWS MODULE */
+
+.newsModuleHeader{
+  position:sticky;
+  top:0;
+  z-index:4;
+  padding:0 0 14px 0;
+  background:linear-gradient(180deg, rgba(5,11,18,.96), rgba(5,11,18,.82));
+}
+
+.newsLiveRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+  font-size:13px;
+  color:rgba(255,255,255,.65);
+}
+
+.newsLiveDot{
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:var(--newsRed);
+  box-shadow:0 0 6px rgba(255,80,80,.8);
+}
+
+.newsLiveLabel{
+  font-weight:700;
+  letter-spacing:.06em;
+}
+
+.newsLiveText{
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.newsList{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding-top:6px;
+}
+
+.newsItem{
+  display:grid;
+  grid-template-columns:110px 1fr;
+  gap:12px;
+  align-items:center;
+  padding-bottom:14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  cursor:pointer;
+}
+
+.newsItemThumb{
+  width:110px;
+  height:72px;
+  border-radius:10px;
+  overflow:hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+    radial-gradient(circle at 30% 30%, rgba(0,209,255,.16), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(255,100,180,.14), transparent 60%);
+}
+
+.newsItemThumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.newsItemBody{
+  min-width:0;
+}
+
+.newsItemTitle{
+  font-size:16px;
+  line-height:1.25;
+  font-weight:700;
+  color:rgba(255,255,255,.94);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.newsItemMeta{
+  margin-top:6px;
+  font-size:13px;
+  color:rgba(255,255,255,.52);
+}
+
+.newsEmpty{
+  font-size:15px;
+  line-height:1.48;
+  color:rgba(255,255,255,.44);
+  padding-top:18px;
+}
+
+/* ARTICLE VIEW */
+
+.articleOverlay{
+  position:absolute;
+  inset:0;
+  background:rgba(5,11,18,.98);
+  z-index:40;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+
+.articleOverlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.articleOverlayInner{
+  position:absolute;
+  inset:0;
+  padding:
+    calc(var(--safeTop) + 14px)
+    18px
+    calc(var(--safeBottom) + 18px)
+    18px;
+  display:flex;
+  flex-direction:column;
+}
+
+.articleTopBar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.articleBackBtn,
+.articleOpenBtn{
+  font-size:14px;
+  font-weight:600;
+  color:rgba(255,255,255,.8);
+  cursor:pointer;
+}
+
+.articleMeta{
+  font-size:13px;
+  color:rgba(255,255,255,.54);
+  margin-bottom:8px;
+}
+
+.articleTitle{
+  font-size:20px;
+  font-weight:700;
+  line-height:1.3;
+  margin-bottom:14px;
+}
+
+.articleFrameWrap{
+  flex:1;
+  min-height:0;
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+
+#articleFrame{
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+  background:#fff;
+}
+
+/* MATCHES MODULE */
+
+.matchesModuleList{
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+  padding-bottom:24px;
+}
+
+.matchCardEditor{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:0 0 18px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.matchCardEditorTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.matchCardEditorCount{
+  font-size:14px;
+  font-weight:700;
+  color:rgba(255,255,255,.76);
+}
+
+.matchDeleteBtn,
+.matchDeleteImageBtn{
+  font-size:12px;
+  color:rgba(255,255,255,.42);
+}
+
+.matchImageBtn{
+  position:relative;
+  width:100%;
+  aspect-ratio:9 / 12;
+  max-height:380px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+  cursor:pointer;
+}
+
+.matchImagePreview{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  background:rgba(255,255,255,.01);
+}
+
+.matchImageEmpty{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.matchImageEmptyIcon{
+  width:26px;
+  height:26px;
+  color:rgba(255,255,255,.38);
+}
+
+.matchImageEmptyText{
+  font-size:13px;
+  color:rgba(255,255,255,.42);
+}
+
+.matchImageActions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.matchImageHint{
+  font-size:12px;
+  color:rgba(255,255,255,.42);
+}
+
+.matchFieldsGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px 10px;
+}
+
+.matchField{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.matchField span{
+  font-size:12px;
+  color:rgba(255,255,255,.48);
+}
+
+.matchField input,
+.matchField select,
+.matchField textarea{
+  min-height:40px;
+  padding:0 0 8px 0;
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+
+.matchField select{
+  appearance:none;
+  -webkit-appearance:none;
+}
+
+.matchField textarea{
+  min-height:72px;
+  resize:vertical;
+  padding-top:4px;
+}
+
+.matchField--note{
+  margin-top:2px;
+}
+
+.matchPlayerSelect.is-milo{
+  color:var(--cyan);
+}
+
+.matchPlayerSelect.is-alice{
+  color:var(--pink);
+}
+
+/* DONE OVERLAY */
+
+.doneOverlayInner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.doneBlob{
+  position:absolute;
+  width:240px;
+  height:240px;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0,209,255,.24), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(255,100,180,.16), transparent 60%);
+  filter:blur(34px);
+  animation:breathBlob 4.2s ease-in-out infinite;
+}
+
+.doneCenter{
+  position:relative;
+  z-index:1;
+  text-align:center;
+  padding:0 20px;
+}
+
+.doneTitle{
+  font-size:42px;
+  line-height:.95;
+  font-weight:800;
+}
+
+/* CALENDAR */
+
+.calendarStrip{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(-1 * var(--safeBottom));
+  height:calc(var(--calendarH) + var(--safeBottom));
+  z-index:4;
+  overflow:hidden;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
+.calendarFrameWrap{
+  position:absolute;
+  inset:0;
+  background:#fff;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
+#calendarFrame{
+  width:125%;
+  height:125%;
+  border:0;
+  display:block;
+  transform:scale(var(--calendarScale));
+  transform-origin:top left;
+  background:#fff;
+}
+
+.calendarFade{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    180deg,
+    rgba(0,0,0,.18) 0%,
+    rgba(0,0,0,.08) 38%,
+    rgba(0,0,0,.02) 100%
+  );
+}
+
+/* ANIMATIONS */
+
+@keyframes sunFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-3px); }
+}
+
+@keyframes cloudDrift{
+  0%,100%{ transform:translateX(0); }
+  50%{ transform:translateX(3px); }
+}
+
+@keyframes rainDrop{
+  0%{ transform:translateY(0); opacity:.2; }
+  50%{ opacity:1; }
+  100%{ transform:translateY(5px); opacity:.2; }
+}
+
+@keyframes breathBlob{
+  0%,100%{
+    transform:scale(1);
+    opacity:.78;
+  }
+  50%{
+    transform:scale(1.14);
+    opacity:1;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width:480px){
+  :root{
+    --padX:16px;
+    --topH:60px;
+    --calendarH:166px;
+  }
+
+  .slotButton{
+    padding:14px 16px;
+  }
+
+  .weatherPreview{
+    grid-template-columns:112px 1fr;
+  }
+
+  .weatherPreviewTemp{
+    font-size:33px;
+  }
+
+  .weatherGlyph{
+    transform:scale(1.22);
+  }
+
+  .timerPreviewWheel{
+    width:184px;
+    height:184px;
+  }
+
+  .fullModuleTitle{
+    font-size:32px;
+  }
+
+  .weatherModuleTop{
+    grid-template-columns:1fr 110px;
+  }
+
+  .weatherBigTemp{
+    font-size:58px;
+  }
+
+  .notesInput{
+    font-size:17px;
+  }
+
+  .timerCenterValue{
+    font-size:52px;
+  }
+
+  .matchPreviewRow--strong{
+    font-size:11px;
+  }
+
+  .matchPreviewRow--muted,
+  .matchPreviewRow--note{
+    font-size:10px;
+  }
+
+  .matchFieldsGrid{
+    grid-template-columns:1fr;
+  }
+
+  .matchImageBtn{
+    aspect-ratio:3 / 4;
+    max-height:320px;
+  }
+
+  .newsPreviewHero{
+    grid-template-columns:88px 1fr;
+    gap:10px;
+  }
+
+  .newsPreviewThumb{
+    width:88px;
+    height:64px;
+  }
+
+  .newsPreviewHeroTitle{
+    font-size:15px;
+  }
+
+  .newsPreviewSubItem{
+    font-size:13px;
+  }
+
+  .newsItem{
+    grid-template-columns:88px 1fr;
+    gap:10px;
+  }
+
+  .newsItemThumb{
+    width:88px;
+    height:64px;
+  }
+
+  .newsItemTitle{
+    font-size:15px;
+  }
+
+  .articleTitle{
+    font-size:18px;
+  }
+}
+
+/* TIMER RING LAYER */
+
+.timerWheel,
+.timerPreviewWheel{
+  position:relative;
+}
+
+.timerNeonRing{
+  position:absolute;
+  width:115%;
+  height:115%;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  pointer-events:none;
+  z-index:0;
+  opacity:.98;
+  filter:
+    drop-shadow(0 0 10px rgba(0,209,255,.30))
+    drop-shadow(0 0 22px rgba(255,100,180,.18));
+}
+
+.timerWheelBlob,
+.timerPreviewBlob{
+  z-index:1;
+}
+
+.timerWheelCenter,
+.timerPreviewCenter{
+  position:relative;
+  z-index:2;
+}
+
+/* === v14 additions: markets + calendar blend === */
+
+.calendarShade{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.48);
+  pointer-events:none;
+}
+
+.calendarOpenBtn{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  padding:14px 18px calc(var(--safeBottom) + 14px) 18px;
+  color:rgba(255,255,255,.92);
+  z-index:3;
+}
+
+.calendarOpenLabel{
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+
+.calendarOpenHint{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,255,255,.66);
+}
+
+.marketsPreview{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+}
+
+.marketsPreviewLabelRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.marketsPreviewCurrent{
+  font-size:12px;
+  color:rgba(255,255,255,.54);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.marketsPreviewTapeShell,
+.marketsHubTapeShell{
+  min-height:54px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.03);
+  overflow:hidden;
+}
+
+.marketsPreviewTape,
+.marketsHubTape{
+  width:100%;
+  min-height:54px;
+}
+
+.marketsPreviewFoot{
+  font-size:12px;
+  color:rgba(255,255,255,.44);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.marketsModule{
+  gap:18px;
+}
+
+.marketsGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  padding-bottom:18px;
+}
+
+.marketCard{
+  text-align:left;
+  padding:14px 14px 16px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+}
+
+.marketCard.is-active{
+  border-color:rgba(34,211,238,.44);
+  background:rgba(34,211,238,.08);
+}
+
+.marketCardName{
+  font-size:16px;
+  font-weight:700;
+  color:rgba(255,255,255,.94);
+}
+
+.marketCardSub{
+  margin-top:5px;
+  font-size:12px;
+  color:rgba(255,255,255,.52);
+}
+
+.marketsChartTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.marketsBackBtn{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.84);
+}
+
+.marketsChartMeta{
+  font-size:12px;
+  color:rgba(255,255,255,.50);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.marketsChartShell{
+  flex:1;
+  min-height:58vh;
+  border:1px solid rgba(255,255,255,.06);
+  background:#050b12;
+  overflow:hidden;
+}
+
+.marketsChartWidget{
+  width:100%;
+  height:58vh;
+  min-height:58vh;
+  background:#050b12;
+}
+
+.marketsSwitchBar{
+  display:flex;
+  gap:8px;
+  overflow:auto;
+  padding-bottom:4px;
+}
+
+.marketsSwitchBtn{
+  flex:0 0 auto;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+  font-size:13px;
+  color:rgba(255,255,255,.78);
+}
+
+.marketsSwitchBtn.is-active{
+  border-color:rgba(34,211,238,.44);
+  background:rgba(34,211,238,.08);
+  color:rgba(255,255,255,.96);
+}
+
+.calendarModule{
+  gap:14px;
+}
+
+.calendarModuleFrameWrap{
+  flex:1;
+  min-height:66vh;
+  background:#fff;
+  overflow:hidden;
+}
+
+.calendarModuleFrame{
+  width:100%;
+  height:70vh;
+  min-height:70vh;
+  border:0;
+  display:block;
+  background:#fff;
+}
+
+.tradingview-widget-container,
+.tradingview-widget-container__widget{
+  width:100%;
+  height:100%;
+}
+
+@media (max-width:480px){
+  .calendarOpenBtn{
+    padding:12px 16px calc(var(--safeBottom) + 12px) 16px;
+  }
+
+  .marketsGrid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .marketCard{
+    padding:12px;
+  }
+
+  .marketCardName{
+    font-size:15px;
+  }
+
+  .marketsChartShell,
+  .marketsChartWidget{
+    min-height:54vh;
+    height:54vh;
+  }
+
+  .calendarModuleFrame{
+    min-height:66vh;
+    height:66vh;
+  }
+}
