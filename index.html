@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png" />
 
   <title>SB Dash</title>
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <div class="app">
@@ -26,10 +26,6 @@
 
     <div class="line line--top" aria-hidden="true"></div>
 
-    <div class="timerMidBarWrap" id="timerMidBarWrap" aria-hidden="true">
-      <div class="timerMidBar" id="timerMidBar"></div>
-    </div>
-
     <main class="slots" aria-label="Slotar">
       <section class="slotSection" id="slotASection" aria-label="Slot A">
         <button class="slotButton" id="slotAButton" type="button" aria-label="Öppna modul i slot A">
@@ -38,6 +34,10 @@
       </section>
 
       <div class="line line--middle" aria-hidden="true"></div>
+
+      <div class="timerMidBarWrap" id="timerMidBarWrap" aria-hidden="true">
+        <div class="timerMidBar" id="timerMidBar"></div>
+      </div>
 
       <section class="slotSection" id="slotBSection" aria-label="Slot B">
         <button class="slotButton" id="slotBButton" type="button" aria-label="Öppna modul i slot B">
@@ -81,6 +81,7 @@
     <audio id="alarmAudio" preload="auto"></audio>
   </div>
 
-  <script src="app.js?v=9"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
