@@ -1322,3 +1322,16 @@ input,textarea,select{
   position:relative;
   z-index:2;
 }
+.calendarStrip{
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
+.calendarFrameWrap{
+  margin-bottom:0;
+  padding-bottom:0;
+}
+
+#calendarFrame{
+  display:block;
+}
