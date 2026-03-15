@@ -2,11 +2,11 @@
   const $ = (id) => document.getElementById(id);
 
   const STORAGE_KEYS = {
-    tasks: "sbdash_v8_tasks",
-    notes: "sbdash_v8_notes",
-    timerPreset: "sbdash_v8_timer_preset",
-    matchCards: "sbdash_v8_match_cards",
-    newsCache: "sbdash_v8_news_cache"
+    tasks: "sbdash_v7_tasks",
+    notes: "sbdash_v7_notes",
+    timerPreset: "sbdash_v7_timer_preset",
+    matchCards: "sbdash_v7_match_cards",
+    newsCache: "sbdash_v7_news_cache"
   };
 
   const dayDateEl = $("dayDate");
@@ -31,16 +31,7 @@
   const articleMeta = $("articleMeta");
   const articleTitle = $("articleTitle");
   const articleFrame = $("articleFrame");
-
   const calendarOpenBtn = $("calendarOpenBtn");
-  const calendarOverlay = $("calendarOverlay");
-  const calendarCloseFab = $("calendarCloseFab");
-
-  const marketChartOverlay = $("marketChartOverlay");
-  const marketChartTitle = $("marketChartTitle");
-  const marketChartTabs = $("marketChartTabs");
-  const marketChartFrame = $("marketChartFrame");
-  const marketChartCloseFab = $("marketChartCloseFab");
 
   const TIMER_OPTIONS = [
     { label: "1m", seconds: 60 },
@@ -52,19 +43,22 @@
     { label: "1h", seconds: 3600 }
   ];
 
-  const MARKET_SYMBOLS = [
-    { key: "gold", label: "Guld", symbol: "TVC:GOLD", yahoo: "GC=F" },
-    { key: "silver", label: "Silver", symbol: "TVC:SILVER", yahoo: "SI=F" },
-    { key: "oil", label: "Olja", symbol: "TVC:UKOIL", yahoo: "BZ=F" },
-    { key: "eth", label: "ETH", symbol: "BINANCE:ETHUSDT", yahoo: "ETH-USD" },
-    { key: "us100", label: "US100", symbol: "OANDA:NAS100USD", yahoo: "^NDX" },
-    { key: "japan", label: "Japan", symbol: "FOREXCOM:JPN225", yahoo: "^N225" },
-    { key: "france", label: "Frankrike", symbol: "INDEX:CAC40", yahoo: "^FCHI" },
-    { key: "usdeur", label: "USD/EUR", symbol: "FX_IDC:USDEUR", yahoo: "USDEUR=X" }
-  ];
-
   const NEWS_REFRESH_MS = 10 * 60 * 1000;
   const NEWS_LIMIT = 12;
+
+  const MARKET_SYMBOLS = [
+    { id: "gold", name: "Guld", short: "Guld", tv: "OANDA:XAUUSD", tape: { description: "Guld", proName: "OANDA:XAUUSD" } },
+    { id: "silver", name: "Silver", short: "Silver", tv: "OANDA:XAGUSD", tape: { description: "Silver", proName: "OANDA:XAGUSD" } },
+    { id: "oil", name: "Olja", short: "Olja", tv: "TVC:USOIL", tape: { description: "Olja", proName: "TVC:USOIL" } },
+    { id: "eth", name: "ETH", short: "ETH", tv: "BITSTAMP:ETHUSD", tape: { description: "ETH", proName: "BITSTAMP:ETHUSD" } },
+    { id: "us100", name: "US100", short: "US100", tv: "FOREXCOM:NSXUSD", tape: { description: "US100", proName: "FOREXCOM:NSXUSD" } },
+    { id: "japan", name: "Japan", short: "Japan", tv: "TVC:NI225", tape: { description: "Japan", proName: "TVC:NI225" } },
+    { id: "france", name: "Frankrike", short: "France", tv: "TVC:CAC40", tape: { description: "Frankrike", proName: "TVC:CAC40" } },
+    { id: "usdeur", name: "USD/EUR", short: "USD/EUR", tv: "FX_IDC:USDEUR", tape: { description: "USD/EUR", proName: "FX_IDC:USDEUR" } }
+  ];
+
+  const TV_SCRIPT_TICKER = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+  const TV_SCRIPT_CHART = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 
   let weatherState = {
     temp: "--°",
@@ -73,13 +67,6 @@
     type: "cloud",
     hourly: []
   };
-
-  let marketState = MARKET_SYMBOLS.map((item) => ({
-    ...item,
-    value: "—",
-    changeText: "Tryck för chart",
-    changeClass: "is-flat"
-  }));
 
   let tasks = loadJson(STORAGE_KEYS.tasks, [
     { id: uid(), text: "Planera dagen", done: false, subtasks: ["Välj fokus", "Stäm av kalendern"] },
@@ -109,7 +96,10 @@
   };
 
   let currentArticle = null;
-  let activeMarketKey = "gold";
+  let marketState = {
+    selectedId: "gold",
+    view: "hub"
+  };
 
   const slotGroups = {
     A: {
@@ -118,7 +108,7 @@
         { key: "weather" },
         { key: "timer" },
         { key: "news" },
-        { key: "market" }
+        { key: "markets" }
       ]
     },
     B: {
@@ -144,21 +134,49 @@
     }
   }
 
-  function saveTasks() { localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks)); }
-  function saveNotes() { localStorage.setItem(STORAGE_KEYS.notes, notes); }
-  function saveTimerPreset() { localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex)); }
-  function saveMatchCards() { localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards)); }
+  function saveTasks() {
+    localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
+  }
+
+  function saveNotes() {
+    localStorage.setItem(STORAGE_KEYS.notes, notes);
+  }
+
+  function saveTimerPreset() {
+    localStorage.setItem(STORAGE_KEYS.timerPreset, String(timerState.presetIndex));
+  }
+
+  function saveMatchCards() {
+    localStorage.setItem(STORAGE_KEYS.matchCards, JSON.stringify(matchCards));
+  }
+
   function saveNewsCache() {
-    localStorage.setItem(STORAGE_KEYS.newsCache, JSON.stringify({ items: newsState.items, updatedAt: newsState.updatedAt }));
+    localStorage.setItem(STORAGE_KEYS.newsCache, JSON.stringify({
+      items: newsState.items,
+      updatedAt: newsState.updatedAt
+    }));
   }
 
   function makeEmptyMatchCard() {
-    return { id: uid(), imageSrc: "", dateText: "", timeText: "", player: "", series: "", opponent: "", location: "", gathering: "", note: "", ocrStatus: "" };
+    return {
+      id: uid(),
+      imageSrc: "",
+      dateText: "",
+      timeText: "",
+      player: "",
+      series: "",
+      opponent: "",
+      location: "",
+      gathering: "",
+      note: "",
+      ocrStatus: ""
+    };
   }
 
   function normalizeMatchCards(cards) {
     const base = Array.from({ length: 5 }, () => makeEmptyMatchCard());
     if (!Array.isArray(cards)) return base;
+
     return base.map((item, index) => {
       const source = cards[index] || {};
       return {
@@ -178,13 +196,23 @@
   }
 
   function normalizeNewsCache(cache) {
-    if (!cache || typeof cache !== "object") return { items: [], updatedAt: 0 };
-    const items = Array.isArray(cache.items) ? cache.items.map((item, index) => normalizeNewsItem(item, index)).filter(Boolean) : [];
-    return { items, updatedAt: Number.isFinite(cache.updatedAt) ? cache.updatedAt : 0 };
+    if (!cache || typeof cache !== "object") {
+      return { items: [], updatedAt: 0 };
+    }
+
+    const items = Array.isArray(cache.items)
+      ? cache.items.map((item, index) => normalizeNewsItem(item, index)).filter(Boolean)
+      : [];
+
+    return {
+      items,
+      updatedAt: Number.isFinite(cache.updatedAt) ? cache.updatedAt : 0
+    };
   }
 
   function normalizeNewsItem(item, index = 0) {
     if (!item || typeof item !== "object") return null;
+
     return {
       id: typeof item.id === "string" ? item.id : `news_${index}_${Date.now()}`,
       title: typeof item.title === "string" ? item.title : "",
@@ -203,7 +231,12 @@
 
   function formatDayDate() {
     const now = new Date();
-    const formatted = new Intl.DateTimeFormat("sv-SE", { weekday: "long", day: "numeric", month: "long" }).format(now);
+    const formatted = new Intl.DateTimeFormat("sv-SE", {
+      weekday: "long",
+      day: "numeric",
+      month: "long"
+    }).format(now);
+
     const parts = formatted.split(" ");
     const weekday = (parts.shift() || "").replace(/\.$/, "").toUpperCase();
     const rest = parts.join(" ").toUpperCase();
@@ -218,25 +251,42 @@
 
   async function loadWeather() {
     try {
-      const url = "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
+      const url =
+        "https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FStockholm&forecast_days=2";
+
       const res = await fetch(url, { cache: "no-store" });
       const data = await res.json();
+
       const current = data.current || {};
       const hourly = data.hourly || {};
       const times = hourly.time || [];
       const temps = hourly.temperature_2m || [];
       const rain = hourly.precipitation_probability || [];
       const codes = hourly.weather_code || [];
+
       const type = weatherTypeFromCode(current.weather_code);
-      const labels = { sun: "Klart", cloud: "Molnigt", rain: "Regn" };
+      const labels = {
+        sun: "Klart",
+        cloud: "Molnigt",
+        rain: "Regn"
+      };
+
       const hourlyRows = [];
       const now = new Date();
       const currentHour = now.getHours();
+
       for (let i = 0; i < times.length && hourlyRows.length < 8; i += 1) {
         const dt = new Date(times[i]);
         if (dt.getDate() !== now.getDate() || dt.getHours() < currentHour) continue;
-        hourlyRows.push({ time: `${String(dt.getHours()).padStart(2, "0")}:00`, temp: `${Math.round(temps[i])}°`, rain: `${Math.round(rain[i] || 0)}%`, type: weatherTypeFromCode(codes[i]) });
+
+        hourlyRows.push({
+          time: `${String(dt.getHours()).padStart(2, "0")}:00`,
+          temp: `${Math.round(temps[i])}°`,
+          rain: `${Math.round(rain[i] || 0)}%`,
+          type: weatherTypeFromCode(codes[i])
+        });
       }
+
       weatherState = {
         temp: `${Math.round(current.temperature_2m ?? 0)}°`,
         status: labels[type],
@@ -245,53 +295,49 @@
         hourly: hourlyRows
       };
     } catch {
-      weatherState = { temp: "--°", status: "Kunde inte ladda väder", meta: "Kontrollera anslutning", type: "cloud", hourly: [] };
+      weatherState = {
+        temp: "--°",
+        status: "Kunde inte ladda väder",
+        meta: "Kontrollera anslutning",
+        type: "cloud",
+        hourly: []
+      };
     }
-    renderSlots();
-    if (overlay.classList.contains("open") && currentModuleKey() === "weather") openCurrentModule("A");
-  }
 
-  async function loadMarketQuotes() {
-    const symbols = MARKET_SYMBOLS.map((item) => encodeURIComponent(item.yahoo)).join(",");
-    try {
-      const res = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`, { cache: "no-store" });
-      const data = await res.json();
-      const results = Array.isArray(data?.quoteResponse?.result) ? data.quoteResponse.result : [];
-      marketState = MARKET_SYMBOLS.map((item) => {
-        const q = results.find((r) => r.symbol === item.yahoo);
-        const rawValue = q?.regularMarketPrice;
-        const rawChange = q?.regularMarketChangePercent;
-        const value = Number.isFinite(rawValue) ? formatMarketValue(rawValue) : "—";
-        const changeText = Number.isFinite(rawChange) ? `${rawChange >= 0 ? "+" : ""}${rawChange.toFixed(2)}% idag` : "Öppna chart";
-        const changeClass = Number.isFinite(rawChange) ? (rawChange > 0 ? "is-up" : rawChange < 0 ? "is-down" : "is-flat") : "is-flat";
-        return { ...item, value, changeText, changeClass };
-      });
-    } catch {
-      marketState = MARKET_SYMBOLS.map((item) => ({ ...item, value: "—", changeText: "Öppna chart", changeClass: "is-flat" }));
+    renderSlots();
+
+    if (overlay.classList.contains("open") && currentModuleKey() === "weather") {
+      openCurrentModule("A");
     }
-    renderSlots();
-    if (overlay.classList.contains("open") && currentModuleKey() === "market") openCurrentModule("A");
-  }
-
-  function formatMarketValue(value) {
-    if (Math.abs(value) >= 1000) return new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(value);
-    if (Math.abs(value) >= 10) return new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-    return new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(value);
   }
 
   async function loadNews(force = false) {
     if (newsState.loading) return;
+
     const now = Date.now();
-    if (!force && newsState.updatedAt && now - newsState.updatedAt < NEWS_REFRESH_MS) return;
+    if (!force && newsState.updatedAt && now - newsState.updatedAt < NEWS_REFRESH_MS) {
+      return;
+    }
+
     newsState.loading = true;
     newsState.error = "";
+
     try {
       const worldFeed = "https://news.google.com/rss/search?q=världen%20OR%20world&hl=sv&gl=SE&ceid=SE:sv";
       const swedenFeed = "https://news.google.com/rss/search?q=Sverige&hl=sv&gl=SE&ceid=SE:sv";
-      const [worldItems, swedenItems] = await Promise.all([fetchRssJson(worldFeed, "Världen"), fetchRssJson(swedenFeed, "Sverige")]);
-      const merged = [...worldItems, ...swedenItems].filter((item) => item.title && item.link).sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+
+      const [worldItems, swedenItems] = await Promise.all([
+        fetchRssJson(worldFeed, "Världen"),
+        fetchRssJson(swedenFeed, "Sverige")
+      ]);
+
+      const merged = [...worldItems, ...swedenItems]
+        .filter((item) => item.title && item.link)
+        .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+
       const unique = [];
       const seen = new Set();
+
       for (const item of merged) {
         const key = `${item.title}__${item.source}`;
         if (seen.has(key)) continue;
@@ -299,6 +345,7 @@
         unique.push(item);
         if (unique.length >= NEWS_LIMIT) break;
       }
+
       if (unique.length) {
         newsState.items = unique;
         newsState.updatedAt = Date.now();
@@ -307,11 +354,16 @@
         newsState.error = "Kunde inte ladda nyheter";
       }
     } catch {
-      if (!newsState.items.length) newsState.error = "Kunde inte ladda nyheter";
+      if (!newsState.items.length) {
+        newsState.error = "Kunde inte ladda nyheter";
+      }
     } finally {
       newsState.loading = false;
       renderSlots();
-      if (overlay.classList.contains("open") && currentModuleKey() === "news") openCurrentModule("A");
+
+      if (overlay.classList.contains("open") && currentModuleKey() === "news") {
+        openCurrentModule("A");
+      }
     }
   }
 
@@ -319,7 +371,9 @@
     const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
     const res = await fetch(url, { cache: "no-store" });
     const data = await res.json();
+
     if (!data || !Array.isArray(data.items)) return [];
+
     return data.items.map((item, index) => ({
       id: `${category}_${index}_${Date.now()}`,
       title: cleanText(item.title || ""),
@@ -334,6 +388,7 @@
   function pickNewsImage(item) {
     if (typeof item.thumbnail === "string" && item.thumbnail) return item.thumbnail;
     if (typeof item.enclosure?.link === "string" && item.enclosure.link) return item.enclosure.link;
+
     const content = item.content || item.description || "";
     const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
     return match ? match[1] : "";
@@ -350,22 +405,130 @@
     return overlay.dataset.moduleKey || "";
   }
 
+
+  function marketById(id) {
+    return MARKET_SYMBOLS.find((item) => item.id === id) || MARKET_SYMBOLS[0];
+  }
+
+  function tradingViewSymbols() {
+    return MARKET_SYMBOLS.map((item) => item.tape);
+  }
+
+  function mountTradingViewWidget(hostId, scriptSrc, config) {
+    const host = $(hostId);
+    if (!host) return;
+
+    host.innerHTML = "";
+
+    const container = document.createElement("div");
+    container.className = "tradingview-widget-container";
+
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+    container.appendChild(widget);
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = scriptSrc;
+    script.async = true;
+    script.innerHTML = JSON.stringify(config);
+    container.appendChild(script);
+
+    host.appendChild(container);
+  }
+
+  function mountMarketsPreviewWidget() {
+    const host = $("marketsPreviewTape");
+    if (!host) return;
+
+    mountTradingViewWidget("marketsPreviewTape", TV_SCRIPT_TICKER, {
+      symbols: tradingViewSymbols(),
+      showSymbolLogo: true,
+      colorTheme: "dark",
+      isTransparent: true,
+      displayMode: "compact",
+      locale: "sv"
+    });
+  }
+
+  function mountMarketsHubWidget() {
+    const host = $("marketsHubTape");
+    if (!host) return;
+
+    mountTradingViewWidget("marketsHubTape", TV_SCRIPT_TICKER, {
+      symbols: tradingViewSymbols(),
+      showSymbolLogo: true,
+      colorTheme: "dark",
+      isTransparent: true,
+      displayMode: "adaptive",
+      locale: "sv"
+    });
+  }
+
+  function mountMarketsChartWidget(symbol) {
+    const host = $("marketsChartWidget");
+    if (!host) return;
+
+    mountTradingViewWidget("marketsChartWidget", TV_SCRIPT_CHART, {
+      autosize: true,
+      symbol,
+      interval: "2",
+      timezone: "Europe/Stockholm",
+      theme: "dark",
+      style: "1",
+      locale: "sv",
+      allow_symbol_change: false,
+      save_image: false,
+      calendar: false,
+      details: false,
+      hotlist: false,
+      support_host: "https://www.tradingview.com"
+    });
+  }
+
+  function afterRenderSlots() {
+    mountMarketsPreviewWidget();
+  }
+
   function weatherGlyph(type, large = false) {
-    return `<div class="weatherGlyph ${large ? "weatherGlyphLarge" : ""} is-${type}"><div class="sun"></div><div class="cloud"></div><div class="rain"></div></div>`;
+    return `
+      <div class="weatherGlyph ${large ? "weatherGlyphLarge" : ""} is-${type}">
+        <div class="sun"></div>
+        <div class="cloud"></div>
+        <div class="rain"></div>
+      </div>
+    `;
   }
 
   function cameraIconMarkup() {
-    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.5h3l1.4-2h6.2l1.4 2h3A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V9a1.5 1.5 0 0 1 1.5-1.5Z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>`;
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.5 7.5h3l1.4-2h6.2l1.4 2h3A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V9a1.5 1.5 0 0 1 1.5-1.5Z"></path>
+        <circle cx="12" cy="13" r="3.5"></circle>
+      </svg>
+    `;
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function shortDayDate(value) {
     const v = (value || "").trim();
     if (!v) return "Datum saknas";
-    return v.replace(/^måndag/i, "Mån").replace(/^tisdag/i, "Tis").replace(/^onsdag/i, "Ons").replace(/^torsdag/i, "Tor").replace(/^fredag/i, "Fre").replace(/^lördag/i, "Lör").replace(/^söndag/i, "Sön");
+    return v
+      .replace(/^måndag/i, "Mån")
+      .replace(/^tisdag/i, "Tis")
+      .replace(/^onsdag/i, "Ons")
+      .replace(/^torsdag/i, "Tor")
+      .replace(/^fredag/i, "Fre")
+      .replace(/^lördag/i, "Lör")
+      .replace(/^söndag/i, "Sön");
   }
 
   function playerClass(player) {
@@ -373,56 +536,181 @@
   }
 
   function isFilledMatch(card) {
-    return !!(card.dateText || card.timeText || card.player || card.series || card.opponent || card.location || card.gathering || card.note || card.imageSrc);
+    return !!(
+      card.dateText ||
+      card.timeText ||
+      card.player ||
+      card.series ||
+      card.opponent ||
+      card.location ||
+      card.gathering ||
+      card.note ||
+      card.imageSrc
+    );
   }
 
   function formatNewsAge(publishedAt) {
     if (!publishedAt) return "";
     const diff = Date.now() - new Date(publishedAt).getTime();
     if (!Number.isFinite(diff)) return "";
+
     const mins = Math.max(1, Math.floor(diff / 60000));
     if (mins < 60) return `${mins}m`;
+
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h`;
+
     const days = Math.floor(hours / 24);
     return `${days}d`;
   }
 
   function renderWeatherPreview() {
-    return `<div class="weatherPreview"><div class="weatherPreviewVisual">${weatherGlyph(weatherState.type)}</div><div class="weatherPreviewText"><div class="weatherPreviewTemp">${escapeHtml(weatherState.temp)}</div><div class="weatherPreviewStatus">${escapeHtml(weatherState.status)}</div><div class="weatherPreviewMeta">${escapeHtml(weatherState.meta)}</div></div></div>`;
+    return `
+      <div class="weatherPreview">
+        <div class="weatherPreviewVisual">${weatherGlyph(weatherState.type)}</div>
+        <div class="weatherPreviewText">
+          <div class="weatherPreviewTemp">${escapeHtml(weatherState.temp)}</div>
+          <div class="weatherPreviewStatus">${escapeHtml(weatherState.status)}</div>
+          <div class="weatherPreviewMeta">${escapeHtml(weatherState.meta)}</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderTasksPreview() {
     const active = tasks.slice(0, 3);
-    if (!active.length) return `<div class="tasksPreview"><div class="tasksEmpty">Inga tasks ännu. Tryck för att skapa din första.</div></div>`;
-    return `<div class="tasksPreview"><div class="tasksListPreview">${active.map((task) => `<div class="tasksItemPreview"><div class="tasksDot"></div><div class="tasksTextWrap"><div class="tasksText">${escapeHtml(task.text)}</div><div class="tasksSub">${task.subtasks?.length ? `${task.subtasks.length} delmål` : "Inga delmål"}</div></div></div>`).join("")}</div></div>`;
+    if (!active.length) {
+      return `<div class="tasksPreview"><div class="tasksEmpty">Inga tasks ännu. Tryck för att skapa din första.</div></div>`;
+    }
+
+    return `
+      <div class="tasksPreview">
+        <div class="tasksListPreview">
+          ${active.map((task) => `
+            <div class="tasksItemPreview">
+              <div class="tasksDot"></div>
+              <div class="tasksTextWrap">
+                <div class="tasksText">${escapeHtml(task.text)}</div>
+                <div class="tasksSub">${task.subtasks?.length ? `${task.subtasks.length} delmål` : "Inga delmål"}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
   }
 
   function renderNotesPreview() {
     const hasText = notes.trim().length > 0;
-    return `<div class="notesPreview"><div class="notesPreviewHead">Anteckningar</div><div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(hasText ? notes : "Tryck för att skriva.")}</div></div>`;
+    return `
+      <div class="notesPreview">
+        <div class="notesPreviewHead">Anteckningar</div>
+        <div class="notesPreviewBody ${hasText ? "" : "is-empty"}">${escapeHtml(
+          hasText ? notes : "Tryck för att skriva."
+        )}</div>
+      </div>
+    `;
   }
 
   function renderTimerPreview() {
-    return `<div class="timerPreview"><div class="timerPreviewWheel"><img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt=""><div class="timerPreviewBlob" aria-hidden="true"></div><div class="timerPreviewCenter"><div class="timerPreviewTop">Timer</div><div class="timerPreviewBottom">Tryck för att starta</div></div></div></div>`;
+    return `
+      <div class="timerPreview">
+        <div class="timerPreviewWheel">
+          <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+          <div class="timerPreviewBlob" aria-hidden="true"></div>
+          <div class="timerPreviewCenter">
+            <div class="timerPreviewTop">Timer</div>
+            <div class="timerPreviewBottom">Tryck för att starta</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function renderNewsPreview() {
     const items = newsState.items.slice(0, 3);
-    if (!items.length) return `<div class="newsPreview"><div class="newsPreviewLabel">Nyheter</div><div class="newsPreviewEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div></div>`;
+
+    if (!items.length) {
+      return `
+        <div class="newsPreview">
+          <div class="newsPreviewLabel">Nyheter</div>
+          <div class="newsPreviewEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
+        </div>
+      `;
+    }
+
     const hero = items[0];
     const rest = items.slice(1);
-    return `<div class="newsPreview"><div class="newsPreviewLabel">Nyheter</div><div class="newsPreviewHero"><div class="newsPreviewThumb">${hero.image ? `<img src="${hero.image}" alt="">` : ""}</div><div class="newsPreviewHeroTitle">${escapeHtml(hero.title)}</div></div><div class="newsPreviewSubList">${rest.map((item) => `<div class="newsPreviewSubItem">${escapeHtml(item.title)}</div>`).join("")}</div></div>`;
+
+    return `
+      <div class="newsPreview">
+        <div class="newsPreviewLabel">Nyheter</div>
+
+        <div class="newsPreviewHero">
+          <div class="newsPreviewThumb">
+            ${hero.image ? `<img src="${hero.image}" alt="">` : ""}
+          </div>
+          <div class="newsPreviewHeroTitle">${escapeHtml(hero.title)}</div>
+        </div>
+
+        <div class="newsPreviewSubList">
+          ${rest.map((item) => `
+            <div class="newsPreviewSubItem">${escapeHtml(item.title)}</div>
+          `).join("")}
+        </div>
+      </div>
+    `;
   }
 
-  function renderMarketPreview() {
-    return `<div class="marketPreview">${marketState.slice(0, 4).map((item) => `<div class="marketPreviewCard"><div class="marketPreviewTitle">${escapeHtml(item.label)}</div><div class="marketPreviewMeta">2m chart i modul</div><div class="marketPreviewValue">${escapeHtml(item.value)}</div><div class="marketPreviewChange ${item.changeClass}">${escapeHtml(item.changeText)}</div></div>`).join("")}</div>`;
+  function renderMarketsPreview() {
+    const active = marketById(marketState.selectedId);
+
+    return `
+      <div class="marketsPreview">
+        <div class="marketsPreviewLabelRow">
+          <div class="newsPreviewLabel">Marknad</div>
+          <div class="marketsPreviewCurrent">${escapeHtml(active.name)}</div>
+        </div>
+        <div class="marketsPreviewTapeShell">
+          <div class="marketsPreviewTape" id="marketsPreviewTape"></div>
+        </div>
+        <div class="marketsPreviewFoot">Guld • Silver • Olja • ETH • US100 • Japan • Frankrike • USD/EUR</div>
+      </div>
+    `;
   }
 
   function renderMatchesPreview() {
     const visible = matchCards.filter(isFilledMatch).slice(0, 4);
-    if (!visible.length) return `<div class="matchPreview matchPreview--empty"><div class="matchPreviewEmpty">Lägg till upp till 5 matcher i modulen.</div></div>`;
-    return `<div class="matchPreview">${visible.map((card, index) => `<article class="matchPreviewCard ${index < visible.length - 1 ? "has-divider" : ""}"><div class="matchPreviewRow matchPreviewRow--strong"><span>${escapeHtml(shortDayDate(card.dateText))}</span><span class="matchPlayer ${playerClass(card.player)}">${escapeHtml(card.player || "Spelare")}</span><span class="matchGathering">Saml. ${escapeHtml(card.gathering || "--:--")}</span></div><div class="matchPreviewRow matchPreviewRow--muted"><span>${escapeHtml(card.location || "Plats saknas")}</span><span>${escapeHtml(card.opponent || "Motstånd saknas")}</span><span>${escapeHtml(card.timeText || "Tid saknas")}</span></div><div class="matchPreviewRow matchPreviewRow--note ${card.note.trim() ? "has-note" : "is-empty"}">${card.note.trim() ? escapeHtml(card.note.trim()) : " "}</div></article>`).join("")}</div>`;
+
+    if (!visible.length) {
+      return `
+        <div class="matchPreview matchPreview--empty">
+          <div class="matchPreviewEmpty">Lägg till upp till 5 matcher i modulen.</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="matchPreview">
+        ${visible.map((card, index) => `
+          <article class="matchPreviewCard ${index < visible.length - 1 ? "has-divider" : ""}">
+            <div class="matchPreviewRow matchPreviewRow--strong">
+              <span>${escapeHtml(shortDayDate(card.dateText))}</span>
+              <span class="matchPlayer ${playerClass(card.player)}">${escapeHtml(card.player || "Spelare")}</span>
+              <span class="matchGathering">Saml. ${escapeHtml(card.gathering || "--:--")}</span>
+            </div>
+            <div class="matchPreviewRow matchPreviewRow--muted">
+              <span>${escapeHtml(card.location || "Plats saknas")}</span>
+              <span>${escapeHtml(card.opponent || "Motstånd saknas")}</span>
+              <span>${escapeHtml(card.timeText || "Tid saknas")}</span>
+            </div>
+            <div class="matchPreviewRow matchPreviewRow--note ${card.note.trim() ? "has-note" : "is-empty"}">
+              ${card.note.trim() ? escapeHtml(card.note.trim()) : " "}
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    `;
   }
 
   function renderPlaceholderPreview(text) {
@@ -432,19 +720,22 @@
   function renderSlot(groupKey) {
     const group = slotGroups[groupKey];
     const module = group.modules[group.index];
+
     if (module.key === "weather") return renderWeatherPreview();
     if (module.key === "timer") return renderTimerPreview();
     if (module.key === "tasks") return renderTasksPreview();
     if (module.key === "notes") return renderNotesPreview();
     if (module.key === "matches") return renderMatchesPreview();
     if (module.key === "news") return renderNewsPreview();
-    if (module.key === "market") return renderMarketPreview();
+    if (module.key === "markets") return renderMarketsPreview();
+
     return renderPlaceholderPreview(module.text || "—");
   }
 
   function renderSlots() {
     slotAContent.innerHTML = renderSlot("A");
     slotBContent.innerHTML = renderSlot("B");
+    requestAnimationFrame(afterRenderSlots);
   }
 
   function openCurrentModule(groupKey) {
@@ -452,6 +743,7 @@
     overlay.dataset.moduleKey = module.key;
     overlay.classList.add("open");
     overlay.setAttribute("aria-hidden", "false");
+
     if (module.key === "weather") {
       overlayContent.innerHTML = renderWeatherModule();
     } else if (module.key === "tasks") {
@@ -469,9 +761,11 @@
     } else if (module.key === "news") {
       overlayContent.innerHTML = renderNewsModule();
       bindNewsModule();
-    } else if (module.key === "market") {
-      overlayContent.innerHTML = renderMarketModule();
-      bindMarketModule();
+    } else if (module.key === "markets") {
+      overlayContent.innerHTML = renderMarketsModule();
+      bindMarketsModule();
+    } else if (module.key === "calendar") {
+      overlayContent.innerHTML = renderCalendarModule();
     } else {
       overlayContent.innerHTML = renderPlaceholderModule(module.text || "Nästa modul");
     }
@@ -483,14 +777,11 @@
     overlay.dataset.moduleKey = "";
   }
 
-  function openCalendar() {
-    calendarOverlay.classList.add("open");
-    calendarOverlay.setAttribute("aria-hidden", "false");
-  }
-
-  function closeCalendar() {
-    calendarOverlay.classList.remove("open");
-    calendarOverlay.setAttribute("aria-hidden", "true");
+  function openCalendarModule() {
+    overlay.dataset.moduleKey = "calendar";
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    overlayContent.innerHTML = renderCalendarModule();
   }
 
   function showTimerDoneOverlay() {
@@ -519,45 +810,91 @@
     currentArticle = null;
   }
 
-  function openMarketChart(key) {
-    const item = marketState.find((m) => m.key === key) || marketState[0];
-    activeMarketKey = item.key;
-    marketChartTitle.textContent = item.label;
-    marketChartTabs.innerHTML = marketState.map((m) => `<button class="marketChartTab ${m.key === item.key ? "is-active" : ""}" type="button" data-key="${m.key}">${escapeHtml(m.label)}</button>`).join("");
-    marketChartFrame.src = tradingViewChartUrl(item.symbol, "2");
-    marketChartOverlay.classList.add("open");
-    marketChartOverlay.setAttribute("aria-hidden", "false");
-  }
-
-  function closeMarketChart() {
-    marketChartOverlay.classList.remove("open");
-    marketChartOverlay.setAttribute("aria-hidden", "true");
-    marketChartFrame.src = "about:blank";
-  }
-
-  function tradingViewChartUrl(symbol, interval = "2") {
-    return `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=050b12&studies=[]&theme=dark&style=1&timezone=Europe%2FStockholm&withdateranges=0&hideideas=1&hidelegend=0&allow_symbol_change=0&details=0&hotlist=0&calendar=0`;
-  }
-
   function renderWeatherModule() {
-    const rows = weatherState.hourly.length ? weatherState.hourly : [{ time: "Nu", temp: weatherState.temp, rain: "0%", type: weatherState.type }];
-    return `<div class="fullModule"><div class="fullModuleHead"><div class="fullModuleTitle">Väder</div></div><div class="weatherModuleTop"><div><div class="weatherBigTemp">${escapeHtml(weatherState.temp)}</div><div class="weatherBigStatus">${escapeHtml(weatherState.status)}</div><div class="weatherMetaLine">${escapeHtml(weatherState.meta)}</div></div>${weatherGlyph(weatherState.type, true)}</div><div class="weatherRows">${rows.map((row) => `<div class="weatherRow"><div class="weatherRowTime">${escapeHtml(row.time)}</div><div class="weatherRowMain">${row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"} · Regnrisk ${escapeHtml(row.rain)}</div><div class="weatherRowTemp">${escapeHtml(row.temp)}</div></div>`).join("")}</div></div>`;
+    const rows = weatherState.hourly.length
+      ? weatherState.hourly
+      : [{ time: "Nu", temp: weatherState.temp, rain: "0%", type: weatherState.type }];
+
+    return `
+      <div class="fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Väder</div>
+        </div>
+        <div class="weatherModuleTop">
+          <div>
+            <div class="weatherBigTemp">${escapeHtml(weatherState.temp)}</div>
+            <div class="weatherBigStatus">${escapeHtml(weatherState.status)}</div>
+            <div class="weatherMetaLine">${escapeHtml(weatherState.meta)}</div>
+          </div>
+          ${weatherGlyph(weatherState.type, true)}
+        </div>
+        <div class="weatherRows">
+          ${rows.map((row) => `
+            <div class="weatherRow">
+              <div class="weatherRowTime">${escapeHtml(row.time)}</div>
+              <div class="weatherRowMain">${
+                row.type === "sun" ? "Klart" : row.type === "rain" ? "Regn" : "Molnigt"
+              } · Regnrisk ${escapeHtml(row.rain)}</div>
+              <div class="weatherRowTemp">${escapeHtml(row.temp)}</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
   }
 
   function renderTasksModule() {
-    return `<div class="tasksModule fullModule"><div class="fullModuleHead"><div class="fullModuleTitle">Tasks</div></div><div class="tasksComposer"><input class="tasksInput" id="tasksInput" type="text" maxlength="140" placeholder="Skapa uppgift..." autocomplete="off" /><button class="tasksAddBtn" id="tasksAddBtn" type="button" aria-label="Lägg till task">+</button></div><div class="tasksModuleList" id="tasksModuleList">${renderTasksList()}</div></div>`;
+    return `
+      <div class="tasksModule fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Tasks</div>
+        </div>
+        <div class="tasksComposer">
+          <input class="tasksInput" id="tasksInput" type="text" maxlength="140" placeholder="Skapa uppgift..." autocomplete="off" />
+          <button class="tasksAddBtn" id="tasksAddBtn" type="button" aria-label="Lägg till task">+</button>
+        </div>
+        <div class="tasksModuleList" id="tasksModuleList">${renderTasksList()}</div>
+      </div>
+    `;
   }
 
   function renderTasksList() {
     if (!tasks.length) return `<div class="fullModuleText">Inga tasks ännu.</div>`;
-    return tasks.map((task) => `<div class="taskCard ${task.done ? "is-done" : ""}" data-task-id="${task.id}"><div class="taskMainRow"><input class="taskCheck" type="checkbox" ${task.done ? "checked" : ""} data-action="toggle-task" data-task-id="${task.id}" /><button class="taskTextBtn" type="button" data-action="focus-sub" data-task-id="${task.id}">${escapeHtml(task.text)}</button><button class="taskDeleteBtn" type="button" data-action="delete-task" data-task-id="${task.id}">Ta bort</button></div><div class="subTasks">${(task.subtasks || []).map((sub) => `<div class="subTaskRow"><div class="subTaskMark"></div><div class="subTaskText">${escapeHtml(sub)}</div></div>`).join("")}</div><div class="subTaskInputRow"><input class="taskSubInput" id="sub_${task.id}" type="text" maxlength="120" placeholder="Lägg till delmål..." autocomplete="off" /><button class="addSubBtn" type="button" data-action="add-sub" data-task-id="${task.id}">Spara</button></div></div>`).join("");
+
+    return tasks.map((task) => `
+      <div class="taskCard ${task.done ? "is-done" : ""}" data-task-id="${task.id}">
+        <div class="taskMainRow">
+          <input class="taskCheck" type="checkbox" ${task.done ? "checked" : ""} data-action="toggle-task" data-task-id="${task.id}" />
+          <button class="taskTextBtn" type="button" data-action="focus-sub" data-task-id="${task.id}">${escapeHtml(task.text)}</button>
+          <button class="taskDeleteBtn" type="button" data-action="delete-task" data-task-id="${task.id}">Ta bort</button>
+        </div>
+        <div class="subTasks">
+          ${(task.subtasks || []).map((sub) => `
+            <div class="subTaskRow">
+              <div class="subTaskMark"></div>
+              <div class="subTaskText">${escapeHtml(sub)}</div>
+            </div>
+          `).join("")}
+        </div>
+        <div class="subTaskInputRow">
+          <input class="taskSubInput" id="sub_${task.id}" type="text" maxlength="120" placeholder="Lägg till delmål..." autocomplete="off" />
+          <button class="addSubBtn" type="button" data-action="add-sub" data-task-id="${task.id}">Spara</button>
+        </div>
+      </div>
+    `).join("");
   }
 
   function bindTasksModule() {
     const tasksInput = $("tasksInput");
     const tasksAddBtn = $("tasksAddBtn");
     const tasksModuleList = $("tasksModuleList");
-    function rerenderTasksModule() { overlayContent.innerHTML = renderTasksModule(); bindTasksModule(); renderSlots(); }
+
+    function rerenderTasksModule() {
+      overlayContent.innerHTML = renderTasksModule();
+      bindTasksModule();
+      renderSlots();
+    }
+
     function addTask() {
       const text = tasksInput.value.trim();
       if (!text) return;
@@ -566,6 +903,7 @@
       saveTasks();
       rerenderTasksModule();
     }
+
     function addSubtask(taskId) {
       const task = tasks.find((item) => item.id === taskId);
       const input = $(`sub_${taskId}`);
@@ -576,24 +914,52 @@
       saveTasks();
       rerenderTasksModule();
     }
+
     tasksAddBtn.addEventListener("click", addTask);
-    tasksInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addTask(); } });
+
+    tasksInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addTask();
+      }
+    });
+
     tasksModuleList.addEventListener("keydown", (e) => {
       const subInput = e.target.closest(".taskSubInput");
       if (!subInput) return;
-      if (e.key === "Enter") { e.preventDefault(); addSubtask(subInput.id.replace("sub_", "")); }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addSubtask(subInput.id.replace("sub_", ""));
+      }
     });
+
     tasksModuleList.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
       const action = btn.dataset.action;
       const taskId = btn.dataset.taskId;
       const task = tasks.find((item) => item.id === taskId);
-      if (action === "delete-task") { tasks = tasks.filter((item) => item.id !== taskId); saveTasks(); rerenderTasksModule(); return; }
+
+      if (action === "delete-task") {
+        tasks = tasks.filter((item) => item.id !== taskId);
+        saveTasks();
+        rerenderTasksModule();
+        return;
+      }
+
       if (!task) return;
-      if (action === "add-sub") { addSubtask(taskId); return; }
-      if (action === "focus-sub") { $(`sub_${taskId}`)?.focus(); }
+
+      if (action === "add-sub") {
+        addSubtask(taskId);
+        return;
+      }
+
+      if (action === "focus-sub") {
+        const input = $(`sub_${taskId}`);
+        input?.focus();
+      }
     });
+
     tasksModuleList.addEventListener("change", (e) => {
       const checkbox = e.target.closest("[data-action='toggle-task']");
       if (!checkbox) return;
@@ -606,20 +972,52 @@
   }
 
   function renderNotesModule() {
-    return `<div class="notesModule fullModule"><div class="notesHead"><div class="notesLabel">Anteckningar</div></div><div class="notesBox"><textarea class="notesInput" id="notesInput" placeholder="Skriv fritt...">${escapeHtml(notes)}</textarea></div></div>`;
+    return `
+      <div class="notesModule fullModule">
+        <div class="notesHead"><div class="notesLabel">Anteckningar</div></div>
+        <div class="notesBox">
+          <textarea class="notesInput" id="notesInput" placeholder="Skriv fritt...">${escapeHtml(notes)}</textarea>
+        </div>
+      </div>
+    `;
   }
 
   function bindNotesModule() {
     const input = $("notesInput");
     if (!input) return;
-    input.addEventListener("input", () => { notes = input.value; saveNotes(); renderSlots(); });
+
+    input.addEventListener("input", () => {
+      notes = input.value;
+      saveNotes();
+      renderSlots();
+    });
   }
 
   function renderTimerModule() {
     const preset = TIMER_OPTIONS[timerState.presetIndex];
     const valueText = timerState.running ? formatRemaining(timerState.remainingMs) : preset.label;
-    const bottomText = timerState.running ? "Pågår" : timerState.selecting ? "Svep för att välja · tryck igen för start" : "Tryck för att starta";
-    return `<div class="timerModule"><div class="timerWheelWrap"><button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer"><img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt=""><div class="timerWheelBlob" aria-hidden="true"></div><div class="timerWheelCenter"><div class="timerCenterTop">Timer</div><div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div><div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div></div></button></div><div class="timerHint">${timerState.running ? "Svep upp eller ner för att se tiden gå klart." : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}</div></div>`;
+    const bottomText = timerState.running
+      ? "Pågår"
+      : timerState.selecting
+        ? "Svep för att välja · tryck igen för start"
+        : "Tryck för att starta";
+
+    return `
+      <div class="timerModule">
+        <div class="timerWheelWrap">
+          <button class="timerWheel" id="timerWheelBtn" type="button" aria-label="Timer">
+            <img class="timerNeonRing" src="assets/ui/wheel-ring.svg" alt="">
+            <div class="timerWheelBlob" aria-hidden="true"></div>
+            <div class="timerWheelCenter">
+              <div class="timerCenterTop">Timer</div>
+              <div class="timerCenterValue" id="timerCenterValue">${escapeHtml(valueText)}</div>
+              <div class="timerCenterBottom" id="timerCenterBottom">${escapeHtml(bottomText)}</div>
+            </div>
+          </button>
+        </div>
+        <div class="timerHint">${timerState.running ? "Svep upp eller ner för att se tiden gå klart." : "Välj 1m, 5, 10, 15, 25, 30 eller 1h."}</div>
+      </div>
+    `;
   }
 
   function bindTimerModule() {
@@ -627,23 +1025,35 @@
     const valueEl = $("timerCenterValue");
     const bottomEl = $("timerCenterBottom");
     if (!wheelBtn) return;
+
     let startY = 0;
     let dragging = false;
+
     function refreshTimerModuleView() {
       const preset = TIMER_OPTIONS[timerState.presetIndex];
       if (valueEl) valueEl.textContent = timerState.running ? formatRemaining(timerState.remainingMs) : preset.label;
-      if (bottomEl) bottomEl.textContent = timerState.running ? "Pågår" : timerState.selecting ? "Svep för att välja · tryck igen för start" : "Tryck för att starta";
+      if (bottomEl) {
+        bottomEl.textContent = timerState.running
+          ? "Pågår"
+          : timerState.selecting
+            ? "Svep för att välja · tryck igen för start"
+            : "Tryck för att starta";
+      }
     }
+
     function startTimer() {
       if (timerState.running) return;
+
       const preset = TIMER_OPTIONS[timerState.presetIndex];
       timerState.running = true;
       timerState.selecting = false;
       timerState.totalMs = preset.seconds * 1000;
       timerState.remainingMs = timerState.totalMs;
       timerState.startedAt = Date.now();
+
       timerMidBarWrap.classList.add("show");
       updateTimerBar(1);
+
       if (timerState.intervalId) clearInterval(timerState.intervalId);
       timerState.intervalId = setInterval(() => {
         const elapsed = Date.now() - timerState.startedAt;
@@ -651,100 +1061,290 @@
         timerState.remainingMs = remaining;
         const ratio = timerState.totalMs > 0 ? remaining / timerState.totalMs : 0;
         updateTimerBar(ratio);
-        if (overlay.classList.contains("open") && currentModuleKey() === "timer") refreshTimerModuleView();
+
+        if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
+          refreshTimerModuleView();
+        }
+
         if (remaining <= 0) finishTimer();
       }, 200);
+
       refreshTimerModuleView();
     }
+
     function finishTimer() {
-      if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
+      if (timerState.intervalId) {
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+      }
+
       timerState.running = false;
       timerState.remainingMs = 0;
       updateTimerBar(0);
       timerMidBarWrap.classList.remove("show");
-      if (overlay.classList.contains("open") && currentModuleKey() === "timer") { overlayContent.innerHTML = renderTimerModule(); bindTimerModule(); }
+
+      if (overlay.classList.contains("open") && currentModuleKey() === "timer") {
+        overlayContent.innerHTML = renderTimerModule();
+        bindTimerModule();
+      }
+
       playAlarm();
       showTimerDoneOverlay();
       renderSlots();
     }
+
     wheelBtn.addEventListener("click", () => {
       if (timerState.running) return;
-      if (!timerState.selecting) { timerState.selecting = true; refreshTimerModuleView(); }
-      else startTimer();
+
+      if (!timerState.selecting) {
+        timerState.selecting = true;
+        refreshTimerModuleView();
+      } else {
+        startTimer();
+      }
     });
-    wheelBtn.addEventListener("pointerdown", (e) => { if (timerState.running) return; dragging = true; startY = e.clientY; wheelBtn.setPointerCapture?.(e.pointerId); });
+
+    wheelBtn.addEventListener("pointerdown", (e) => {
+      if (timerState.running) return;
+      dragging = true;
+      startY = e.clientY;
+      wheelBtn.setPointerCapture?.(e.pointerId);
+    });
+
     wheelBtn.addEventListener("pointermove", (e) => {
       if (!dragging || timerState.running) return;
       const dy = e.clientY - startY;
       if (Math.abs(dy) > 26) {
         timerState.selecting = true;
-        timerState.presetIndex = dy < 0 ? clampPresetIndex(timerState.presetIndex + 1) : clampPresetIndex(timerState.presetIndex - 1);
+        timerState.presetIndex =
+          dy < 0
+            ? clampPresetIndex(timerState.presetIndex + 1)
+            : clampPresetIndex(timerState.presetIndex - 1);
         saveTimerPreset();
         startY = e.clientY;
         refreshTimerModuleView();
       }
     });
-    const endDrag = () => { dragging = false; };
+
+    function endDrag() {
+      dragging = false;
+    }
+
     wheelBtn.addEventListener("pointerup", endDrag);
     wheelBtn.addEventListener("pointercancel", endDrag);
   }
-
-  function renderNewsModule() {
+    function renderNewsModule() {
     const items = newsState.items.slice(0, NEWS_LIMIT);
-    return `<div class="newsModule fullModule"><div class="newsModuleHeader"><div class="fullModuleTitle">Nyheter</div><div class="newsLiveRow"><div class="newsLiveDot"></div><div class="newsLiveLabel">Live</div><div class="newsLiveText">${escapeHtml(items[0]?.title || newsState.error || "Laddar nyheter…")}</div></div></div>${items.length ? `<div class="newsList">${items.map((item, index) => `<article class="newsItem" data-action="open-news-item" data-index="${index}"><div class="newsItemThumb">${item.image ? `<img src="${item.image}" alt="">` : ""}</div><div class="newsItemBody"><div class="newsItemTitle">${escapeHtml(item.title)}</div><div class="newsItemMeta">${escapeHtml(item.source || "Nyhet")}${item.publishedAt ? ` • ${escapeHtml(formatNewsAge(item.publishedAt))}` : ""}</div></div></article>`).join("")}</div>` : `<div class="newsEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>`}</div>`;
+
+    return `
+      <div class="newsModule fullModule">
+        <div class="newsModuleHeader">
+          <div class="fullModuleTitle">Nyheter</div>
+          <div class="newsLiveRow">
+            <div class="newsLiveDot"></div>
+            <div class="newsLiveLabel">Live</div>
+            <div class="newsLiveText">${escapeHtml(items[0]?.title || newsState.error || "Laddar nyheter…")}</div>
+          </div>
+        </div>
+
+        ${items.length ? `
+          <div class="newsList">
+            ${items.map((item, index) => `
+              <article class="newsItem" data-action="open-news-item" data-index="${index}">
+                <div class="newsItemThumb">
+                  ${item.image ? `<img src="${item.image}" alt="">` : ""}
+                </div>
+                <div class="newsItemBody">
+                  <div class="newsItemTitle">${escapeHtml(item.title)}</div>
+                  <div class="newsItemMeta">${escapeHtml(item.source || "Nyhet")}${item.publishedAt ? ` • ${escapeHtml(formatNewsAge(item.publishedAt))}` : ""}</div>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        ` : `
+          <div class="newsEmpty">${escapeHtml(newsState.error || "Laddar nyheter…")}</div>
+        `}
+      </div>
+    `;
   }
 
   function bindNewsModule() {
-    overlayContent.onclick = (e) => {
-      const itemEl = e.target.closest("[data-action='open-news-item']");
-      if (!itemEl) return;
-      const index = Number(itemEl.dataset.index);
-      const item = newsState.items[index];
-      if (item) openArticle(item);
-    };
+    overlayContent.addEventListener("click", onNewsModuleClick, { once: true });
   }
 
-  function renderMarketModule() {
-    return `<div class="marketModule fullModule"><div class="marketModuleHeader"><div class="fullModuleTitle">Marknad</div><div class="fullModuleText">Översikt först. Tryck på en symbol för fullskärms-chart. Default i chart är 2m.</div></div><div class="marketGrid">${marketState.map((item) => `<button class="marketCard" type="button" data-market-key="${item.key}"><div class="marketCardTop"><div><div class="marketCardTitle">${escapeHtml(item.label)}</div><div class="marketCardSymbol">${escapeHtml(item.symbol)}</div></div></div><div class="marketCardValue">${escapeHtml(item.value)}</div><div class="marketCardChange ${item.changeClass}">${escapeHtml(item.changeText)}</div><div class="marketCardHint">Öppna chart</div></button>`).join("")}</div></div>`;
-  }
+  function onNewsModuleClick(e) {
+    const itemEl = e.target.closest("[data-action='open-news-item']");
+    if (!itemEl) {
+      bindNewsModule();
+      return;
+    }
 
-  function bindMarketModule() {
-    overlayContent.onclick = (e) => {
-      const card = e.target.closest("[data-market-key]");
-      if (!card) return;
-      openMarketChart(card.dataset.marketKey);
-    };
+    const index = Number(itemEl.dataset.index);
+    const item = newsState.items[index];
+    if (item) openArticle(item);
+
+    bindNewsModule();
   }
 
   function renderMatchesModule() {
-    return `<div class="matchesModule fullModule"><div class="fullModuleHead"><div class="fullModuleTitle">Matcher</div><div class="fullModuleText">Upp till 5 kort. Ladda upp SportAdmin-bild så försöker appen läsa av datum, tider, plats, spelare, serie och motstånd automatiskt. Du kan alltid rätta manuellt.</div></div><div class="matchesModuleList">${matchCards.map((card, index) => `<section class="matchCardEditor" data-index="${index}"><div class="matchCardEditorTop"><div class="matchCardEditorCount">Kort ${index + 1}</div><button class="matchDeleteBtn" type="button" data-action="clear-match" data-index="${index}">Ta bort</button></div><button class="matchImageBtn ${card.imageSrc ? "has-image" : "is-empty"}" type="button" data-action="pick-image" data-index="${index}">${card.imageSrc ? `<img class="matchImagePreview" src="${card.imageSrc}" alt="Matchbild ${index + 1}">` : `<div class="matchImageEmpty"><div class="matchImageEmptyIcon">${cameraIconMarkup()}</div><div class="matchImageEmptyText">Lägg till SportAdmin-bild</div></div>`}</button><div class="matchImageActions"><div class="matchImageHint">${card.ocrStatus ? escapeHtml(card.ocrStatus) : card.imageSrc ? "Tryck för att byta bild" : "Ladda upp bild som referens"}</div>${card.imageSrc ? `<button class="matchDeleteImageBtn" type="button" data-action="remove-image" data-index="${index}">Ta bort bild</button>` : ""}</div><div class="matchFieldsGrid"><label class="matchField"><span>Datum</span><input type="text" data-field="dateText" data-index="${index}" value="${escapeHtml(card.dateText)}" placeholder="Lördag 15 mars"></label><label class="matchField"><span>Matchtid</span><input type="text" data-field="timeText" data-index="${index}" value="${escapeHtml(card.timeText)}" placeholder="12:15–14:15"></label><label class="matchField"><span>Spelare</span><select data-field="player" data-index="${index}" class="matchPlayerSelect ${playerClass(card.player)}"><option value="" ${card.player === "" ? "selected" : ""}>Välj</option><option value="Milo" ${card.player === "Milo" ? "selected" : ""}>Milo</option><option value="Alice" ${card.player === "Alice" ? "selected" : ""}>Alice</option></select></label><label class="matchField"><span>Serie</span><input type="text" data-field="series" data-index="${index}" value="${escapeHtml(card.series)}" placeholder="2013 B Mellersta"></label><label class="matchField"><span>Motstånd</span><input type="text" data-field="opponent" data-index="${index}" value="${escapeHtml(card.opponent)}" placeholder="Norrtulls SK (B)"></label><label class="matchField"><span>Plats</span><input type="text" data-field="location" data-index="${index}" value="${escapeHtml(card.location)}" placeholder="Värmdö sporthall"></label><label class="matchField"><span>Samling</span><input type="text" data-field="gathering" data-index="${index}" value="${escapeHtml(card.gathering)}" placeholder="11:30"></label></div><label class="matchField matchField--note"><span>Anteckning</span><textarea data-field="note" data-index="${index}" placeholder="Åk 14, Ted ska med, restid 30 min...">${escapeHtml(card.note)}</textarea></label><input class="matchFileInput" id="matchFileInput_${index}" type="file" accept="image/*" hidden></section>`).join("")}</div></div>`;
+    return `
+      <div class="matchesModule fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Matcher</div>
+          <div class="fullModuleText">Upp till 5 kort. Ladda upp SportAdmin-bild så försöker appen läsa av datum, tider, plats, spelare, serie och motstånd automatiskt. Du kan alltid rätta manuellt.</div>
+        </div>
+
+        <div class="matchesModuleList">
+          ${matchCards.map((card, index) => `
+            <section class="matchCardEditor" data-index="${index}">
+              <div class="matchCardEditorTop">
+                <div class="matchCardEditorCount">Kort ${index + 1}</div>
+                <button class="matchDeleteBtn" type="button" data-action="clear-match" data-index="${index}">Ta bort</button>
+              </div>
+
+              <button class="matchImageBtn ${card.imageSrc ? "has-image" : "is-empty"}" type="button" data-action="pick-image" data-index="${index}">
+                ${
+                  card.imageSrc
+                    ? `<img class="matchImagePreview" src="${card.imageSrc}" alt="Matchbild ${index + 1}">`
+                    : `<div class="matchImageEmpty"><div class="matchImageEmptyIcon">${cameraIconMarkup()}</div><div class="matchImageEmptyText">Lägg till SportAdmin-bild</div></div>`
+                }
+              </button>
+
+              <div class="matchImageActions">
+                <div class="matchImageHint">${
+                  card.ocrStatus
+                    ? escapeHtml(card.ocrStatus)
+                    : card.imageSrc
+                      ? "Tryck för att byta bild"
+                      : "Ladda upp bild som referens"
+                }</div>
+                ${card.imageSrc ? `<button class="matchDeleteImageBtn" type="button" data-action="remove-image" data-index="${index}">Ta bort bild</button>` : ""}
+              </div>
+
+              <div class="matchFieldsGrid">
+                <label class="matchField">
+                  <span>Datum</span>
+                  <input type="text" data-field="dateText" data-index="${index}" value="${escapeHtml(card.dateText)}" placeholder="Lördag 15 mars">
+                </label>
+
+                <label class="matchField">
+                  <span>Matchtid</span>
+                  <input type="text" data-field="timeText" data-index="${index}" value="${escapeHtml(card.timeText)}" placeholder="12:15–14:15">
+                </label>
+
+                <label class="matchField">
+                  <span>Spelare</span>
+                  <select data-field="player" data-index="${index}" class="matchPlayerSelect ${playerClass(card.player)}">
+                    <option value="" ${card.player === "" ? "selected" : ""}>Välj</option>
+                    <option value="Milo" ${card.player === "Milo" ? "selected" : ""}>Milo</option>
+                    <option value="Alice" ${card.player === "Alice" ? "selected" : ""}>Alice</option>
+                  </select>
+                </label>
+
+                <label class="matchField">
+                  <span>Serie</span>
+                  <input type="text" data-field="series" data-index="${index}" value="${escapeHtml(card.series)}" placeholder="2013 B Mellersta">
+                </label>
+
+                <label class="matchField">
+                  <span>Motstånd</span>
+                  <input type="text" data-field="opponent" data-index="${index}" value="${escapeHtml(card.opponent)}" placeholder="Norrtulls SK (B)">
+                </label>
+
+                <label class="matchField">
+                  <span>Plats</span>
+                  <input type="text" data-field="location" data-index="${index}" value="${escapeHtml(card.location)}" placeholder="Värmdö sporthall">
+                </label>
+
+                <label class="matchField">
+                  <span>Samling</span>
+                  <input type="text" data-field="gathering" data-index="${index}" value="${escapeHtml(card.gathering)}" placeholder="11:30">
+                </label>
+              </div>
+
+              <label class="matchField matchField--note">
+                <span>Anteckning</span>
+                <textarea data-field="note" data-index="${index}" placeholder="Åk 14, Ted ska med, restid 30 min...">${escapeHtml(card.note)}</textarea>
+              </label>
+
+              <input class="matchFileInput" id="matchFileInput_${index}" type="file" accept="image/*" hidden>
+            </section>
+          `).join("")}
+        </div>
+      </div>
+    `;
   }
 
   function cleanOcrLines(text) {
-    return text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter(Boolean);
   }
 
   function normalizeTimeString(value) {
-    return String(value || "").replace(/\./g, ":").replace(/\s+/g, "").replace(/[^0-9:\-–]/g, "").replace(/(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})/, "$1–$2");
+    return String(value || "")
+      .replace(/\./g, ":")
+      .replace(/\s+/g, "")
+      .replace(/[^0-9:\-–]/g, "")
+      .replace(/(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})/, "$1–$2");
   }
 
   function parseSportAdminText(rawText) {
     const lines = cleanOcrLines(rawText);
-    const result = { dateText: "", timeText: "", player: "", series: "", opponent: "", location: "", gathering: "" };
+    const result = {
+      dateText: "",
+      timeText: "",
+      player: "",
+      series: "",
+      opponent: "",
+      location: "",
+      gathering: ""
+    };
+
     const lineText = lines.join(" | ");
-    const dateLine = lines.find((line) => /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag/i.test(line) && /\d/.test(line)) || lines.find((line) => /mån|tis|ons|tor|fre|lör|sön/i.test(line) && /\d/.test(line));
+
+    const dateLine =
+      lines.find((line) => /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag/i.test(line) && /\d/.test(line)) ||
+      lines.find((line) => /mån|tis|ons|tor|fre|lör|sön/i.test(line) && /\d/.test(line));
+
     if (dateLine) result.dateText = dateLine;
+
     const gatheringMatch = lineText.match(/samling\s*(\d{1,2}[:.]\d{2})/i);
     if (gatheringMatch) result.gathering = gatheringMatch[1].replace(".", ":");
+
     const timeRangeMatch = lineText.match(/(\d{1,2}[:.]\d{2})\s*[-–]\s*(\d{1,2}[:.]\d{2})/);
-    if (timeRangeMatch) result.timeText = `${timeRangeMatch[1].replace(".", ":")}–${timeRangeMatch[2].replace(".", ":")}`;
+    if (timeRangeMatch) {
+      result.timeText = `${timeRangeMatch[1].replace(".", ":")}–${timeRangeMatch[2].replace(".", ":")}`;
+    }
+
     if (/milo/i.test(lineText)) result.player = "Milo";
     if (/alice/i.test(lineText)) result.player = result.player || "Alice";
-    const locationLine = lines.find((line) => /sporthall|arena|idrottshall|hallen|gymnasium|center|centret|plan/i.test(line)) || lines.find((line, idx) => /plats/i.test(line) && lines[idx + 1]);
-    if (locationLine) result.location = /plats/i.test(locationLine) ? (lines[lines.indexOf(locationLine) + 1] || "") : locationLine;
-    const seriesLine = lines.find((line) => /\b\d{4}\b/.test(line) && /mellersta|södra|norra|västra|östra|pojkar|flickor|\bA\b|\bB\b|\bC\b/i.test(line)) || lines.find((line) => /pojkar|flickor/i.test(line));
-    if (seriesLine) result.series = seriesLine.replace(/^pantamera\s*/i, "").replace(/^innebandy\s*/i, "").trim();
-    const skipWords = /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|samling|plats|aktivitet|svara|kallelse|kommentar|närvaro|sportadmin|pojkar|flickor|matchstart|starttid|sluttid|tid:/i;
+
+    const locationLine =
+      lines.find((line) => /sporthall|arena|idrottshall|hallen|gymnasium|center|centret|plan/i.test(line)) ||
+      lines.find((line, idx) => /plats/i.test(line) && lines[idx + 1]);
+
+    if (locationLine) {
+      result.location = /plats/i.test(locationLine)
+        ? (lines[lines.indexOf(locationLine) + 1] || "")
+        : locationLine;
+    }
+
+    const seriesLine =
+      lines.find((line) => /\b\d{4}\b/.test(line) && /mellersta|södra|norra|västra|östra|pojkar|flickor|\bA\b|\bB\b|\bC\b/i.test(line)) ||
+      lines.find((line) => /pojkar|flickor/i.test(line));
+
+    if (seriesLine) {
+      result.series = seriesLine
+        .replace(/^pantamera\s*/i, "")
+        .replace(/^innebandy\s*/i, "")
+        .trim();
+    }
+
+    const skipWords =
+      /måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|samling|plats|aktivitet|svara|kallelse|kommentar|närvaro|sportadmin|pojkar|flickor|matchstart|starttid|sluttid|tid:/i;
+
     const opponentCandidates = lines.filter((line) => {
       if (line.length < 3) return false;
       if (/\d{1,2}[:.]\d{2}/.test(line)) return false;
@@ -753,44 +1353,76 @@
       if (/milo|alice/i.test(line)) return false;
       return /[A-Za-zÅÄÖåäö]/.test(line);
     });
-    if (opponentCandidates.length) result.opponent = opponentCandidates.find((line) => /\([A-Z]\)/.test(line)) || opponentCandidates[0];
+
+    if (opponentCandidates.length) {
+      const bestOpponent = opponentCandidates.find((line) => /\([A-Z]\)/.test(line)) || opponentCandidates[0];
+      result.opponent = bestOpponent;
+    }
+
     result.dateText = result.dateText.trim();
     result.timeText = normalizeTimeString(result.timeText);
     result.series = result.series.trim();
     result.opponent = result.opponent.trim();
     result.location = result.location.trim();
     result.gathering = normalizeTimeString(result.gathering);
+
     return result;
   }
 
   async function extractMatchDataFromImage(dataUrl) {
-    if (!window.Tesseract) return { dateText: "", timeText: "", player: "", series: "", opponent: "", location: "", gathering: "" };
+    if (!window.Tesseract) {
+      return {
+        dateText: "",
+        timeText: "",
+        player: "",
+        series: "",
+        opponent: "",
+        location: "",
+        gathering: ""
+      };
+    }
+
     try {
-      const result = await window.Tesseract.recognize(dataUrl, "swe+eng", { logger: () => {} });
+      const result = await window.Tesseract.recognize(dataUrl, "swe+eng", {
+        logger: () => {}
+      });
       return parseSportAdminText(result.data.text || "");
     } catch {
-      return { dateText: "", timeText: "", player: "", series: "", opponent: "", location: "", gathering: "" };
+      return {
+        dateText: "",
+        timeText: "",
+        player: "",
+        series: "",
+        opponent: "",
+        location: "",
+        gathering: ""
+      };
     }
   }
 
   function bindMatchesModule() {
     const root = overlayContent.querySelector(".matchesModule");
     if (!root) return;
+
     root.querySelectorAll(".matchFileInput").forEach((input) => {
       input.addEventListener("change", async () => {
         const file = input.files?.[0];
         const index = Number(input.id.replace("matchFileInput_", ""));
         if (!file) return;
+
         matchCards[index].ocrStatus = "Förbereder bild…";
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
         bindMatchesModule();
+
         matchCards[index].imageSrc = await fileToDataUrlResized(file, 1800);
         matchCards[index].ocrStatus = "Läser av text…";
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
         bindMatchesModule();
+
         const extracted = await extractMatchDataFromImage(matchCards[index].imageSrc);
+
         matchCards[index].dateText = extracted.dateText || matchCards[index].dateText;
         matchCards[index].timeText = extracted.timeText || matchCards[index].timeText;
         matchCards[index].player = extracted.player || matchCards[index].player;
@@ -799,18 +1431,26 @@
         matchCards[index].location = extracted.location || matchCards[index].location;
         matchCards[index].gathering = extracted.gathering || matchCards[index].gathering;
         matchCards[index].ocrStatus = "OCR klar. Kontrollera gärna fälten.";
+
         saveMatchCards();
         overlayContent.innerHTML = renderMatchesModule();
         bindMatchesModule();
         renderSlots();
       });
     });
+
     root.addEventListener("click", (e) => {
       const actionEl = e.target.closest("[data-action]");
       if (!actionEl) return;
       const action = actionEl.dataset.action;
       const index = Number(actionEl.dataset.index);
-      if (action === "pick-image") { $(`matchFileInput_${index}`)?.click(); return; }
+
+      if (action === "pick-image") {
+        const input = $(`matchFileInput_${index}`);
+        input?.click();
+        return;
+      }
+
       if (action === "remove-image") {
         matchCards[index].imageSrc = "";
         matchCards[index].ocrStatus = "";
@@ -820,6 +1460,7 @@
         renderSlots();
         return;
       }
+
       if (action === "clear-match") {
         matchCards[index] = makeEmptyMatchCard();
         saveMatchCards();
@@ -828,22 +1469,27 @@
         renderSlots();
       }
     });
+
     root.addEventListener("input", (e) => {
       const fieldEl = e.target.closest("[data-field]");
       if (!fieldEl) return;
+
       const index = Number(fieldEl.dataset.index);
       const field = fieldEl.dataset.field;
       matchCards[index][field] = fieldEl.value;
       saveMatchCards();
       renderSlots();
+
       if (field === "player") {
         fieldEl.classList.toggle("is-milo", fieldEl.value === "Milo");
         fieldEl.classList.toggle("is-alice", fieldEl.value === "Alice");
       }
     });
+
     root.addEventListener("change", (e) => {
       const fieldEl = e.target.closest("[data-field]");
       if (!fieldEl) return;
+
       const index = Number(fieldEl.dataset.index);
       const field = fieldEl.dataset.field;
       matchCards[index][field] = fieldEl.value;
@@ -855,22 +1501,29 @@
   function fileToDataUrlResized(file, maxSize = 1800) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+
       reader.onload = () => {
         const img = new Image();
+
         img.onload = () => {
           const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
           const width = Math.round(img.width * ratio);
           const height = Math.round(img.height * ratio);
+
           const canvas = document.createElement("canvas");
           canvas.width = width;
           canvas.height = height;
+
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
+
           resolve(canvas.toDataURL("image/jpeg", 0.9));
         };
+
         img.onerror = reject;
         img.src = reader.result;
       };
+
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -885,7 +1538,11 @@
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    if (h > 0) {
+      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
@@ -893,33 +1550,160 @@
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
+
       const ctx = new AudioCtx();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
+
       o.type = "sine";
       o.frequency.value = 880;
       g.gain.value = 0.0001;
+
       o.connect(g);
       g.connect(ctx.destination);
       o.start();
+
       g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
-      setTimeout(() => { o.stop(); ctx.close(); }, 800);
+
+      setTimeout(() => {
+        o.stop();
+        ctx.close();
+      }, 800);
     } catch {
-      if (alarmAudio) { try { alarmAudio.play(); } catch {} }
+      if (alarmAudio) {
+        try {
+          alarmAudio.play();
+        } catch {}
+      }
     }
   }
 
+  function renderMarketsModule() {
+    const selected = marketById(marketState.selectedId);
+
+    if (marketState.view === "chart") {
+      return `
+        <div class="marketsModule fullModule">
+          <div class="marketsChartTop">
+            <button class="marketsBackBtn" type="button" data-action="markets-back">← Marknad</button>
+            <div class="marketsChartMeta">2m • ${escapeHtml(selected.name)}</div>
+          </div>
+
+          <div class="marketsChartShell">
+            <div class="marketsChartWidget" id="marketsChartWidget"></div>
+          </div>
+
+          <div class="marketsSwitchBar">
+            ${MARKET_SYMBOLS.map((item) => `
+              <button class="marketsSwitchBtn ${item.id === selected.id ? "is-active" : ""}" type="button" data-action="open-market-chart" data-market-id="${item.id}">${escapeHtml(item.short)}</button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="marketsModule fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Marknad</div>
+          <div class="fullModuleText">Översikt först. Tryck på en symbol för att öppna TradingView-chart i helskärm med 2m som default.</div>
+        </div>
+
+        <div class="marketsHubTapeShell">
+          <div class="marketsHubTape" id="marketsHubTape"></div>
+        </div>
+
+        <div class="marketsGrid">
+          ${MARKET_SYMBOLS.map((item) => `
+            <button class="marketCard ${item.id === selected.id ? "is-active" : ""}" type="button" data-action="open-market-chart" data-market-id="${item.id}">
+              <div class="marketCardName">${escapeHtml(item.name)}</div>
+              <div class="marketCardSub">TradingView • 2m</div>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function bindMarketsModule() {
+    if (marketState.view === "hub") {
+      mountMarketsHubWidget();
+    } else {
+      const selected = marketById(marketState.selectedId);
+      mountMarketsChartWidget(selected.tv);
+    }
+
+    overlayContent.addEventListener("click", onMarketsModuleClick, { once: true });
+  }
+
+  function onMarketsModuleClick(e) {
+    const trigger = e.target.closest("[data-action]");
+    if (!trigger) {
+      bindMarketsModule();
+      return;
+    }
+
+    const action = trigger.dataset.action;
+
+    if (action === "markets-back") {
+      marketState.view = "hub";
+      overlayContent.innerHTML = renderMarketsModule();
+      bindMarketsModule();
+      return;
+    }
+
+    if (action === "open-market-chart") {
+      marketState.selectedId = trigger.dataset.marketId || marketState.selectedId;
+      marketState.view = "chart";
+      overlayContent.innerHTML = renderMarketsModule();
+      bindMarketsModule();
+      renderSlots();
+      return;
+    }
+
+    bindMarketsModule();
+  }
+
+  function renderCalendarModule() {
+    return `
+      <div class="calendarModule fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">Kalender</div>
+          <div class="fullModuleText">Helskärm utan ramen från startsidan.</div>
+        </div>
+        <div class="calendarModuleFrameWrap">
+          <iframe
+            class="calendarModuleFrame"
+            src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&bgcolor=%23ffffff&showTitle=0&showTabs=0&showNav=1&showPrint=0&showCalendars=0&showDate=1"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            title="Google Kalender helskärm"
+          ></iframe>
+        </div>
+      </div>
+    `;
+  }
+
   function renderPlaceholderModule(text) {
-    return `<div class="fullModule"><div class="fullModuleHead"><div class="fullModuleTitle">${escapeHtml(text)}</div><div class="fullModuleText">Redo för nästa modul.</div></div></div>`;
+    return `
+      <div class="fullModule">
+        <div class="fullModuleHead">
+          <div class="fullModuleTitle">${escapeHtml(text)}</div>
+          <div class="fullModuleText">Redo för nästa modul.</div>
+        </div>
+      </div>
+    `;
   }
 
   function animateSlotSwitch(groupKey, direction) {
     renderSlots();
     const content = groupKey === "A" ? slotAContent : slotBContent;
     const startOffset = direction === "left" ? 22 : -22;
+
     content.style.setProperty("--slotX", `${startOffset}px`);
     content.style.setProperty("--slotOpacity", ".88");
+
     requestAnimationFrame(() => {
       content.style.setProperty("--slotX", "0px");
       content.style.setProperty("--slotOpacity", "1");
@@ -936,10 +1720,17 @@
     let dragging = false;
     let startX = 0;
     let currentX = 0;
+
     const content = groupKey === "A" ? slotAContent : slotBContent;
+
     section.addEventListener("pointerdown", (e) => {
-      dragging = true; startX = e.clientX; currentX = e.clientX; section.classList.add("is-dragging"); section.setPointerCapture?.(e.pointerId);
+      dragging = true;
+      startX = e.clientX;
+      currentX = e.clientX;
+      section.classList.add("is-dragging");
+      section.setPointerCapture?.(e.pointerId);
     });
+
     section.addEventListener("pointermove", (e) => {
       if (!dragging) return;
       currentX = e.clientX;
@@ -947,39 +1738,51 @@
       content.style.setProperty("--slotX", `${dx * 0.55}px`);
       content.style.setProperty("--slotOpacity", String(Math.max(0.62, 1 - Math.abs(dx) / 220)));
     });
+
     function endSwipe() {
       if (!dragging) return;
       const dx = currentX - startX;
-      dragging = false; section.classList.remove("is-dragging");
+      dragging = false;
+      section.classList.remove("is-dragging");
+
       if (dx < -48) stepSlot(groupKey, 1, "left");
       else if (dx > 48) stepSlot(groupKey, -1, "right");
-      else { content.style.setProperty("--slotX", "0px"); content.style.setProperty("--slotOpacity", "1"); }
+      else {
+        content.style.setProperty("--slotX", "0px");
+        content.style.setProperty("--slotOpacity", "1");
+      }
     }
+
     section.addEventListener("pointerup", endSwipe);
     section.addEventListener("pointercancel", endSwipe);
     section.addEventListener("pointerleave", endSwipe);
-    section.addEventListener("wheel", (e) => {
-      if (overlay.classList.contains("open") || articleOverlay.classList.contains("open") || calendarOverlay.classList.contains("open") || marketChartOverlay.classList.contains("open")) return;
-      if (Math.abs(e.deltaY) < 12) return;
-      e.preventDefault();
-      if (e.deltaY > 0) stepSlot(groupKey, 1, "left");
-      else stepSlot(groupKey, -1, "right");
-    }, { passive: false });
+
+    section.addEventListener(
+      "wheel",
+      (e) => {
+        if (overlay.classList.contains("open") || articleOverlay.classList.contains("open")) return;
+        if (Math.abs(e.deltaY) < 12) return;
+
+        e.preventDefault();
+
+        if (e.deltaY > 0) stepSlot(groupKey, 1, "left");
+        else stepSlot(groupKey, -1, "right");
+      },
+      { passive: false }
+    );
   }
 
   slotAButton.addEventListener("click", () => openCurrentModule("A"));
   slotBButton.addEventListener("click", () => openCurrentModule("B"));
+  calendarOpenBtn?.addEventListener("click", openCalendarModule);
   closeFab.addEventListener("click", closeModule);
   timerDoneCloseFab.addEventListener("click", hideTimerDoneOverlay);
+
   articleBackBtn.addEventListener("click", closeArticle);
-  articleOpenBtn.addEventListener("click", () => { if (currentArticle?.link) window.open(currentArticle.link, "_blank", "noopener,noreferrer"); });
-  calendarOpenBtn.addEventListener("click", openCalendar);
-  calendarCloseFab.addEventListener("click", closeCalendar);
-  marketChartCloseFab.addEventListener("click", closeMarketChart);
-  marketChartTabs.addEventListener("click", (e) => {
-    const tab = e.target.closest("[data-key]");
-    if (!tab) return;
-    openMarketChart(tab.dataset.key);
+  articleOpenBtn.addEventListener("click", () => {
+    if (currentArticle?.link) {
+      window.open(currentArticle.link, "_blank", "noopener,noreferrer");
+    }
   });
 
   bindSwipe(slotASection, "A");
@@ -989,9 +1792,7 @@
   renderSlots();
   loadWeather();
   loadNews(true);
-  loadMarketQuotes();
 
   setInterval(formatDayDate, 60 * 1000);
   setInterval(() => loadNews(true), NEWS_REFRESH_MS);
-  setInterval(() => loadMarketQuotes(), 2 * 60 * 1000);
 })();
