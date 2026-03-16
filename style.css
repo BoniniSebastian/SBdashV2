@@ -709,14 +709,16 @@ a{
 .overlayScroll{
   position:absolute;
   inset:calc(var(--safeTop) + 16px) 0 calc(var(--safeBottom) + 72px) 0;
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
+  touch-action:pan-y;
 }
 
 .overlayContent{
   min-height:100%;
-  padding:0 18px 16px 18px;
+  padding:0 18px 32px 18px;
 }
 .closeFab{
   position:absolute;
@@ -743,7 +745,7 @@ a{
 .notesModule,
 .matchesModule,
 .newsModule{
-  min-height:100%;
+  min-height:auto;
   display:flex;
   flex-direction:column;
 }
