@@ -743,8 +743,12 @@ a{
 .fullModule,
 .tasksModule,
 .notesModule,
-.matchesModule,
 .newsModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.matchesModule{
   min-height:auto;
   display:flex;
   flex-direction:column;
