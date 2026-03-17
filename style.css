@@ -1532,7 +1532,9 @@ a{
     --padX:16px;
     --topH:60px;
     --calendarH:166px;
+    body{ overflow:auto; }
   }
+  
 
   .slotButton{
     padding:14px 16px;
