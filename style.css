@@ -30,7 +30,7 @@ html,body{
   font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
 }
 
-body{ overflow:auto; }
+body{ overflow:hidden; }
 
 button,input,textarea,select{
   font:inherit;
