@@ -743,12 +743,10 @@ a{
 .fullModule,
 .tasksModule,
 .notesModule,
-.newsModule{
-  min-height:100%;
-  display:flex;
-  flex-direction:column;
-}
-.matchesModule{
+.newsModule,
+.matchesModule,
+.marketsModule,
+.calendarModule{
   min-height:auto;
   display:flex;
   flex-direction:column;
