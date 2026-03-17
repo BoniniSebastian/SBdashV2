@@ -709,16 +709,26 @@ a{
 .overlayScroll{
   position:absolute;
   inset:calc(var(--safeTop) + 16px) 0 calc(var(--safeBottom) + 72px) 0;
-  overflow-y:auto;
-  overflow-x:hidden;
+  overflow:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
-  touch-action:pan-y;
 }
 
 .overlayContent{
-  min-height:auto;
-  padding:0 18px 32px 18px;
+  min-height:100%;
+  padding:0 18px 16px 18px;
+}
+
+.fullModule,
+.tasksModule,
+.notesModule,
+.newsModule,
+.matchesModule,
+.marketsModule,
+.calendarModule{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
 }
 .closeFab{
   position:absolute;
@@ -738,18 +748,6 @@ a{
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.04),
     0 8px 18px rgba(0,0,0,.22);
-}
-
-.fullModule,
-.tasksModule,
-.notesModule,
-.newsModule,
-.matchesModule,
-.marketsModule,
-.calendarModule{
-  min-height:auto;
-  display:flex;
-  flex-direction:column;
 }
 
 .fullModuleHead{
